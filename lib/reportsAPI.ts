@@ -27,56 +27,66 @@ export interface ReportFilters {
   status?: string
 }
 
-export interface FinancialReportData {
-  total_balance_fees_statement: {
+export interface FinancialPaymentData {
+  id: string
+  student_id: string
+  enrollment_id?: string
+  amount: number
+  payment_type: string
+  payment_method: string
+  payment_status: string
+  transaction_id?: string
+  payment_date?: string
+  due_date: string
+  notes?: string
+  branch_name: string
+  course_name: string
+  formatted_amount: number
+  formatted_date: string
+  formatted_due_date: string
+  created_at: string
+}
+
+export interface FinancialAnalytics {
+  revenue_by_status: Array<{
+    _id: string
     total_amount: number
-    total_transactions: number
+    count: number
+  }>
+  revenue_by_method: Array<{
+    _id: string
+    total_amount: number
+    count: number
+  }>
+  revenue_by_type: Array<{
+    _id: string
+    total_amount: number
+    count: number
+  }>
+  revenue_by_branch: Array<{
+    _id: string
+    branch_name: string
+    total_amount: number
+    count: number
+  }>
+  monthly_revenue: Array<{
+    _id: string
+    total_amount: number
+    count: number
+  }>
+  outstanding_payments: {
+    total_amount: number
+    count: number
   }
-  balance_fees_statement: {
-    pending_amount: number
-    pending_transactions: number
-  }
-  daily_collection_report: Array<{
-    _id: string
-    total: number
-    count: number
-  }>
-  type_wise_balance_report: Array<{
-    _id: string
-    total: number
-    count: number
-  }>
-  fees_statement: Array<{
-    _id: string
-    total: number
-    count: number
-    branch_info: {
-      name: string
-      location: string
-    }
-  }>
-  total_fee_collection_report: Array<{
-    _id: string
-    total: number
-    count: number
-  }>
-  other_fees_collection_report: Array<{
-    _id: string
-    total: number
-    count: number
-  }>
-  online_fees_collection_report: Array<{
-    _id: string
-    total: number
-    count: number
-  }>
-  balance_fees_report_with_remark: Array<{
-    amount: number
-    due_date: string
-    notes: string
-    student_name: string
-    student_email: string
-  }>
+}
+
+export interface FinancialSummary {
+  total_revenue: number
+  total_transactions: number
+  pending_amount: number
+  outstanding_amount: number
+  outstanding_count: number
+  average_transaction: number
 }
 
 export interface StudentReportData {
@@ -191,7 +201,22 @@ export interface ReportFilterOptions {
     id: string
     name: string
   }>
-  payment_types: string[]
+  payment_types: Array<{
+    id: string
+    name: string
+  }>
+  payment_methods: Array<{
+    id: string
+    name: string
+  }>
+  payment_statuses: Array<{
+    id: string
+    name: string
+  }>
+  date_ranges: Array<{
+    id: string
+    name: string
+  }>
   sessions: string[]
   classes: string[]
   sections: string[]
@@ -199,8 +224,51 @@ export interface ReportFilterOptions {
 }
 
 export interface FinancialReportsResponse {
-  financial_reports: FinancialReportData
-  filters_applied: ReportFilters
+  payments: FinancialPaymentData[]
+  pagination: {
+    total: number
+    skip: number
+    limit: number
+    has_more: boolean
+  }
+  analytics: FinancialAnalytics
+  summary: FinancialSummary
+  filters_applied: {
+    branch_id?: string
+    payment_type?: string
+    payment_method?: string
+    payment_status?: string
+    date_range?: string
+    amount_min?: number
+    amount_max?: number
+    search?: string
+  }
+  generated_at: string
+}
+
+export interface FinancialReportFiltersResponse {
+  filters: {
+    branches: Array<{
+      id: string
+      name: string
+    }>
+    payment_types: Array<{
+      id: string
+      name: string
+    }>
+    payment_methods: Array<{
+      id: string
+      name: string
+    }>
+    payment_statuses: Array<{
+      id: string
+      name: string
+    }>
+    date_ranges: Array<{
+      id: string
+      name: string
+    }>
+  }
   generated_at: string
 }
 
@@ -549,18 +617,44 @@ class ReportsAPI extends BaseAPI {
   }
 
   /**
-   * Get comprehensive financial reports
+   * Get comprehensive financial reports with enhanced filtering
    */
-  async getFinancialReports(token: string, filters?: ReportFilters): Promise<FinancialReportsResponse> {
+  async getFinancialReports(
+    token: string,
+    filters?: {
+      branch_id?: string
+      payment_type?: string
+      payment_method?: string
+      payment_status?: string
+      date_range?: string
+      amount_min?: number
+      amount_max?: number
+      search?: string
+      skip?: number
+      limit?: number
+    }
+  ): Promise<FinancialReportsResponse> {
     const params = new URLSearchParams()
     if (filters) {
       Object.entries(filters).forEach(([key, value]) => {
-        if (value) params.append(key, value)
+        if (value !== undefined && value !== null && value !== '') {
+          params.append(key, value.toString())
+        }
       })
     }
-    
+
     const endpoint = `/api/reports/financial${params.toString() ? `?${params.toString()}` : ''}`
     return await this.makeRequest(endpoint, {
+      method: 'GET',
+      token
+    })
+  }
+
+  /**
+   * Get financial report filter options
+   */
+  async getFinancialReportFilters(token: string): Promise<FinancialReportFiltersResponse> {
+    return await this.makeRequest('/api/reports/financial/filters', {
       method: 'GET',
       token
     })

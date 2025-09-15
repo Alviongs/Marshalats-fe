@@ -227,7 +227,11 @@ function CategoryReportsPageContent() {
   const [branchesWithCourses, setBranchesWithCourses] = useState<any[]>([])
 
   // Filter states with validation
-  const [filters, setFilters] = useState<ReportFilters>({
+  const [filters, setFilters] = useState<ReportFilters & {
+    payment_type?: string
+    payment_method?: string
+    search?: string
+  }>({
     session: "",
     class: "",
     section: "",
@@ -235,7 +239,10 @@ function CategoryReportsPageContent() {
     branch_id: "",
     course_id: "",
     date_range: "",
-    status: ""
+    status: "",
+    payment_type: "",
+    payment_method: "",
+    search: ""
   })
 
   // Custom date range state
@@ -299,7 +306,7 @@ function CategoryReportsPageContent() {
         }
 
         // Use the backend API endpoint for branches with courses
-        const response = await fetch(`http://localhost:8003/api/branches-with-courses`, {
+        const response = await fetch(`http://31.97.224.169:8003/api/branches-with-courses`, {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -387,6 +394,34 @@ function CategoryReportsPageContent() {
     }
 
     loadBranchReportFilters()
+  }, [categoryId])
+
+  // Load financial report filters when on financial category
+  useEffect(() => {
+    const loadFinancialReportFilters = async () => {
+      if (categoryId !== 'financial') return
+
+      try {
+        const token = TokenManager.getToken()
+        if (!token) return
+
+        const response = await reportsAPI.getFinancialReportFilters(token)
+
+        // Update filter options with financial-specific data
+        setFilterOptions(prev => ({
+          ...prev,
+          branches: response.filters.branches,
+          payment_types: response.filters.payment_types,
+          payment_methods: response.filters.payment_methods,
+          payment_statuses: response.filters.payment_statuses,
+          date_ranges: response.filters.date_ranges
+        }))
+      } catch (error) {
+        console.error('Error loading financial report filters:', error)
+      }
+    }
+
+    loadFinancialReportFilters()
   }, [categoryId])
 
   // Dynamic course filtering based on selected branch
@@ -665,15 +700,34 @@ function CategoryReportsPageContent() {
     setHasSearched(true)
 
     try {
-      // Generate mock financial data for demonstration
-      const mockFinancialData = generateMockFinancialData(filters)
-      setFinancialResults(mockFinancialData)
-      toast.success(`Found ${mockFinancialData.length} financial record${mockFinancialData.length !== 1 ? 's' : ''}`)
+      // Prepare filters for API call
+      const apiFilters = {
+        branch_id: filters.branch_id || undefined,
+        payment_type: filters.payment_type || undefined,
+        payment_method: filters.payment_method || undefined,
+        payment_status: filters.status || undefined,
+        date_range: filters.date_range || undefined,
+        search: filters.search || undefined,
+        skip: 0,
+        limit: 50
+      }
+
+      // Remove undefined values and 'all' values
+      Object.keys(apiFilters).forEach(key => {
+        if (apiFilters[key] === undefined || apiFilters[key] === 'all' || apiFilters[key] === '') {
+          delete apiFilters[key]
+        }
+      })
+
+      const response = await reportsAPI.getFinancialReports(token, apiFilters)
+      setFinancialResults(response.payments || [])
+
+      const count = response.payments?.length || 0
+      toast.success(`Found ${count} financial record${count !== 1 ? 's' : ''}`)
     } catch (error) {
       console.error('Error searching financial records:', error)
-      const mockData = generateMockFinancialData(filters)
-      setFinancialResults(mockData)
-      toast.warning(`API unavailable. Showing ${mockData.length} sample record${mockData.length !== 1 ? 's' : ''}`)
+      toast.error('Failed to load financial records. Please try again.')
+      setFinancialResults([])
     } finally {
       setSearchLoading(false)
     }
@@ -1266,37 +1320,69 @@ function CategoryReportsPageContent() {
                 <CardTitle className="text-lg font-semibold text-gray-900">Search Financial Reports</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-4">
                   {/* Branch Dropdown */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Branch</label>
                     <Select
                       value={filters.branch_id || "all"}
                       onValueChange={(value) => handleFilterChange('branch_id', value)}
-                      disabled={branchesLoading}
+                      disabled={loading}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder={branchesLoading ? "Loading branches..." : "Select Branch"} />
+                        <SelectValue placeholder={loading ? "Loading..." : "Select Branch"} />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="all">All Branches</SelectItem>
-                        {branches.filter(branch => branch.id && branch.branch?.name).map((branch) => (
+                        {filterOptions?.branches?.map((branch) => (
                           <SelectItem key={branch.id} value={branch.id}>
-                            {branch.branch?.name || 'N/A'} ({branch.branch?.code || branch.id})
+                            {branch.name}
                           </SelectItem>
                         ))}
-                        {branchesError && (
-                          <SelectItem value="" disabled>
-                            Error loading branches
-                          </SelectItem>
-                        )}
                       </SelectContent>
                     </Select>
-                    {branchesError && (
-                      <p className="text-sm text-red-600 mt-1">
-                        {branchesError}
-                      </p>
-                    )}
+                  </div>
+
+                  {/* Payment Type Dropdown */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Payment Type</label>
+                    <Select
+                      value={filters.payment_type || "all"}
+                      onValueChange={(value) => handleFilterChange('payment_type', value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select Type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Types</SelectItem>
+                        {filterOptions?.payment_types?.map((type) => (
+                          <SelectItem key={type.id} value={type.id}>
+                            {type.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Payment Method Dropdown */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Payment Method</label>
+                    <Select
+                      value={filters.payment_method || "all"}
+                      onValueChange={(value) => handleFilterChange('payment_method', value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select Method" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Methods</SelectItem>
+                        {filterOptions?.payment_methods?.map((method) => (
+                          <SelectItem key={method.id} value={method.id}>
+                            {method.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   {/* Payment Status Dropdown */}
@@ -1311,11 +1397,11 @@ function CategoryReportsPageContent() {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="all">All Status</SelectItem>
-                        <SelectItem value="paid">Paid</SelectItem>
-                        <SelectItem value="pending">Pending</SelectItem>
-                        <SelectItem value="overdue">Overdue</SelectItem>
-                        <SelectItem value="cancelled">Cancelled</SelectItem>
-                        <SelectItem value="refunded">Refunded</SelectItem>
+                        {filterOptions?.payment_statuses?.map((status) => (
+                          <SelectItem key={status.id} value={status.id}>
+                            {status.name}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
@@ -1332,41 +1418,26 @@ function CategoryReportsPageContent() {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="all">All Time</SelectItem>
-                        <SelectItem value="today">Today</SelectItem>
-                        <SelectItem value="yesterday">Yesterday</SelectItem>
-                        <SelectItem value="current-week">Current Week</SelectItem>
-                        <SelectItem value="last-week">Last Week</SelectItem>
-                        <SelectItem value="current-month">Current Month</SelectItem>
-                        <SelectItem value="last-month">Last Month</SelectItem>
-                        <SelectItem value="current-quarter">Current Quarter</SelectItem>
-                        <SelectItem value="last-quarter">Last Quarter</SelectItem>
-                        <SelectItem value="current-year">Current Year</SelectItem>
-                        <SelectItem value="last-year">Last Year</SelectItem>
+                        {filterOptions?.date_ranges?.map((range) => (
+                          <SelectItem key={range.id} value={range.id}>
+                            {range.name}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
+                </div>
 
-                  {/* Amount Range Filter */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Amount Range</label>
-                    <Select
-                      value={filters.amount_range || "all"}
-                      onValueChange={(value) => handleFilterChange('amount_range', value)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select Amount Range" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Amounts</SelectItem>
-                        <SelectItem value="0-1000">₹0 - ₹1,000</SelectItem>
-                        <SelectItem value="1000-5000">₹1,000 - ₹5,000</SelectItem>
-                        <SelectItem value="5000-10000">₹5,000 - ₹10,000</SelectItem>
-                        <SelectItem value="10000-25000">₹10,000 - ₹25,000</SelectItem>
-                        <SelectItem value="25000-50000">₹25,000 - ₹50,000</SelectItem>
-                        <SelectItem value="50000+">₹50,000+</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                {/* Search Input */}
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Search</label>
+                  <Input
+                    type="text"
+                    placeholder="Search by transaction ID, course, branch, or notes..."
+                    value={filters.search || ""}
+                    onChange={(e) => handleFilterChange('search', e.target.value)}
+                    className="w-full"
+                  />
                 </div>
 
                 {/* Search Button */}
@@ -1419,28 +1490,44 @@ function CategoryReportsPageContent() {
                             <th className="text-left py-3 px-4 font-medium text-gray-900 text-sm">Transaction ID</th>
                             <th className="text-left py-3 px-4 font-medium text-gray-900 text-sm hidden sm:table-cell">Amount</th>
                             <th className="text-left py-3 px-4 font-medium text-gray-900 text-sm hidden md:table-cell">Branch</th>
+                            <th className="text-left py-3 px-4 font-medium text-gray-900 text-sm hidden lg:table-cell">Course</th>
                             <th className="text-left py-3 px-4 font-medium text-gray-900 text-sm">Status</th>
+                            <th className="text-left py-3 px-4 font-medium text-gray-900 text-sm hidden xl:table-cell">Method</th>
                             <th className="text-left py-3 px-4 font-medium text-gray-900 text-sm hidden lg:table-cell">Date</th>
                           </tr>
                         </thead>
                         <tbody>
                           {financialResults.map((record, index) => (
                             <tr key={record.id} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                              <td className="py-3 px-4 text-sm text-gray-900">{record.transaction_id}</td>
-                              <td className="py-3 px-4 text-sm text-gray-900 hidden sm:table-cell">₹{record.amount?.toLocaleString()}</td>
-                              <td className="py-3 px-4 text-sm text-gray-600 hidden md:table-cell">{record.branch}</td>
+                              <td className="py-3 px-4 text-sm text-gray-900">
+                                {record.transaction_id || 'N/A'}
+                              </td>
+                              <td className="py-3 px-4 text-sm text-gray-900 hidden sm:table-cell">
+                                ₹{record.amount?.toLocaleString() || '0'}
+                              </td>
+                              <td className="py-3 px-4 text-sm text-gray-600 hidden md:table-cell">
+                                {record.branch_name || 'N/A'}
+                              </td>
+                              <td className="py-3 px-4 text-sm text-gray-600 hidden lg:table-cell">
+                                {record.course_name || 'N/A'}
+                              </td>
                               <td className="py-3 px-4 text-sm">
                                 <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-                                  record.status === 'paid' ? 'bg-green-100 text-green-800' :
-                                  record.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                                  record.status === 'overdue' ? 'bg-red-100 text-red-800' :
-                                  record.status === 'cancelled' ? 'bg-gray-100 text-gray-800' :
+                                  record.payment_status === 'paid' || record.payment_status === 'completed' ? 'bg-green-100 text-green-800' :
+                                  record.payment_status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                                  record.payment_status === 'overdue' ? 'bg-red-100 text-red-800' :
+                                  record.payment_status === 'cancelled' ? 'bg-gray-100 text-gray-800' :
                                   'bg-blue-100 text-blue-800'
                                 }`}>
-                                  {record.status}
+                                  {record.payment_status?.charAt(0).toUpperCase() + record.payment_status?.slice(1) || 'Unknown'}
                                 </span>
                               </td>
-                              <td className="py-3 px-4 text-sm text-gray-600 hidden lg:table-cell">{record.date}</td>
+                              <td className="py-3 px-4 text-sm text-gray-600 hidden xl:table-cell">
+                                {record.payment_method?.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()) || 'N/A'}
+                              </td>
+                              <td className="py-3 px-4 text-sm text-gray-600 hidden lg:table-cell">
+                                {record.formatted_date || record.payment_date || 'N/A'}
+                              </td>
                             </tr>
                           ))}
                         </tbody>
