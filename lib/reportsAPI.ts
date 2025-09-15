@@ -234,6 +234,65 @@ export interface IndividualReportResponse {
   generated_at: string
 }
 
+export interface MasterData {
+  id: string
+  full_name: string
+  first_name: string
+  last_name: string
+  email: string
+  phone: string
+  branch: {
+    id: string
+    name: string
+    code: string
+  } | null
+  assigned_courses: Array<{
+    id: string
+    title: string
+    code: string
+    difficulty_level: string
+  }>
+  areas_of_expertise: string[]
+  professional_experience: string
+  designation: string
+  is_active: boolean
+  join_date: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface MasterReportsResponse {
+  masters: MasterData[]
+  pagination: {
+    total: number
+    skip: number
+    limit: number
+    has_more: boolean
+  }
+  filters_applied: {
+    branch_id?: string
+    course_id?: string
+    area_of_expertise?: string
+    professional_experience?: string
+    designation_id?: string
+    active_only?: boolean
+    search?: string
+  }
+  generated_at: string
+}
+
+export interface MasterReportFiltersResponse {
+  filters: {
+    branches: Array<{ id: string; name: string }>
+    courses: Array<{ id: string; name: string }>
+    areas_of_expertise: Array<{ id: string; name: string }>
+    professional_experience: Array<{ id: string; name: string }>
+    designations: Array<{ id: string; name: string }>
+    active_status: Array<{ id: string; name: string }>
+  }
+  generated_at: string
+}
+
 class ReportsAPI extends BaseAPI {
   /**
    * Validate and sanitize report filters
@@ -377,7 +436,7 @@ class ReportsAPI extends BaseAPI {
           endpoint = `/api/reports/financial${queryString}`
           break
         case 'master':
-          endpoint = `/api/reports/financial${queryString}`
+          endpoint = `/api/reports/masters${queryString}`
           break
       }
 
@@ -535,6 +594,46 @@ class ReportsAPI extends BaseAPI {
       year: 'numeric',
       month: 'short',
       day: 'numeric'
+    })
+  }
+
+  /**
+   * Get comprehensive master reports
+   */
+  async getMasterReports(token: string, filters?: {
+    branch_id?: string
+    course_id?: string
+    area_of_expertise?: string
+    professional_experience?: string
+    designation_id?: string
+    active_only?: boolean
+    search?: string
+    skip?: number
+    limit?: number
+  }): Promise<MasterReportsResponse> {
+    const params = new URLSearchParams()
+    if (filters) {
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== '') {
+          params.append(key, value.toString())
+        }
+      })
+    }
+
+    const endpoint = `/api/reports/masters${params.toString() ? `?${params.toString()}` : ''}`
+    return await this.makeRequest(endpoint, {
+      method: 'GET',
+      token
+    })
+  }
+
+  /**
+   * Get available filter options for master reports
+   */
+  async getMasterReportFilters(token: string): Promise<MasterReportFiltersResponse> {
+    return await this.makeRequest('/api/reports/masters/filters', {
+      method: 'GET',
+      token
     })
   }
 
