@@ -362,6 +362,33 @@ function CategoryReportsPageContent() {
     }
   }, [categoryId])
 
+  // Load branch report filters when on branch category
+  useEffect(() => {
+    const loadBranchReportFilters = async () => {
+      if (categoryId !== 'branch') return
+
+      try {
+        const token = TokenManager.getToken()
+        if (!token) return
+
+        const response = await reportsAPI.getBranchReportFilters(token)
+
+        // Update filter options with branch-specific data
+        setFilterOptions(prev => ({
+          ...prev,
+          branches: response.filters.branches,
+          metrics: response.filters.metrics,
+          date_ranges: response.filters.date_ranges,
+          statuses: response.filters.statuses
+        }))
+      } catch (error) {
+        console.error('Error loading branch report filters:', error)
+      }
+    }
+
+    loadBranchReportFilters()
+  }, [categoryId])
+
   // Dynamic course filtering based on selected branch
   useEffect(() => {
     if (!allCourses.length) return
@@ -731,15 +758,35 @@ function CategoryReportsPageContent() {
     setHasSearched(true)
 
     try {
-      // Generate mock branch data for demonstration
-      const mockBranchData = generateMockBranchData(filters)
-      setBranchResults(mockBranchData)
-      toast.success(`Found ${mockBranchData.length} branch${mockBranchData.length !== 1 ? 'es' : ''}`)
+      // Prepare filter parameters
+      const searchFilters = {
+        branch_id: filters.branch_id === "all" ? undefined : filters.branch_id,
+        metric: filters.metric === "all" ? undefined : filters.metric,
+        date_range: filters.date_range === "all" ? undefined : filters.date_range,
+        status: filters.status === "all" ? undefined : filters.status,
+        skip: 0,
+        limit: 50
+      }
+
+      // Call real API
+      const response = await reportsAPI.getBranchReports(token, searchFilters)
+
+      // Transform data to match expected format
+      const transformedResults = response.branches.map(branch => ({
+        id: branch.id,
+        name: branch.branch_name || 'Unknown Branch',
+        student_count: branch.active_enrollments,
+        revenue: branch.total_revenue,
+        status: branch.status,
+        performance_score: branch.performance_score
+      }))
+
+      setBranchResults(transformedResults)
+      toast.success(`Found ${transformedResults.length} branch${transformedResults.length !== 1 ? 'es' : ''}`)
     } catch (error) {
       console.error('Error searching branch reports:', error)
-      const mockData = generateMockBranchData(filters)
-      setBranchResults(mockData)
-      toast.warning(`API unavailable. Showing ${mockData.length} sample branch${mockData.length !== 1 ? 'es' : ''}`)
+      toast.error('Failed to load branch reports. Please try again.')
+      setBranchResults([])
     } finally {
       setSearchLoading(false)
     }

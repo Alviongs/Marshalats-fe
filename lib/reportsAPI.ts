@@ -293,6 +293,102 @@ export interface MasterReportFiltersResponse {
   generated_at: string
 }
 
+// Course Report Interfaces
+export interface CourseData {
+  id: string
+  title: string
+  code: string
+  description: string
+  difficulty_level: string
+  category_name: string
+  pricing: {
+    currency: string
+    amount: number
+    branch_specific_pricing: boolean
+  }
+  total_enrollments: number
+  active_enrollments: number
+  inactive_enrollments: number
+  is_active: boolean
+  offers_certification: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface CourseReportsResponse {
+  courses: CourseData[]
+  pagination: {
+    total: number
+    skip: number
+    limit: number
+    has_more: boolean
+  }
+  summary: {
+    total_courses: number
+    active_courses: number
+    total_enrollments: number
+    active_enrollments: number
+  }
+  generated_at: string
+}
+
+export interface CourseReportFiltersResponse {
+  filters: {
+    branches: Array<{ id: string; name: string }>
+    categories: Array<{ id: string; name: string }>
+    difficulty_levels: Array<{ id: string; name: string }>
+    active_status: Array<{ id: string; name: string }>
+  }
+  generated_at: string
+}
+
+// Branch Report Interfaces
+export interface BranchData {
+  id: string
+  branch_name: string
+  branch_code: string
+  location: string
+  state: string
+  is_active: boolean
+  total_enrollments: number
+  active_enrollments: number
+  total_coaches: number
+  active_coaches: number
+  total_revenue: number
+  total_transactions: number
+  performance_score: number
+  status: string
+  created_at: string
+  updated_at: string
+}
+
+export interface BranchReportsResponse {
+  branches: BranchData[]
+  pagination: {
+    total: number
+    skip: number
+    limit: number
+    has_more: boolean
+  }
+  summary: {
+    total_branches: number
+    active_branches: number
+    total_enrollments: number
+    total_revenue: number
+  }
+  generated_at: string
+}
+
+export interface BranchReportFiltersResponse {
+  filters: {
+    branches: Array<{ id: string; name: string }>
+    metrics: Array<{ id: string; name: string }>
+    date_ranges: Array<{ id: string; name: string }>
+    statuses: Array<{ id: string; name: string }>
+  }
+  generated_at: string
+}
+
 class ReportsAPI extends BaseAPI {
   /**
    * Validate and sanitize report filters
@@ -632,6 +728,79 @@ class ReportsAPI extends BaseAPI {
    */
   async getMasterReportFilters(token: string): Promise<MasterReportFiltersResponse> {
     return await this.makeRequest('/api/reports/masters/filters', {
+      method: 'GET',
+      token
+    })
+  }
+
+  /**
+   * Get comprehensive course reports
+   */
+  async getCourseReports(token: string, filters?: {
+    branch_id?: string
+    category_id?: string
+    difficulty_level?: string
+    active_only?: boolean
+    search?: string
+    skip?: number
+    limit?: number
+  }): Promise<CourseReportsResponse> {
+    const params = new URLSearchParams()
+    if (filters) {
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== '') {
+          params.append(key, value.toString())
+        }
+      })
+    }
+
+    return await this.makeRequest(`/api/reports/courses?${params.toString()}`, {
+      method: 'GET',
+      token
+    })
+  }
+
+  /**
+   * Get available filter options for course reports
+   */
+  async getCourseReportFilters(token: string): Promise<CourseReportFiltersResponse> {
+    return await this.makeRequest('/api/reports/courses/filters', {
+      method: 'GET',
+      token
+    })
+  }
+
+  /**
+   * Get comprehensive branch reports
+   */
+  async getBranchReports(token: string, filters?: {
+    branch_id?: string
+    metric?: string
+    date_range?: string
+    status?: string
+    skip?: number
+    limit?: number
+  }): Promise<BranchReportsResponse> {
+    const params = new URLSearchParams()
+    if (filters) {
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== '') {
+          params.append(key, value.toString())
+        }
+      })
+    }
+
+    return await this.makeRequest(`/api/reports/branches?${params.toString()}`, {
+      method: 'GET',
+      token
+    })
+  }
+
+  /**
+   * Get available filter options for branch reports
+   */
+  async getBranchReportFilters(token: string): Promise<BranchReportFiltersResponse> {
+    return await this.makeRequest('/api/reports/branches/filters', {
       method: 'GET',
       token
     })
