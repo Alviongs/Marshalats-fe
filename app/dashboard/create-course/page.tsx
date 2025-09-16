@@ -232,12 +232,11 @@ export default function CreateCoursePage() {
     <div className="min-h-screen bg-gray-50">
       <DashboardHeader currentPage="Create Course" />
 
-      <main className="w-full p-4 lg:p-6">
+      <main className="w-full py-4 lg:py-6 px-19">
         {/* Header with Back Button */}
         <div className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Create New Course</h1>
-            <p className="text-gray-600 mt-1">Set up a new martial arts course with comprehensive details</p>
+            <h1 className="text-3xl font-bold text-[#4F5077]">Create New Course</h1>
           </div>
           <Button
             variant="outline"
@@ -245,7 +244,7 @@ export default function CreateCoursePage() {
             className="flex items-center space-x-2"
           >
             <ArrowLeft className="w-4 h-4" />
-            <span>Back to Courses</span>
+            <span className="text-[#4F5077]">Back to Courses</span>
           </Button>
         </div>
 
@@ -256,11 +255,10 @@ export default function CreateCoursePage() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
-                  <Star className="w-5 h-5 text-yellow-500" />
-                  <span>Course Information</span>
+                  <span className="text-[#4F5077]">Course Information</span>
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-6">
+              <CardContent className="space-y-6 text-[#7D8592]">
                 <form onSubmit={handleSubmit} className="space-y-6">
                   {/* Basic Information */}
                   <div className="space-y-4">
@@ -390,13 +388,13 @@ export default function CreateCoursePage() {
                   </div>
 
                   {/* Student Requirements */}
-                  <div className="space-y-4">
+                  <div className="space-y-4 text-[#7d8592]">
                     <h3 className="text-lg font-semibold text-gray-900 flex items-center space-x-2">
-                      <Users className="w-5 h-5" />
-                      <span>Student Requirements</span>
+                      
+                      <span className="text-[#4F5077]">Student Requirements</span>
                     </h3>
                     
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-[#7D8592]">
                       <div className="space-y-2">
                         <Label htmlFor="maxStudents">Maximum Students</Label>
                         <Input
@@ -439,8 +437,8 @@ export default function CreateCoursePage() {
 
                     {/* Prerequisites */}
                     <div className="space-y-2">
-                      <Label>Prerequisites</Label>
-                      <div className="flex space-x-2">
+                      <Label className="text-[#4F5077]">Prerequisites</Label>
+                      <div className="flex space-x-2 text-[#7D8592]">
                         <Input
                           value={newPrerequisite}
                           onChange={(e) => setNewPrerequisite(e.target.value)}
@@ -451,7 +449,7 @@ export default function CreateCoursePage() {
                           <Plus className="w-4 h-4" />
                         </Button>
                       </div>
-                      <div className="flex flex-wrap gap-2 mt-2">
+                      <div className="flex flex-wrap gap-2 mt-2 text-[#7d8592]">
                         {prerequisites.map((prereq, index) => (
                           <Badge key={index} variant="secondary" className="flex items-center space-x-1">
                             <span>{prereq}</span>
@@ -470,10 +468,10 @@ export default function CreateCoursePage() {
 
                   {/* Course Content */}
                   <div className="space-y-4">
-                    <h3 className="text-lg font-semibold text-gray-900">Course Content</h3>
+                    <h3 className="text-lg font-semibold text-[#4F5077]">Course Content</h3>
                     
                     <div className="space-y-4">
-                      <div className="space-y-2">
+                      <div className="space-y-2 text-[#7d8592]">
                         <Label htmlFor="syllabus">Course Syllabus</Label>
                         <Textarea
                           id="syllabus"
@@ -499,7 +497,7 @@ export default function CreateCoursePage() {
 
                   {/* Media and Resources */}
                   <div className="space-y-4">
-                    <h3 className="text-lg font-semibold text-gray-900">Media & Resources</h3>
+                    <h3 className="text-lg font-semibold text-[#4F5077]">Media & Resources</h3>
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
@@ -534,7 +532,7 @@ export default function CreateCoursePage() {
                     <div className="flex space-x-4">
                       <Button 
                         type="submit" 
-                        className="bg-yellow-400 hover:bg-yellow-500 text-black px-8"
+                        className="bg-yellow-400 hover:bg-yellow-500 text-white px-8"
                         disabled={isSubmitting}
                       >
                         {isSubmitting ? (
@@ -566,9 +564,9 @@ export default function CreateCoursePage() {
             {/* Pricing */}
             <Card>
               <CardHeader>
-                <CardTitle>Pricing & Availability</CardTitle>
+                <CardTitle className="text-[#4F5077]">Pricing & Availability</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-4 text-[#7D8592]">
                 <div className="space-y-2">
                   <Label htmlFor="price">Course Price *</Label>
                   <div className="flex space-x-2">
@@ -629,10 +627,10 @@ export default function CreateCoursePage() {
             {/* Course Statistics Preview */}
             <Card>
               <CardHeader>
-                <CardTitle>Course Overview</CardTitle>
+                <CardTitle className="text-[#4F5077]">Course Overview</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-3">
+                <div className="space-y-3 text-[#7D8592]">
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600">Max Students:</span>
                     <span className="font-medium">{formData.maxStudents || '—'}</span>

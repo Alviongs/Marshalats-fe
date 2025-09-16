@@ -1,5 +1,5 @@
 "use client"
-
+import { DualLineChart } from "@/components/charts/LineChart"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -7,16 +7,84 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Star, Users, BookOpen, Loader2, AlertCircle } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import DashboardHeader from "@/components/dashboard-header"
-
+import add_icon from "@/public/images/add_icon.png"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import { dashboardAPI, DashboardStats, Coach } from "@/lib/api"
 import { paymentAPI, PaymentStats, Payment } from "@/lib/paymentAPI"
 import { TokenManager } from "@/lib/tokenManager"
 
+
+const chartData = [
+  { _id: "01 Jan", total: 2000, count: 1000 },
+  { _id: "01 Feb", total: 5000, count: 3000 },
+  { _id: "01 Mar", total: 12000, count: 8000 },
+  { _id: "01 Apr", total: 7000, count: 6000 },
+  { _id: "01 May", total: 10000, count: 9000 },
+  { _id: "01 Jun", total: 11000, count: 9500 },
+  { _id: "01 Jul", total: 9000, count: 7000 },
+]
+const formatValue = (value: number) => {
+  if (value >= 1000) {
+    return `${(value / 1000).toFixed(0)}K`
+  }
+  return value.toString()
+}
+
+interface Attendance {
+  date: string
+  studentName: string
+  gender: string
+  expertise: string
+  email: string
+  joinDate: string
+  checkIn: string
+  checkOut: string
+  attendance: string
+}
+
+const studentData: Attendance[] = [
+  {
+    date: "28/04/2025",
+    studentName: "Abhi ram",
+    gender: "Male",
+    expertise: "Martial Arts",
+    email: "Abhi@gmail.com",
+    joinDate: "20/04/2025",
+    checkIn: "06:30 AM",
+    checkOut: "09:00 AM",
+    attendance: "90%",
+  },
+  // 👆 Add more student records here
+]
+
+const masterData: Attendance[] = [
+  {
+    date: "28/04/2025",
+    studentName: "Master Rohan",
+    gender: "Male",
+    expertise: "Yoga",
+    email: "rohan@gmail.com",
+    joinDate: "15/04/2025",
+    checkIn: "07:00 AM",
+    checkOut: "10:00 AM",
+    attendance: "95%",
+  },
+  // 👆 Add more master records here
+]
+
 export default function SuperAdminDashboard() {
   const router = useRouter();
+    const [activeTab, setActiveTab] = useState<"student" | "master">("student")
+  const [month, setMonth] = useState("april")
+  const [sort, setSort] = useState("today")
+  const [page, setPage] = useState(1)
+  const rowsPerPage = 5
 
+  const data = activeTab === "student" ? studentData : masterData
+
+  const paginatedData = data.slice((page - 1) * rowsPerPage, page * rowsPerPage)
+  const totalPages = Math.ceil(data.length / rowsPerPage)
   // State management
   const [dashboardStats, setDashboardStats] = useState<DashboardStats | null>(null)
   const [coaches, setCoaches] = useState<Coach[]>([])
@@ -137,53 +205,58 @@ export default function SuperAdminDashboard() {
     <div className="min-h-screen bg-gray-50">
       <DashboardHeader currentPage="Dashboard" />
 
-      <main className="w-full p-4 lg:p-6">
+      <main className="w-full p-4 lg:py-4 px-19">
         {/* Dashboard Header with Action Buttons */}
-        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4">
-          <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-          <div className="flex flex-wrap gap-2 lg:gap-3">
+        <div className="flex flex-col lg:flex-row justify-between items-start py-8 mb-4 lg:items-center  gap-4">
+          <h1 className="text-2xl font-medium text-gray-600">Dashboard</h1>
+          <div className="flex flex-wrap gap-2 lg:gap-3 text-[#6B7A99]">
             <Button
               variant="outline"
-              className="flex items-center space-x-2 bg-transparent text-sm"
+              className="flex items-center space-x-1 bg-transparent text-sm"
               onClick={() => router.push("/dashboard/create-student")}
             >
-              <Users className="w-4 h-4" />
+              <img src={add_icon.src} alt="" className="w-8 h-8" />
               <span className="hidden sm:inline">Add new student</span>
               <span className="sm:hidden">Student</span>
             </Button>
             <Button
               variant="outline"
-              className="flex items-center space-x-2 bg-transparent text-sm"
+              className="flex items-center space-x-1 bg-transparent text-sm"
               onClick={() => router.push("/dashboard/create-course")}
             >
-              <BookOpen className="w-4 h-4" />
+              <img src={add_icon.src} alt="" className="w-8 h-8" />
               <span className="hidden sm:inline">Add Course</span>
               <span className="sm:hidden">Course</span>
             </Button>
             <Button
               variant="outline"
-              className="flex items-center space-x-2 bg-transparent text-sm"
+              className="flex items-center space-x-1 bg-transparent text-sm"
               onClick={() => router.push("/dashboard/add-coach")}
             >
-              <Users className="w-4 h-4" />
+              <img src={add_icon.src} alt="" className="w-8 h-8" />
               <span className="hidden sm:inline">Add Coach</span>
               <span className="sm:hidden">Coach</span>
             </Button>
             <Button
               variant="outline"
-              className="flex items-center space-x-2 bg-transparent text-sm"
+              className="flex items-center space-x-1 bg-transparent text-sm"
               onClick={() => router.push("/dashboard/create-branch")}
             >
+              <img src={add_icon.src} alt="" className="w-8 h-8" />
               <span className="hidden sm:inline">Add New Branch</span>
               <span className="sm:hidden">Branch</span>
             </Button>
           </div>
         </div>
 
-        {/* Statistics Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+
+        {/* Revenue Chart and Coaches List */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+          <div className="flex flex-col lg:col-span-2">
+
+             {/* Statistics Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-4 xl:gap-6 gap-2 mb-8">
           {loading ? (
-            // Loading state
             Array.from({ length: 4 }).map((_, index) => (
               <Card key={index}>
                 <CardContent className="p-6">
@@ -211,94 +284,110 @@ export default function SuperAdminDashboard() {
           ) : (
             // Data loaded successfully
             <>
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-gray-600">Monthly Revenue</p>
-                      <p className="text-2xl font-bold">
+              <Card className="h-48 shadow-md">
+                <CardContent className="px-4">
+                  <div className="">
+                    <div className="flex justify-between flex-col gap-10">
+                      <div className="flex flex-col xl:flex-row justify-between mt-4">
+                      <p className="text-xs font-base text-[#9593A8]">Total Revenue</p>
+                       <Badge variant="secondary" className="bg-gray-100">
+                      Monthly
+                    </Badge>
+                    </div>
+                    <div className="">
+                      <p className="text-2xl font-bold text-[#403C6B]">
                         {paymentStats ? paymentAPI.formatCurrency(paymentStats.this_month_collection || 0) : '₹0'}
                       </p>
-                      <p className="text-xs text-gray-500">Earning this month</p>
+                      <p className="text-xs text-[#9593A8]">Earning this month</p>
+                      </div>
                     </div>
-                    <Badge variant="secondary" className="bg-gray-100">
-                      Monthly
-                    </Badge>
+                   
                   </div>
                 </CardContent>
               </Card>
 
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-gray-600">Active Students</p>
-                      <p className="text-2xl font-bold">
-                        {dashboardStats ? dashboardStats.active_students : 0}
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        {dashboardStats ? dashboardStats.monthly_active_users : 0} active this month
-                      </p>
-                    </div>
-                    <Badge variant="secondary" className="bg-gray-100">
+               <Card className="h-48 shadow-md">
+                <CardContent className="px-4">
+                  <div className="">
+                    <div className="flex justify-between flex-col gap-10">
+                      <div className="flex flex-col xl:flex-row justify-between mt-4">
+                      <p className="text-xs font-base text-[#9593A8]">Active Students</p>
+                       <Badge variant="secondary" className="bg-gray-100">
                       Monthly
                     </Badge>
+                    </div>
+                    <div className="">
+                      <p className="text-2xl font-bold text-[#403C6B]">
+                         {dashboardStats ? dashboardStats.active_students : 0}
+                      </p>
+                      <p className="text-xs text-[#9593A8]">Active users this month</p>
+                      </div>
+                    </div>
+                   
                   </div>
                 </CardContent>
               </Card>
 
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-gray-600">Active Courses</p>
-                      <p className="text-2xl font-bold">
+              <Card className="h-48 shadow-md">
+                <CardContent className="px-4">
+                  <div className="">
+                    <div className="flex justify-between flex-col gap-10">
+                      <div className="flex flex-col xl:flex-row justify-between mt-4">
+                      <p className="text-xs font-base text-[#9593A8]">Active Courses</p>
+                       <Badge variant="secondary" className="bg-gray-100">
+                      Monthly
+                    </Badge>
+                    </div>
+                    <div className="">
+                      <p className="text-2xl font-bold text-[#403C6B]">
                         {dashboardStats ? dashboardStats.active_courses : 0}
                       </p>
-                      <p className="text-xs text-gray-500">Active courses in all branches</p>
+                      <p className="text-xs text-[#9593A8]">Active courses in all branches</p>
+                      </div>
                     </div>
-                    <Badge variant="secondary" className="bg-gray-100">
-                      Available
-                    </Badge>
+                   
                   </div>
                 </CardContent>
               </Card>
 
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-gray-600">Total Users</p>
-                      <p className="text-2xl font-bold">
-                        {dashboardStats ? formatNumber(dashboardStats.total_users) : 0}
-                      </p>
-                      <p className="text-xs text-gray-500">All active users</p>
-                    </div>
-                    <Badge variant="secondary" className="bg-gray-100">
+                <Card className="h-48 shadow-md">
+                <CardContent className="px-4">
+                  <div className="">
+                    <div className="flex justify-between flex-col gap-10">
+                      <div className="flex flex-col xl:flex-row justify-between mt-4">
+                      <p className="text-xs font-base text-[#9593A8]">Total Number of users</p>
+                       <Badge variant="secondary" className="bg-gray-100">
                       Active
                     </Badge>
+                    </div>
+                    <div className="">
+                      <p className="text-2xl font-bold text-[#403C6B]">
+                       {dashboardStats ? formatNumber(dashboardStats.total_users) : 0}
+                      </p>
+                      <p className="text-xs text-[#9593A8]">All active users</p>
+                      </div>
+                    </div>
+                   
                   </div>
                 </CardContent>
               </Card>
+
             </>
           )}
         </div>
-
-        {/* Revenue Chart and Coaches List */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
           {/* Revenue Chart */}
-          <Card className="lg:col-span-2">
+          <Card className="shadow-md">
             <CardHeader>
               <div className="flex justify-between items-center">
-                <CardTitle>Revenue</CardTitle>
+                <CardTitle className="text-[#4F5077]">Revenue</CardTitle>
                 <div className="flex items-center space-x-4">
-                  <Button variant="link" className="text-blue-600">
+                  <Button variant="link" className="text-[#5A6ACF] text-xs border border-gray-200 rounded-lg">
                     View Report
                   </Button>
                   <div className="flex items-center space-x-2">
                     <span className="text-sm text-gray-600">Sort by:</span>
-                    <Select defaultValue="all-branches">
-                      <SelectTrigger className="w-32">
+                    <Select defaultValue="all-branches" >
+                      <SelectTrigger className="bg-[#F1F1F1] text-[#9593A8]">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -308,7 +397,7 @@ export default function SuperAdminDashboard() {
                       </SelectContent>
                     </Select>
                     <Select defaultValue="monthly">
-                      <SelectTrigger className="w-24">
+                      <SelectTrigger className="bg-[#F1F1F1] text-[#9593A8]">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -322,7 +411,7 @@ export default function SuperAdminDashboard() {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="h-64">
+              {/* <div className="h-64">
                 {paymentsLoading ? (
                   <div className="h-full flex items-center justify-center bg-gray-50 rounded">
                     <div className="text-center">
@@ -365,19 +454,27 @@ export default function SuperAdminDashboard() {
                     </div>
                   </div>
                 )}
-              </div>
+              </div> */}
+
+        <DualLineChart 
+          data={chartData} 
+          height={400} 
+          formatValue={formatValue} 
+        />
+  
+ 
             </CardContent>
           </Card>
-
+          </div>
           {/* List of Coaches */}
-          <Card>
+          <Card className="shadow-md">
             <CardHeader>
               <div className="flex justify-between items-center">
-                <CardTitle>List of coaches</CardTitle>
+                <CardTitle className="text-[#4F5077]">List of coaches</CardTitle>
                 <div className="flex items-center space-x-2">
-                  <span className="text-sm text-gray-600">Filter by:</span>
+                  <span className="text-sm text-black">Filter by:</span>
                   <Select defaultValue="branch">
-                    <SelectTrigger className="w-20">
+                    <SelectTrigger className="w-20 bg-[#F1F1F1]">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -422,7 +519,8 @@ export default function SuperAdminDashboard() {
                 ) : (
                   // Display coaches
                   coaches.map((coach) => (
-                    <div key={coach.id} className="flex items-center justify-between">
+                    <div key={coach.id} className="">
+                      <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-3">
                         <Avatar className="w-10 h-10">
                           <AvatarImage src="/placeholder.svg" />
@@ -451,11 +549,13 @@ export default function SuperAdminDashboard() {
                           />
                         ))}
                       </div>
+                      </div>
+                      <hr  className="mt-2 mb-2"/>
                     </div>
                   ))
                 )}
                 {coaches.length > 0 && (
-                  <div className="pt-2 border-t">
+                  <div className="">
                     <Button
                       variant="outline"
                       size="sm"
@@ -474,113 +574,149 @@ export default function SuperAdminDashboard() {
         {/* Student Attendance and Recent Payments */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Student Attendance */}
-          <Card className="lg:col-span-2">
-            <CardHeader>
-              <div className="flex space-x-4">
-                <Button className="bg-yellow-400 hover:bg-yellow-500 text-black">Student Attendance</Button>
-                <Button variant="outline">Master Attendance</Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="mb-4 flex justify-between items-center">
-                <h3 className="font-semibold">Student Attendance</h3>
-                <div className="flex items-center space-x-4">
-                  <Select defaultValue="march">
-                    <SelectTrigger className="w-32">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="march">Select Month: March</SelectItem>
-                      <SelectItem value="april">April</SelectItem>
-                      <SelectItem value="may">May</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Select defaultValue="today">
-                    <SelectTrigger className="w-24">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="today">Sort BY: Today</SelectItem>
-                      <SelectItem value="week">This Week</SelectItem>
-                      <SelectItem value="month">This Month</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
+         <Card className="lg:col-span-2 shadow-md rounded-2xl">
+      <CardHeader>
+        <div className="flex space-x-4">
+          <Button
+            className={`rounded-md px-4 ${
+              activeTab === "student"
+                ? "bg-yellow-400 hover:bg-yellow-500 text-black"
+                : "bg-gray-100 text-gray-700"
+            }`}
+            onClick={() => setActiveTab("student")}
+          >
+            Student Attendance
+          </Button>
+          <Button
+            className={`rounded-md px-4 ${
+              activeTab === "master"
+                ? "bg-yellow-400 hover:bg-yellow-500 text-black"
+                : "bg-gray-100 text-gray-700"
+            }`}
+            onClick={() => setActiveTab("master")}
+          >
+            Master Attendance
+          </Button>
+        </div>
+      </CardHeader>
 
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b">
-                      <th className="text-left py-2">Name</th>
-                      <th className="text-left py-2">Student Name</th>
-                      <th className="text-left py-2">Gender</th>
-                      <th className="text-left py-2">Expertise</th>
-                      <th className="text-left py-2">Emil Id</th>
-                      <th className="text-left py-2">Date of Join</th>
-                      <th className="text-left py-2">Check In</th>
-                      <th className="text-left py-2">Check out</th>
-                      <th className="text-left py-2">Attendance</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {[...Array(5)].map((_, index) => (
-                      <tr key={index} className="border-b">
-                        <td className="py-2">25/04/2025</td>
-                        <td className="py-2">Abhi ram</td>
-                        <td className="py-2">Male</td>
-                        <td className="py-2">Martial Arts</td>
-                        <td className="py-2">Abhi@gmail.com</td>
-                        <td className="py-2">25/04/2025</td>
-                        <td className="py-2">06:30 AM</td>
-                        <td className="py-2">09:00 AM</td>
-                        <td className="py-2">
-                          <div className="flex items-center space-x-2">
-                            <span>90%</span>
-                            <Badge className="bg-yellow-100 text-yellow-800">View more</Badge>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+      <CardContent>
+        <div className="mb-4 flex justify-between items-center">
+          <h3 className="font-semibold text-lg text-[#4F5077]">Attendance</h3>
+          <div className="flex items-center space-x-4">
+            {/* Month Filter */}
+            <Select value={month} onValueChange={setMonth}>
+              <SelectTrigger className="w-40 bg-[#f1f1f1] text-[#9593A8]">
+                <SelectValue placeholder="Select Month" />
+              </SelectTrigger>
+              <SelectContent className="">
+                <SelectItem value="march">March</SelectItem>
+                <SelectItem value="april">April</SelectItem>
+                <SelectItem value="may">May</SelectItem>
+              </SelectContent>
+            </Select>
 
-              <div className="flex justify-center items-center space-x-2 mt-4">
-                <Button variant="outline" size="sm">
-                  Previous
-                </Button>
-                <Button variant="outline" size="sm">
-                  1
-                </Button>
-                <Button variant="outline" size="sm">
-                  2
-                </Button>
-                <Button variant="outline" size="sm">
-                  3
-                </Button>
-                <Button variant="outline" size="sm">
-                  4
-                </Button>
-                <Button className="bg-yellow-400 hover:bg-yellow-500 text-black" size="sm">
-                  Next
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+            {/* Sort Filter */}
+            <Select value={sort} onValueChange={setSort}>
+              <SelectTrigger className="w-32 bg-[#f1f1f1] text-[#9593A8]">
+                <SelectValue placeholder="Sort By" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="today">Today</SelectItem>
+                <SelectItem value="week">This Week</SelectItem>
+                <SelectItem value="month">This Month</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        {/* Table */}
+        <div className="overflow-x-auto border rounded-xl">
+          <table className="w-full text-sm">
+            <thead className="bg-gray-50">
+              <tr className="border-b text-[#6B7A99] text-xs">
+                <th className="text-left py-3 px-1">Name</th>
+                <th className="text-left py-3 px-1">Student Name</th>
+                <th className="text-left py-3 px-1">Gender</th>
+                <th className="text-left py-3 px-1">Expertise</th>
+                <th className="text-left py-3 px-1">Email Id</th>
+                <th className="text-left py-3 px-1">Date of Join</th>
+                <th className="text-left py-3 px-1">Check In</th>
+                <th className="text-left py-3 px-1">Check Out</th>
+                <th className="text-left py-3 px-1">Attendance</th>
+                <th className="text-left py-3 px-1"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {paginatedData.map((item, index) => (
+                <tr key={index} className="border-b hover:bg-gray-50 text-[10px]">
+                  <td className="py-3 px-2">{item.date}</td>
+                  <td className="py-3 px-2">{item.studentName}</td>
+                  <td className="py-3 px-2">{item.gender}</td>
+                  <td className="py-3 px-2">{item.expertise}</td>
+                  <td className="py-3 px-2">{item.email}</td>
+                  <td className="py-3 px-2">{item.joinDate}</td>
+                  <td className="py-3 px-2">{item.checkIn}</td>
+                  <td className="py-3 px-2">{item.checkOut}</td>
+                  <td className="py-3 px-2">{item.attendance}</td>
+                  <td className="py-3 px-2">
+                    <Button className="bg-yellow-400 hover:bg-yellow-500 text-black px-3 py-1 rounded-md text-xs">
+                      View more
+                    </Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Pagination */}
+        <div className="flex justify-end items-center space-x-2 mt-4">
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={page === 1}
+            onClick={() => setPage((p) => p - 1)}
+          >
+            Previous
+          </Button>
+
+          {Array.from({ length: totalPages }).map((_, i) => (
+            <Button
+              key={i}
+              variant={page === i + 1 ? "default" : "outline"}
+              size="sm"
+              className={page === i + 1 ? "bg-yellow-400 text-black" : ""}
+              onClick={() => setPage(i + 1)}
+            >
+              {i + 1}
+            </Button>
+          ))}
+
+          <Button
+            className="bg-yellow-400 hover:bg-yellow-500 text-black"
+            size="sm"
+            disabled={page === totalPages}
+            onClick={() => setPage((p) => p + 1)}
+          >
+            Next
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
 
           {/* Recent Payments */}
-          <Card>
+          <Card className="shadow-md">
             <CardHeader>
               <div className="flex justify-between items-center">
-                <CardTitle>Recent payments</CardTitle>
+                <CardTitle className="text-[#4F5077]">Recent payments</CardTitle>
                 <div className="flex items-center space-x-2">
-                  <span className="text-sm text-gray-600">Select:</span>
+                  <span className="text-sm text-black">Select:</span>
                   <Select defaultValue="branch">
-                    <SelectTrigger className="w-20">
+                    <SelectTrigger className="w-20 bg-[#f1f1f1] text-[#9593A8]">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="">
                       <SelectItem value="branch">Branch</SelectItem>
                       <SelectItem value="amount">Amount</SelectItem>
                     </SelectContent>
@@ -632,7 +768,7 @@ export default function SuperAdminDashboard() {
                         <p className="font-medium text-sm">{paymentAPI.formatCurrency(payment.amount)}</p>
                         <Badge
                           variant={payment.payment_method === "cash" ? "secondary" : "default"}
-                          className={payment.payment_method === "cash" ? "bg-gray-100" : "bg-blue-100 text-blue-800"}
+                          className={payment.payment_method === "cash" ? "bg-gray-100 text-[#2E85E8]" : "bg-blue-100 text-[#2E85E8]"}
                         >
                           {paymentAPI.formatPaymentMethod(payment.payment_method)}
                         </Badge>

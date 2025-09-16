@@ -572,19 +572,18 @@ export default function CreateStudent() {
       <DashboardHeader currentPage="Create Student" />
 
       {/* Main Content */}
-      <main className="w-full max-w-6xl mx-auto p-4 sm:p-6 lg:p-8">
+      <main className="w-full mx-auto py-4 sm:py-6 px-19 lg:py-8">
         {/* Page Header */}
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-8">
           <div className="mb-4 sm:mb-0">
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Create New Student</h1>
-            <p className="text-gray-600 text-sm sm:text-base">Add a new student to your martial arts academy</p>
+            <h1 className="text-2xl sm:text-3xl font-bold text-[#4F5077] mb-2">Create New Student</h1>
           </div>
           <Button
             variant="outline"
             onClick={() => router.push("/dashboard/students")}
-            className="flex items-center space-x-2 px-4 py-2 text-gray-700 border-gray-300 hover:bg-gray-50 transition-all duration-200 text-sm"
+            className="flex items-center space-x-2 px-4 py-2 border-gray-300 hover:bg-gray-50 transition-all duration-200 text-sm"
           >
-            <span>← Back to Students</span>
+            <span className="text-[#4F5077]">← Back to Students</span>
           </Button>
         </div>
 
@@ -601,10 +600,10 @@ export default function CreateStudent() {
           <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
             
             {/* Form Header */}
-            <div className="bg-gradient-to-r from-yellow-50 to-orange-50 px-6 sm:px-8 py-6 border-b border-gray-200">
+            {/* <div className="bg-gradient-to-r from-yellow-50 to-orange-50 px-6 sm:px-8 py-6 border-b border-gray-200">
               <h2 className="text-xl font-semibold text-gray-900 mb-1">Student Information</h2>
               <p className="text-gray-600 text-sm">Please fill in all required fields marked with *</p>
-            </div>
+            </div> */}
 
             <form onSubmit={handleSubmit} className="p-6 sm:p-8 space-y-8">
               {/* Error Display */}
@@ -619,12 +618,12 @@ export default function CreateStudent() {
                 
                 {/* Personal Information Section */}
                 <div className="space-y-4">
-                  <h3 className="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2">Personal Information</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                  <h3 className="text-lg font-semibold text-[#4F5077] border-b border-gray-200 pb-2">Personal Information</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 text-[#7D8592]">
                     
                     {/* First Name */}
                     <div>
-                      <Label className="block text-sm font-medium text-gray-700 mb-2">
+                      <Label className="block text-sm font-medium mb-2">
                         First Name <span className="text-red-500">*</span>
                       </Label>
                       <div className="relative">
@@ -644,7 +643,7 @@ export default function CreateStudent() {
 
                     {/* Last Name */}
                     <div>
-                      <Label className="block text-sm font-medium text-gray-700 mb-2">
+                      <Label className="block text-sm font-medium mb-2">
                         Last Name <span className="text-red-500">*</span>
                       </Label>
                       <div className="relative">
@@ -664,7 +663,7 @@ export default function CreateStudent() {
 
                     {/* Email */}
                     <div>
-                      <Label className="block text-sm font-medium text-gray-700 mb-2">
+                      <Label className="block text-sm font-medium mb-2">
                         Email Address <span className="text-red-500">*</span>
                       </Label>
                       <div className="relative">
@@ -685,7 +684,7 @@ export default function CreateStudent() {
 
                     {/* Mobile Number */}
                     <div>
-                      <Label className="block text-sm font-medium text-gray-700 mb-2">
+                      <Label className="block text-sm font-medium mb-2">
                         Mobile Number <span className="text-red-500">*</span>
                       </Label>
                       <div className="relative">
@@ -705,7 +704,7 @@ export default function CreateStudent() {
 
                     {/* Gender */}
                     <div>
-                      <Label className="block text-sm font-medium text-gray-700 mb-2">
+                      <Label className="block text-sm font-medium mb-2">
                         Gender <span className="text-red-500">*</span>
                       </Label>
                       <div className="relative">
@@ -733,7 +732,7 @@ export default function CreateStudent() {
 
                     {/* Date of Birth */}
                     <div>
-                      <Label className="block text-sm font-medium text-gray-700 mb-2">
+                      <Label className="block text-sm font-medium mb-2">
                         Date of Birth <span className="text-red-500">*</span>
                       </Label>
                       <div className="relative">
@@ -769,7 +768,7 @@ export default function CreateStudent() {
 
                     {/* Password */}
                     <div>
-                      <Label className="block text-sm font-medium text-gray-700 mb-2">
+                      <Label className="block text-sm font-medium mb-2">
                         Password <span className="text-red-500">*</span>
                       </Label>
                       <div className="relative">
@@ -792,7 +791,7 @@ export default function CreateStudent() {
 
                     {/* Biometric ID */}
                     <div>
-                      <Label className="block text-sm font-medium text-gray-700 mb-2">
+                      <Label className="block text-sm font-medium mb-2">
                         Biometric ID
                       </Label>
                       <div className="relative">
@@ -813,12 +812,12 @@ export default function CreateStudent() {
 
                 {/* Course Information Section */}
                 <div className="space-y-4">
-                  <h3 className="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2">Course Information</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                  <h3 className="text-lg font-semibold text-[#4F5077] border-b border-gray-200 pb-2">Course Information</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 text-[#7D8592]">
                     
                     {/* Category */}
                     <div>
-                      <Label className="block text-sm font-medium text-gray-700 mb-2">Category</Label>
+                      <Label className="block text-sm font-medium mb-2">Category</Label>
                       <div className="relative">
                         <div className="absolute left-4 top-1/2 transform -translate-y-1/2 z-10 pointer-events-none">
                           <FolderIcon className="w-5 h-5 text-gray-400" />
@@ -850,7 +849,7 @@ export default function CreateStudent() {
 
                     {/* Course */}
                     <div>
-                      <Label className="block text-sm font-medium text-gray-700 mb-2">
+                      <Label className="block text-sm font-medium mb-2">
                         Course <span className="text-red-500">*</span>
                       </Label>
                       <div className="relative">
@@ -895,7 +894,7 @@ export default function CreateStudent() {
 
                     {/* Duration */}
                     <div>
-                      <Label className="block text-sm font-medium text-gray-700 mb-2">Duration</Label>
+                      <Label className="block text-sm font-medium mb-2">Duration</Label>
                       <div className="relative">
                         <div className="absolute left-4 top-1/2 transform -translate-y-1/2 z-10 pointer-events-none">
                           <ClockIcon className="w-5 h-5 text-gray-400" />
@@ -919,12 +918,12 @@ export default function CreateStudent() {
 
                 {/* Course & Staff Assignments Section */}
                 <div className="space-y-4">
-                  <h3 className="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2">Course & Staff Assignments</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <h3 className="text-lg font-semibold text-[#4F5077] border-b border-gray-200 pb-2">Course & Staff Assignments</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-[#7D8592]">
 
                     {/* Selected Course Display */}
                     <div>
-                      <Label className="block text-sm font-medium text-gray-700 mb-2">Selected Course</Label>
+                      <Label className="block text-sm font-medium mb-2">Selected Course</Label>
                       <div className="p-4 bg-gray-50 border border-gray-200 rounded-xl">
                         {formData.course ? (
                           (() => {
@@ -961,7 +960,7 @@ export default function CreateStudent() {
 
                     {/* Assign Coach */}
                     <div>
-                      <Label className="block text-sm font-medium text-gray-700 mb-2">
+                      <Label className="block text-sm font-medium mb-2">
                         Assign Coach/Instructor
                       </Label>
                       <div className="relative">
@@ -1068,12 +1067,12 @@ export default function CreateStudent() {
 
                 {/* Location Information Section */}
                 <div className="space-y-4">
-                  <h3 className="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2">Location Information</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <h3 className="text-lg font-semibold text-[#4F5077] border-b border-gray-200 pb-2">Location Information</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-[#7D8592]">
                     
                     {/* Location */}
                     <div>
-                      <Label className="block text-sm font-medium text-gray-700 mb-2">
+                      <Label className="block text-sm font-medium mb-2">
                         Location <span className="text-red-500">*</span>
                       </Label>
                       <div className="relative">
@@ -1111,7 +1110,7 @@ export default function CreateStudent() {
 
                     {/* Branch */}
                     <div>
-                      <Label className="block text-sm font-medium text-gray-700 mb-2">
+                      <Label className="block text-sm font-medium mb-2">
                         Branch <span className="text-red-500">*</span>
                       </Label>
                       <div className="relative">
@@ -1177,7 +1176,7 @@ export default function CreateStudent() {
                   <Button 
                     type="submit" 
                     disabled={isSubmitting}
-                    className="w-full sm:w-auto h-12 bg-yellow-400 hover:bg-yellow-500 text-black font-semibold px-8 rounded-xl text-base transition-all duration-200 shadow-md hover:shadow-lg"
+                    className="w-full sm:w-auto h-12 bg-yellow-400 hover:bg-yellow-500 text-white font-semibold px-8 rounded-xl text-base transition-all duration-200 shadow-md hover:shadow-lg"
                   >
                     {isSubmitting ? (
                       <div className="flex items-center">

@@ -141,18 +141,17 @@ export default function DashboardHeader({ currentPage = "Dashboard" }: Dashboard
   };
 
   return (
-    <header className="bg-white shadow-lg border-b border-gray-200/80 backdrop-blur-sm">
-      <div className="w-full px-4 lg:px-6">
-        <div className="flex justify-between items-center h-16">
+    <header className="bg-white shadow-sm border border-gray-200/80 backdrop-blur-sm mx-4 xl:mx-12 mt-6 rounded-lg">
+      <div className="w-full px-4 lg:px-6 py-2">
+        <div className="flex justify-between items-center h-auto">
           {/* Logo and Navigation */}
-          <div className="flex items-center space-x-4 lg:space-x-6 min-w-0 flex-1">
-            <div className="flex items-center space-x-3 flex-shrink-0">
+          <div className="flex items-center space-x-2 min-w-0">
+            <div className="  flex-shrink-0">
               <img
-                src="/placeholder-logo.svg"
+                src="/footer_logo.png"
                 alt="Logo"
-                className="w-8 h-8"
+                className="xl:w-[95px] w-[80px] h-auto"
               />
-              <span className="font-bold text-xl text-gray-900 hidden lg:inline tracking-tight">Rock</span>
             </div>
 
             {/* Mobile Menu Button */}
@@ -171,11 +170,10 @@ export default function DashboardHeader({ currentPage = "Dashboard" }: Dashboard
                   <div className="p-4 border-b border-gray-200/60">
                     <div className="flex items-center space-x-3">
                       <img
-                        src="/placeholder-logo.svg"
+                        src="/footer_logo.png"
                         alt="Logo"
                         className="w-8 h-8"
                       />
-                      <span className="font-bold text-xl text-gray-900 tracking-tight">Rock</span>
                     </div>
                   </div>
                   <nav className="flex-1 p-6">
@@ -277,12 +275,12 @@ export default function DashboardHeader({ currentPage = "Dashboard" }: Dashboard
               </SheetContent>
             </Sheet>
 
-            <nav className="hidden lg:flex items-center space-x-6 xl:space-x-8">
+            <nav className="hidden lg:flex items-center space-x-5 xl:space-x-4">
               <button
                 onClick={() => router.push("/dashboard")}
-                className={`pb-4 px-1 text-sm font-semibold whitespace-nowrap cursor-pointer border-b-2 transition-all duration-300 hover:scale-105 ${
+                className={`pb-2 px-1 text-sm font-semibold whitespace-nowrap cursor-pointer border-b-2 transition-all duration-300 hover:scale-105 ${
                   pathname === "/dashboard"
-                    ? "text-gray-900 border-yellow-400 shadow-sm"
+                    ? "text-gray-900 border-yellow-400 shadow-sm items-center"
                     : "text-gray-600 hover:text-gray-900 border-transparent hover:border-gray-300"
                 }`}
               >
@@ -290,7 +288,7 @@ export default function DashboardHeader({ currentPage = "Dashboard" }: Dashboard
               </button>
               <button
                 onClick={() => router.push("/dashboard/branches")}
-                className={`pb-4 px-1 text-sm font-semibold whitespace-nowrap cursor-pointer border-b-2 transition-all duration-300 hover:scale-105 ${
+                className={`pb-2 px-1 text-sm font-semibold whitespace-nowrap cursor-pointer border-b-2 transition-all duration-300 hover:scale-105 ${
                   isActivePath("/dashboard/branches")
                     ? "text-gray-900 border-yellow-400 shadow-sm"
                     : "text-gray-600 hover:text-gray-900 border-transparent hover:border-gray-300"
@@ -300,7 +298,7 @@ export default function DashboardHeader({ currentPage = "Dashboard" }: Dashboard
               </button>
               <button
                 onClick={() => router.push("/dashboard/coaches")}
-                className={`pb-4 px-1 text-sm font-semibold whitespace-nowrap cursor-pointer border-b-2 transition-all duration-300 hover:scale-105 ${
+                className={`pb-2 px-1 text-sm font-semibold whitespace-nowrap cursor-pointer border-b-2 transition-all duration-300 hover:scale-105 ${
                   isActivePath("/dashboard/coaches")
                     ? "text-gray-900 border-yellow-400 shadow-sm"
                     : "text-gray-600 hover:text-gray-900 border-transparent hover:border-gray-300"
@@ -310,7 +308,7 @@ export default function DashboardHeader({ currentPage = "Dashboard" }: Dashboard
               </button>
               <button
                 onClick={() => router.push("/dashboard/students")}
-                className={`pb-4 px-1 text-sm font-semibold whitespace-nowrap cursor-pointer border-b-2 transition-all duration-300 hover:scale-105 ${
+                className={`pb-2 px-1 text-sm font-semibold whitespace-nowrap cursor-pointer border-b-2 transition-all duration-300 hover:scale-105 ${
                   isActivePath("/dashboard/students")
                     ? "text-gray-900 border-yellow-400 shadow-sm"
                     : "text-gray-600 hover:text-gray-900 border-transparent hover:border-gray-300"
@@ -321,7 +319,7 @@ export default function DashboardHeader({ currentPage = "Dashboard" }: Dashboard
 
               <button
                 onClick={() => router.push("/dashboard/courses")}
-                className={`pb-4 px-1 text-sm font-semibold whitespace-nowrap cursor-pointer border-b-2 transition-all duration-300 hover:scale-105 ${
+                className={`pb-2 px-1 text-sm font-semibold whitespace-nowrap cursor-pointer border-b-2 transition-all duration-300 hover:scale-105 ${
                   isActivePath("/dashboard/courses")
                     ? "text-gray-900 border-yellow-400 shadow-sm"
                     : "text-gray-600 hover:text-gray-900 border-transparent hover:border-gray-300"
@@ -332,7 +330,7 @@ export default function DashboardHeader({ currentPage = "Dashboard" }: Dashboard
 
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className={`pb-4 px-1 text-sm font-semibold whitespace-nowrap flex items-center cursor-pointer border-b-2 transition-all duration-300 hover:scale-105 ${
+                  <button className={`pb-2 px-1 text-sm font-semibold whitespace-nowrap flex items-center cursor-pointer border-b-2 transition-all duration-300 hover:scale-105 ${
                     isActivePath("/dashboard/attendance")
                       ? "text-gray-900 border-yellow-400 shadow-sm"
                       : "text-gray-600 hover:text-gray-900 border-transparent hover:border-gray-300"
@@ -358,7 +356,7 @@ export default function DashboardHeader({ currentPage = "Dashboard" }: Dashboard
               </DropdownMenu>
               <button
                 onClick={() => router.push("/dashboard/reports")}
-                className={`pb-4 px-1 text-sm font-semibold whitespace-nowrap cursor-pointer border-b-2 transition-all duration-300 hover:scale-105 ${
+                className={`pb-2 px-1 text-sm font-semibold whitespace-nowrap cursor-pointer border-b-2 transition-all duration-300 hover:scale-105 ${
                   isActivePath("/dashboard/reports")
                     ? "text-gray-900 border-yellow-400 shadow-sm"
                     : "text-gray-600 hover:text-gray-900 border-transparent hover:border-gray-300"
@@ -391,8 +389,8 @@ export default function DashboardHeader({ currentPage = "Dashboard" }: Dashboard
           </div>
 
           {/* Search and User Controls */}
-          <div className="flex items-center space-x-3 lg:space-x-5 flex-shrink-0">
-            <div className="relative hidden lg:block" ref={searchContainerRef}>
+          <div className="flex items-center space-x-3 lg:space-x-2 flex-shrink-0">
+            <div className="relative hidden xl:block" ref={searchContainerRef}>
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-4 h-4" />
               <Input
                 placeholder="Try searching: User Name, Course Name, User ID"
@@ -419,14 +417,14 @@ export default function DashboardHeader({ currentPage = "Dashboard" }: Dashboard
                 <DropdownMenuTrigger asChild>
                   <Button
                     variant="ghost"
-                    className="flex items-center space-x-3 hover:bg-gray-100/80 rounded-lg px-3 py-2 transition-all duration-200 hover:shadow-sm"
+                    className="flex border border-gray-200 items-center space-x-2 hover:bg-gray-100/80 rounded-lg px-2 py-2 transition-all duration-200 hover:shadow-sm"
                   >
-                    <Avatar className="w-8 h-8 ring-2 ring-gray-200/50 hover:ring-yellow-400/30 transition-all duration-200">
+                    <Avatar className="w-6 h-6 ring-2 ring-gray-200/50 hover:ring-yellow-400/30 transition-all duration-200">
                       <AvatarImage src="/placeholder.svg" />
                       <AvatarFallback className="bg-gradient-to-br from-yellow-400 to-yellow-500 text-white font-semibold text-xs">SA</AvatarFallback>
                     </Avatar>
-                    <span className="text-sm font-semibold text-gray-800 hidden lg:inline">Super admin</span>
-                    <ChevronDown className="w-4 h-4 text-gray-600 transition-transform duration-200 group-hover:rotate-180" />
+                    <span className="text-xs font-semibold text-gray-800 hidden xl:inline">Super admin</span>
+                    <ChevronDown className="w-3 h-3 text-gray-600 transition-transform duration-200 group-hover:rotate-180" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuPortal>
