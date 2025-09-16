@@ -545,37 +545,37 @@ export default function CreateBranchPage() {
     <div className="min-h-screen bg-gray-50">
       <DashboardHeader currentPage="Create Branch" />
 
-      <main className="w-full p-4 lg:p-6">
+      <main className="w-full py-4 lg:py-6 px-19">
         {/* Header with Back Button */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center space-x-4">
             <Button
               variant="ghost"
               onClick={() => router.push("/dashboard/branches")}
-              className="flex items-center space-x-2 hover:bg-gray-100"
+              className="flex items-center text-[#4F5077] space-x-2 hover:bg-gray-100"
             >
               <ArrowLeft className="w-4 h-4" />
               <span>Back to Branches</span>
             </Button>
             <div className="w-px h-6 bg-gray-300"></div>
-            <h1 className="text-2xl font-bold text-gray-900">Create New Branch</h1>
+            <h1 className="text-2xl font-bold text-[#4F5077]">Create New Branch</h1>
           </div>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* 2x2 Card Grid Layout */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="flex flex-col gap-4">
             {/* Top Left Card - Branch & Address Information */}
-            <Card className="h-fit">
+            <Card className="">
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
-                  <Building className="w-5 h-5 text-yellow-600" />
-                  <span>Branch & Address Information</span>
+                  <span className="text-[#4F5077] font-base">Branch Information</span>
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 {/* Branch Basic Info */}
-                <div className="space-y-4">
+                <div className="space-y-4 text-[#7D8592]">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="branchName">Branch Name *</Label>
@@ -645,11 +645,10 @@ export default function CreateBranchPage() {
                 {/* Location Selection */}
                 <div className="pt-4 border-t">
                   <div className="flex items-center space-x-2 mb-4">
-                    <MapPin className="w-4 h-4 text-yellow-600" />
-                    <span className="font-medium">Location Selection</span>
+                    <span className="font-medium text-[#4F5077]">Location Selection</span>
                   </div>
 
-                  <div className="space-y-2">
+                  <div className="space-y-2 text-[#7D8592]">
                     <Label htmlFor="location">Location *</Label>
                     <Select
                       value={formData.location_id}
@@ -692,11 +691,10 @@ export default function CreateBranchPage() {
                 {/* Address Section */}
                 <div className="pt-4 border-t">
                   <div className="flex items-center space-x-2 mb-4">
-                    <MapPin className="w-4 h-4 text-yellow-600" />
-                    <span className="font-medium">Address Details</span>
+                    <span className="font-medium text-[#4F5077]">Address Details</span>
                   </div>
                   
-                  <div className="space-y-4">
+                  <div className="space-y-4 text-[#7D8592]">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label htmlFor="addressLine1">Address Line 1 *</Label>
@@ -820,10 +818,9 @@ export default function CreateBranchPage() {
                 {/* Branch Manager */}
                 <div className="pt-4 border-t">
                   <div className="flex items-center space-x-2 mb-4">
-                    <Users className="w-4 h-4 text-yellow-600" />
-                    <span className="font-medium">Branch Manager</span>
+                    <span className="font-medium text-[#4F5077]">Branch Manager</span>
                   </div>
-                  <div className="space-y-2">
+                  <div className="space-y-2 text-[#7D8592]">
                     <Label htmlFor="managerId">Select Branch Manager *</Label>
                     {isLoadingCoaches ? (
                       <div className="flex items-center justify-center py-2">
@@ -859,15 +856,145 @@ export default function CreateBranchPage() {
               </CardContent>
             </Card>
 
+            {/* Bottom Left Card - Course & Staff Assignments */}
+            <Card className="h-fit">
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <span className="text-[#4F5077]">Course & Staff Assignments</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6 text-[#7D8592]">
+                {/* Accessories Available */}
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="accessoriesAvailable"
+                    checked={formData.assignments.accessories_available}
+                    onCheckedChange={(checked) => setFormData({
+                      ...formData,
+                      assignments: { ...formData.assignments, accessories_available: !!checked }
+                    })}
+                  />
+                  <Label htmlFor="accessoriesAvailable">Accessories Available at Branch</Label>
+                </div>
+
+                {/* Course Assignments */}
+                <div className="space-y-2">
+                  <Label>Assign Courses to Branch</Label>
+                  {isLoadingCourses ? (
+                    <div className="flex items-center justify-center py-4">
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-yellow-600"></div>
+                      <span className="ml-2 text-sm text-gray-600">Loading courses...</span>
+                    </div>
+                  ) : courses.length > 0 ? (
+                    <div className="grid grid-cols-1 gap-3 max-h-40 overflow-y-auto">
+                      {courses.map((course) => (
+                        <div key={course.id} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`course-assign-${course.id}`}
+                            checked={formData.assignments.courses.includes(course.id)}
+                            onCheckedChange={() => handleCourseAssignmentToggle(course.id)}
+                          />
+                          <Label htmlFor={`course-assign-${course.id}`} className="text-sm cursor-pointer">
+                            <div className="flex flex-col">
+                              <span className="font-medium">{course.title}</span>
+                              <span className="text-xs text-gray-500">
+                                {course.code} • {course.difficulty_level} • {course.pricing.currency} {course.pricing.amount}
+                              </span>
+                            </div>
+                          </Label>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-4 text-gray-500">
+                      <p className="text-sm">No courses available</p>
+                    </div>
+                  )}
+
+                  {formData.assignments.courses.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mt-2 max-h-24 overflow-y-auto">
+                      {formData.assignments.courses.map((courseId) => {
+                        const course = courses.find((c: Course) => c.id === courseId)
+                        return course ? (
+                          <Badge key={courseId} variant="secondary" className="bg-green-100 text-green-800">
+                            {course.title}
+                            <button
+                              type="button"
+                              onClick={() => handleCourseAssignmentToggle(courseId)}
+                              className="ml-2 hover:text-red-600"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </Badge>
+                        ) : null
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                {/* Coach Admins */}
+                <div className="space-y-2">
+                  <Label>Assign Coach Admins</Label>
+                  {isLoadingCoaches ? (
+                    <div className="flex items-center justify-center py-4">
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-yellow-600"></div>
+                      <span className="ml-2 text-sm text-gray-600">Loading coaches...</span>
+                    </div>
+                  ) : coaches.length > 0 ? (
+                    <div className="grid grid-cols-1 gap-3 max-h-32 overflow-y-auto">
+                      {coaches.map((coach) => (
+                        <div key={coach.id} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`admin-${coach.id}`}
+                            checked={formData.assignments.branch_admins.includes(coach.id)}
+                            onCheckedChange={() => handleBranchAdminToggle(coach.id)}
+                          />
+                          <Label htmlFor={`admin-${coach.id}`} className="text-sm cursor-pointer">
+                            {coach.name}
+                          </Label>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-4 text-gray-500">
+                      <p className="text-sm">No coaches available</p>
+                    </div>
+                  )}
+
+                  {formData.assignments.branch_admins.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mt-2 max-h-20 overflow-y-auto">
+                      {formData.assignments.branch_admins.map((coachId) => {
+                        const coach = coaches.find(c => c.id === coachId)
+                        return coach ? (
+                          <Badge key={coachId} variant="secondary" className="bg-purple-100 text-purple-800">
+                            {coach.name}
+                            <button
+                              type="button"
+                              onClick={() => handleBranchAdminToggle(coachId)}
+                              className="ml-2 hover:text-red-600"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </Badge>
+                        ) : null
+                      })}
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+            </div>
+
+            <div className="flex flex-col gap-4">
             {/* Top Right Card - Operational Details */}
             <Card className="h-fit">
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
-                  <Clock className="w-5 h-5 text-yellow-600" />
-                  <span>Operational Details</span>
+              
+                  <span className="text-[#4F5077]">Operational Details</span>
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-6">
+              <CardContent className="space-y-6 text-[#7D8592]">
                 {/* Courses Offered */}
                 <div className="space-y-2">
                   <Label>Courses Offered *</Label>
@@ -1068,145 +1195,15 @@ export default function CreateBranchPage() {
                 </div>
               </CardContent>
             </Card>
-
-            {/* Bottom Left Card - Course & Staff Assignments */}
-            <Card className="h-fit">
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <Users className="w-5 h-5 text-yellow-600" />
-                  <span>Course & Staff Assignments</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                {/* Accessories Available */}
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="accessoriesAvailable"
-                    checked={formData.assignments.accessories_available}
-                    onCheckedChange={(checked) => setFormData({
-                      ...formData,
-                      assignments: { ...formData.assignments, accessories_available: !!checked }
-                    })}
-                  />
-                  <Label htmlFor="accessoriesAvailable">Accessories Available at Branch</Label>
-                </div>
-
-                {/* Course Assignments */}
-                <div className="space-y-2">
-                  <Label>Assign Courses to Branch</Label>
-                  {isLoadingCourses ? (
-                    <div className="flex items-center justify-center py-4">
-                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-yellow-600"></div>
-                      <span className="ml-2 text-sm text-gray-600">Loading courses...</span>
-                    </div>
-                  ) : courses.length > 0 ? (
-                    <div className="grid grid-cols-1 gap-3 max-h-40 overflow-y-auto">
-                      {courses.map((course) => (
-                        <div key={course.id} className="flex items-center space-x-2">
-                          <Checkbox
-                            id={`course-assign-${course.id}`}
-                            checked={formData.assignments.courses.includes(course.id)}
-                            onCheckedChange={() => handleCourseAssignmentToggle(course.id)}
-                          />
-                          <Label htmlFor={`course-assign-${course.id}`} className="text-sm cursor-pointer">
-                            <div className="flex flex-col">
-                              <span className="font-medium">{course.title}</span>
-                              <span className="text-xs text-gray-500">
-                                {course.code} • {course.difficulty_level} • {course.pricing.currency} {course.pricing.amount}
-                              </span>
-                            </div>
-                          </Label>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-center py-4 text-gray-500">
-                      <p className="text-sm">No courses available</p>
-                    </div>
-                  )}
-
-                  {formData.assignments.courses.length > 0 && (
-                    <div className="flex flex-wrap gap-2 mt-2 max-h-24 overflow-y-auto">
-                      {formData.assignments.courses.map((courseId) => {
-                        const course = courses.find((c: Course) => c.id === courseId)
-                        return course ? (
-                          <Badge key={courseId} variant="secondary" className="bg-green-100 text-green-800">
-                            {course.title}
-                            <button
-                              type="button"
-                              onClick={() => handleCourseAssignmentToggle(courseId)}
-                              className="ml-2 hover:text-red-600"
-                            >
-                              <X className="w-3 h-3" />
-                            </button>
-                          </Badge>
-                        ) : null
-                      })}
-                    </div>
-                  )}
-                </div>
-
-                {/* Coach Admins */}
-                <div className="space-y-2">
-                  <Label>Assign Coach Admins</Label>
-                  {isLoadingCoaches ? (
-                    <div className="flex items-center justify-center py-4">
-                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-yellow-600"></div>
-                      <span className="ml-2 text-sm text-gray-600">Loading coaches...</span>
-                    </div>
-                  ) : coaches.length > 0 ? (
-                    <div className="grid grid-cols-1 gap-3 max-h-32 overflow-y-auto">
-                      {coaches.map((coach) => (
-                        <div key={coach.id} className="flex items-center space-x-2">
-                          <Checkbox
-                            id={`admin-${coach.id}`}
-                            checked={formData.assignments.branch_admins.includes(coach.id)}
-                            onCheckedChange={() => handleBranchAdminToggle(coach.id)}
-                          />
-                          <Label htmlFor={`admin-${coach.id}`} className="text-sm cursor-pointer">
-                            {coach.name}
-                          </Label>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-center py-4 text-gray-500">
-                      <p className="text-sm">No coaches available</p>
-                    </div>
-                  )}
-
-                  {formData.assignments.branch_admins.length > 0 && (
-                    <div className="flex flex-wrap gap-2 mt-2 max-h-20 overflow-y-auto">
-                      {formData.assignments.branch_admins.map((coachId) => {
-                        const coach = coaches.find(c => c.id === coachId)
-                        return coach ? (
-                          <Badge key={coachId} variant="secondary" className="bg-purple-100 text-purple-800">
-                            {coach.name}
-                            <button
-                              type="button"
-                              onClick={() => handleBranchAdminToggle(coachId)}
-                              className="ml-2 hover:text-red-600"
-                            >
-                              <X className="w-3 h-3" />
-                            </button>
-                          </Badge>
-                        ) : null
-                      })}
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-
             {/* Bottom Right Card - Bank Details */}
             <Card className="h-fit">
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
-                  <CreditCard className="w-5 h-5 text-yellow-600" />
-                  <span>Bank Details</span>
+            
+                  <span className="text-[#4F5077]">Bank Details</span>
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-4 text-[#7D8592]">
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="bankName">Bank Name</Label>
@@ -1266,9 +1263,7 @@ export default function CreateBranchPage() {
                 </div>
               </CardContent>
             </Card>
-          </div>
-
-          {/* Form Actions */}
+             {/* Form Actions */}
           <div className="flex justify-end space-x-4 py-6">
             <Button
               type="button"
@@ -1280,7 +1275,7 @@ export default function CreateBranchPage() {
             </Button>
             <Button
               type="submit"
-              className="bg-yellow-400 hover:bg-yellow-500 text-black"
+              className="bg-yellow-400 hover:bg-yellow-500 text-white"
               disabled={isSubmitting}
             >
               {isSubmitting ? (
@@ -1293,6 +1288,11 @@ export default function CreateBranchPage() {
               )}
             </Button>
           </div>
+            </div>
+
+          </div>
+
+         
         </form>
       </main>
 

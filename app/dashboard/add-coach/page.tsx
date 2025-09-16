@@ -511,7 +511,7 @@ export default function AddCoachPage() {
     <div className="min-h-screen bg-gray-50">
       <DashboardHeader currentPage="Add Coach" />
 
-      <main className="w-full p-4 lg:p-6">
+      <main className="w-full py-4 px-19 lg:py-6">
         {/* Header with Back Button */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center space-x-4">
@@ -521,23 +521,23 @@ export default function AddCoachPage() {
               className="flex items-center space-x-2 hover:bg-gray-100"
             >
               <ArrowLeft className="w-4 h-4" />
-              <span>Back to Coaches</span>
+              <span className="text-[#4F5077]">Back to Coaches</span>
             </Button>
             <div className="w-px h-6 bg-gray-300"></div>
-            <h1 className="text-2xl font-bold text-gray-900">Add New Coach</h1>
+            <h1 className="text-2xl font-bold text-[#4F5077]">Add New Coach</h1>
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-6 ">
           {/* Personal Information */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
-                <User className="w-5 h-5 text-yellow-600" />
-                <span>Personal Information</span>
+            
+                <span className="text-[#4F5077]">Personal Information</span>
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-4 text-[#7D8592]">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="firstName">First Name *</Label>
@@ -714,11 +714,11 @@ export default function AddCoachPage() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
-                <Award className="w-5 h-5 text-yellow-600" />
-                <span>Professional Information</span>
+          
+                <span className="text-[#4F5077]">Professional Information</span>
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-4 text-[#7D8592]">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="designation">Designation *</Label>
@@ -827,11 +827,10 @@ export default function AddCoachPage() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
-                <MapPin className="w-5 h-5 text-yellow-600" />
-                <span>Assignment Details</span>
+                <span className="text-[#4F5077]">Assignment Details</span>
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-4 text-[#7D8592]">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="branch">Assign to Branch</Label>
@@ -946,11 +945,10 @@ export default function AddCoachPage() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
-                <Phone className="w-5 h-5 text-yellow-600" />
-                <span>Emergency Contact</span>
+                <span className="text-[#4F5077]">Emergency Contact</span>
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-4 text-[#7D8592]">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="emergencyContactName">Contact Name</Label>
@@ -997,9 +995,9 @@ export default function AddCoachPage() {
           {/* Additional Information */}
           <Card>
             <CardHeader>
-              <CardTitle>Additional Information</CardTitle>
+              <CardTitle className="text-[#4F5077]">Additional Information</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-4 text-[#7D8592]">
               <div className="space-y-2">
                 <Label htmlFor="achievements">Achievements & Awards</Label>
                 <Textarea
@@ -1036,7 +1034,7 @@ export default function AddCoachPage() {
             </Button>
             <Button
               type="submit"
-              className="bg-yellow-400 hover:bg-yellow-500 text-black"
+              className="bg-yellow-400 hover:bg-yellow-500 text-white"
               disabled={isSubmitting}
             >
               {isSubmitting ? (

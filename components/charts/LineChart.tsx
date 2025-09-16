@@ -95,7 +95,7 @@ export function CustomLineChart({
 export function DualLineChart({ 
   data, 
   title = "Dual Line Chart", 
-  height = 300,
+  height = 200,
   formatValue
 }: LineChartProps) {
   // Transform data for chart
@@ -148,22 +148,24 @@ export function DualLineChart({
           />
           <Tooltip content={<CustomTooltip />} />
           <Legend />
+          {/* Gray line */}
           <Line 
             yAxisId="left"
             type="monotone" 
             dataKey="value" 
-            stroke="var(--color-value)"
+            stroke="#4B5563" // Tailwind gray-600
             strokeWidth={2}
-            dot={{ fill: "var(--color-value)", strokeWidth: 2, r: 4 }}
+            dot={{ fill: "#4B5563", strokeWidth: 2, r: 4 }}
             activeDot={{ r: 6 }}
           />
+          {/* Yellow line */}
           <Line 
             yAxisId="right"
             type="monotone" 
             dataKey="count" 
-            stroke="var(--color-count)"
+            stroke="#EAB308" // Tailwind yellow-500
             strokeWidth={2}
-            dot={{ fill: "var(--color-count)", strokeWidth: 2, r: 4 }}
+            dot={{ fill: "#EAB308", strokeWidth: 2, r: 4 }}
             activeDot={{ r: 6 }}
           />
         </LineChart>
@@ -171,6 +173,7 @@ export function DualLineChart({
     </ChartContainer>
   )
 }
+
 
 export function AreaLineChart({ 
   data, 
