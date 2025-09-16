@@ -188,7 +188,7 @@ export default function SelectCoursePage() {
       {/* Left Side - Illustration */}
       <div className="hidden lg:flex lg:w-1/2 bg-gray-200 items-center justify-center relative overflow-hidden">
         <div
-          className="w-full h-full bg-cover bg-center bg-no-repeat"
+          className="w-[550px] h-[550px] bg-cover bg-center bg-no-repeat"
           style={{
             backgroundImage: "url('/images/select-course-left.png')",
           }}
@@ -196,12 +196,12 @@ export default function SelectCoursePage() {
       </div>
 
       {/* Right Side - Course Selection Form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 bg-white">
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 bg-white mt-[100px]">
         <div className="w-full max-w-md space-y-6">
           {/* Header */}
           <div className="text-center space-y-3">
             <h1 className="text-3xl font-bold text-black">Select Course</h1>
-            <p className="text-gray-500 text-sm">Choose your preferred course and duration to continue.</p>
+            <p className="text-gray-500 text-sm">Please login to continue to your account.</p>
           </div>
 
           {isLoading ? (
@@ -220,21 +220,16 @@ export default function SelectCoursePage() {
               </Button>
             </div>
           ) : (
-          <form onSubmit={handleNextStep} className="space-y-6">
+          <form onSubmit={handleNextStep} className="space-y-4">
             {/* Select Category */}
             <div className="relative">
-              <div className="absolute left-4 top-1/2 transform -translate-y-1/2 z-10 pointer-events-none">
-                <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 7a2 2 0 012-2h10a2 2 0 012 2v2M7 7h10" />
-                </svg>
-              </div>
               <Select
                 value={formData.category_id}
                 onValueChange={(value) => handleSelectChange("category_id", value)}
                 disabled={isLoading || categories.length === 0}
               >
-                <SelectTrigger className="w-full pl-12 py-6 text-base">
-                  <SelectValue placeholder={isLoading ? "Loading categories..." : "Select a category"} />
+                <SelectTrigger className="w-full !h-[60px] pl-6 pr-10 bg-[#F9F8FF] rounded-xl border-0 py-6 text-[16px] data-[placeholder]:text-black">
+                  <SelectValue placeholder={isLoading ? "Loading categories..." : "Select a category"} className="!placeholder:text-[#000]"  />
                 </SelectTrigger>
                 <SelectContent>
                   {categories.map((category) => (
@@ -248,26 +243,21 @@ export default function SelectCoursePage() {
 
             {/* Choose Course */}
             <div className="relative">
-              <div className="absolute left-4 top-1/2 transform -translate-y-1/2 z-10 pointer-events-none">
-                <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                </svg>
-              </div>
               <Select
                 value={formData.course_id}
                 onValueChange={(value) => handleSelectChange("course_id", value)}
                 disabled={!formData.category_id || isLoadingCourses}
               >
-                <SelectTrigger className="w-full pl-12 py-6 text-base">
+                <SelectTrigger className="w-full !h-[60px] pl-6 pr-10 bg-[#F9F8FF] rounded-xl border-0 py-6 text-[10px] data-[placeholder]:text-black data-[placeholder]:text-[16px]">
                   <SelectValue 
                     placeholder={
-                      isLoadingCourses 
-                        ? "Loading courses..." 
-                        : !formData.category_id 
-                          ? "Select a category first" 
-                          : courses.length === 0 
-                            ? "No courses available" 
-                            : "Select a course"
+                    isLoadingCourses 
+                    ? "Loading courses..." 
+                    : !formData.category_id 
+                      ? "Select a category first" 
+                      : courses.length === 0 
+                        ? "No courses available" 
+                        : "Select a course"
                     } 
                   />
                 </SelectTrigger>
@@ -283,7 +273,7 @@ export default function SelectCoursePage() {
                         <div className="flex flex-col">
                           <span className="font-medium">{course.title}</span>
                           <span className="text-xs text-gray-500">{course.code} • {course.difficulty_level}</span>
-                          <span className="text-sm font-semibold mt-1">
+                          <span className="text-[14px] font-semibold mt-1">
                             {course.pricing.currency} {course.pricing.amount}
                           </span>
                         </div>
@@ -296,17 +286,13 @@ export default function SelectCoursePage() {
 
             {/* Select Duration */}
             <div className="relative">
-              <div className="absolute left-4 top-1/2 transform -translate-y-1/2 z-10 pointer-events-none">
-                <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
+              
               <Select
                 value={formData.duration}
                 onValueChange={(value) => handleSelectChange("duration", value)}
                 disabled={!formData.course_id || durationOptions.length === 0}
               >
-                <SelectTrigger className="w-full pl-12 py-6 text-base">
+                <SelectTrigger className="w-full !h-[60px] pl-6 pr-10 bg-[#F9F8FF] rounded-xl border-0 py-6 text-[16px] data-[placeholder]:text-black">
                   <SelectValue 
                     placeholder={!formData.course_id ? "Select a course first" : durationOptions.length === 0 ? "No duration options available" : "Select duration"} 
                   />
@@ -329,10 +315,10 @@ export default function SelectCoursePage() {
             {/* Next Step Button */}
             <Button 
               type="submit" 
-              className="w-full py-6 text-base"
+             className="w-full bg-yellow-400 hover:bg-yellow-500 text-[#ffffff] font-bold py-4 px-6 rounded-xl text-[12px] h-14 transition-all duration-200 transform hover:scale-[1.02] shadow-lg hover:shadow-xl mt-8"
               disabled={!formData.category_id || !formData.course_id || !formData.duration}
             >
-              Continue
+              NEXT STEP
             </Button>
           </form>
           )}

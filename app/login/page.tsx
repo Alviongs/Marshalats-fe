@@ -151,9 +151,9 @@ function LoginFormContent() {
   return (
     <div className="min-h-screen flex">
       {/* Left Side - Illustration */}
-      <div className="hidden lg:flex lg:w-1/2 bg-gray-200 items-center justify-center relative overflow-hidden">
+      <div className="hidden lg:flex lg:w-1/2 bg-white items-center justify-center relative overflow-hidden">
         <div
-          className="w-full h-full bg-cover bg-center bg-no-repeat"
+          className="w-[800px] h-[800px] bg-cover bg-center bg-no-repeat"
           style={{
             backgroundImage: "url('/images/martial-artist.png')",
           }}
@@ -161,12 +161,12 @@ function LoginFormContent() {
       </div>
 
       {/* Right Side - Login Form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 bg-white">
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 bg-white mt-[100px]">
         <div className="w-full max-w-md space-y-6">
           {/* Header */}
           <div className="text-center space-y-2">
-            <h1 className="text-3xl font-bold text-black">STUDENT LOGIN</h1>
-            <p className="text-gray-500 text-sm">Access your martial arts training dashboard</p>
+            <h1 className="text-2xl font-bold text-black">STUDENT LOGIN</h1>
+            <p className="text-gray-500 text-[12px]">Access your martial arts training dashboard</p>
           </div>
 
           {/* Login Form */}
@@ -175,7 +175,7 @@ function LoginFormContent() {
             <div className="space-y-4">
               <div className="relative">
                 <div className="absolute left-4 top-1/2 transform -translate-y-1/2">
-                  <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-6 h-6 text-[#000]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -189,7 +189,7 @@ function LoginFormContent() {
                   placeholder="Email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="pl-14 py-4 text-base bg-gray-50 border-gray-200 rounded-xl h-14"
+                  className="pl-14 py-4 text-base bg-[#F0EDFFCC] border-0 rounded-xl h-14 placeholder:text-[#000]"
                   required
                 />
               </div>
@@ -199,7 +199,7 @@ function LoginFormContent() {
             <div className="space-y-4">
               <div className="relative">
                 <div className="absolute left-4 top-1/2 transform -translate-y-1/2">
-                  <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-6 h-6 text-[#000]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -213,7 +213,7 @@ function LoginFormContent() {
                   placeholder="Password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="pl-14 py-4 text-base bg-gray-50 border-gray-200 rounded-xl h-14"
+                  className="pl-14 py-4 text-base bg-[#F0EDFFCC] border-0 rounded-xl h-14 placeholder:text-[#000]"
                   required
                 />
               </div>
@@ -234,7 +234,7 @@ function LoginFormContent() {
                   id="remember"
                   checked={rememberMe}
                   onCheckedChange={(checked) => setRememberMe(checked as boolean)}
-                  className="w-5 h-5 border-2 border-gray-300 rounded-md"
+                  className="w-5 h-5 border-2 border-gray-300 rounded-sm"
                 />
                 <label htmlFor="remember" className="text-sm font-medium text-gray-700 cursor-pointer select-none">
                   Remember me
@@ -251,7 +251,7 @@ function LoginFormContent() {
             {/* Login Button */}
             <Button
               type="submit"
-              className="w-full bg-yellow-400 hover:bg-yellow-500 text-black font-bold py-4 px-6 rounded-xl text-lg h-14 transition-all duration-200 transform hover:scale-[1.02] shadow-lg hover:shadow-xl"
+              className="w-full bg-yellow-400 hover:bg-yellow-500 text-[#fff] font-bold py-4 px-6 rounded-xl text-sm h-14 transition-all duration-200 transform hover:scale-[1.02] shadow-lg hover:shadow-xl"
               disabled={loading}
             >
               {loading ? (

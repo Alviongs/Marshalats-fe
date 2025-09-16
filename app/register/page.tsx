@@ -47,7 +47,7 @@ export default function RegisterPage() {
       {/* Left Side - Illustration */}
       <div className="hidden lg:flex lg:w-1/2 bg-gray-200 items-center justify-center relative overflow-hidden">
         <div
-          className="w-full h-full bg-cover bg-center bg-no-repeat"
+          className="w-[550px] h-[550px] bg-cover bg-center bg-no-repeat"
           style={{
             backgroundImage: "url('/images/registration-left.png')",
           }}
@@ -55,7 +55,7 @@ export default function RegisterPage() {
       </div>
 
       {/* Right Side - Registration Form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 bg-white">
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 bg-white lg:mt-[100px]">
         <div className="w-full max-w-md space-y-6">
           {/* Header */}
           <div className="text-center space-y-2">
@@ -64,36 +64,28 @@ export default function RegisterPage() {
           </div>
 
           {/* Registration Form */}
-          <form onSubmit={handleNextStep} className="space-y-6">
+          <form onSubmit={handleNextStep} className="space-y-3">
             {/* Name Fields */}
             <div className="grid grid-cols-2 gap-4">
               <div className="relative">
-                <div className="absolute left-4 top-1/2 transform -translate-y-1/2">
-                  <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                  </svg>
-                </div>
+                
                 <Input
                   type="text"
                   placeholder="First Name"
                   value={formData.firstName}
                   onChange={(e) => handleInputChange("firstName", e.target.value)}
-                  className="pl-12 py-4 text-base bg-gray-50 border-gray-200 rounded-xl h-14"
+                  className="pl-5 py-4 text-[8px] bg-[#F9F8FF] border-0 rounded-xl h-14 placeholder:text-[#000] "
                   required
                 />
               </div>
               <div className="relative">
-                <div className="absolute left-4 top-1/2 transform -translate-y-1/2">
-                  <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                  </svg>
-                </div>
+               
                 <Input
                   type="text"
                   placeholder="Last Name"
                   value={formData.lastName}
                   onChange={(e) => handleInputChange("lastName", e.target.value)}
-                  className="pl-12 py-4 text-base bg-gray-50 border-gray-200 rounded-xl h-14"
+                  className="pl-5 py-4 text-[8px] bg-[#F9F8FF] border-0 rounded-xl h-14 placeholder:text-[#000]"
                   required
                 />
               </div>
@@ -102,32 +94,24 @@ export default function RegisterPage() {
             {/* Email and Mobile Fields */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="relative">
-                <div className="absolute left-4 top-1/2 transform -translate-y-1/2">
-                  <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
-                  </svg>
-                </div>
+                
                 <Input
                   type="email"
                   placeholder="Email Address"
                   value={formData.email}
                   onChange={(e) => handleInputChange("email", e.target.value)}
-                  className="pl-12 py-4 text-base bg-gray-50 border-gray-200 rounded-xl h-14"
+                  className="pl-5 py-4 text-[8px] bg-[#F9F8FF] border-0 rounded-xl h-14 placeholder:text-[#000]"
                   required
                 />
               </div>
               <div className="relative">
-                <div className="absolute left-4 top-1/2 transform -translate-y-1/2">
-                  <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                  </svg>
-                </div>
+                
                 <Input
                   type="tel"
                   placeholder="Mobile Number"
                   value={formData.mobile}
                   onChange={(e) => handleInputChange("mobile", e.target.value)}
-                  className="pl-12 py-4 text-base bg-gray-50 border-gray-200 rounded-xl h-14"
+                  className="pl-5 py-4 text-[8px] bg-[#F9F8FF] border-0 rounded-xl h-14 placeholder:text-[#000]"
                   required
                 />
               </div>
@@ -135,17 +119,13 @@ export default function RegisterPage() {
 
             {/* Password Field */}
             <div className="relative">
-              <div className="absolute left-4 top-1/2 transform -translate-y-1/2">
-                <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                </svg>
-              </div>
+             
               <Input
                 type="password"
                 placeholder="Password"
                 value={formData.password}
                 onChange={(e) => handleInputChange("password", e.target.value)}
-                className="pl-12 py-4 text-base bg-gray-50 border-gray-200 rounded-xl h-14"
+                className="pl-5 py-4 text-[8px] bg-[#F9F8FF] border-0 rounded-xl h-14 placeholder:text-[#000]"
                 required
               />
             </div>
@@ -153,14 +133,10 @@ export default function RegisterPage() {
             {/* Gender and DOB Fields */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="relative">
-                <div className="absolute left-4 top-1/2 transform -translate-y-1/2 z-10 pointer-events-none">
-                  <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
-                  </svg>
-                </div>
-                <Select value={formData.gender} onValueChange={(value) => handleInputChange("gender", value)}>
-                  <SelectTrigger className="!w-full !h-14 !pl-12 !pr-4 !py-4 !text-base !bg-gray-50 !border-gray-200 !rounded-xl focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent !min-h-14">
-                    <SelectValue placeholder="Select Gender" className="text-gray-500" />
+              
+                <Select value={formData.gender} onValueChange={(value) => handleInputChange("gender", value)} >
+                  <SelectTrigger className="!w-full !h-14 !pl-5 !pr-4 !py-4 !text-base !bg-[#F9F8FF] !border-0 !rounded-xl focus:outline-none focus:ring-2  !min-h-14 ">
+                    <SelectValue placeholder="Select Gender" className="text-gray-500 placeholder:text-[#000]" />
                   </SelectTrigger>
                   <SelectContent className="rounded-xl border border-gray-200 bg-white shadow-lg max-h-60">
                     <SelectItem value="male" className="!py-3 !pl-3 pr-8 text-base hover:bg-gray-50 rounded-lg cursor-pointer">Male</SelectItem>
@@ -171,17 +147,13 @@ export default function RegisterPage() {
               </div>
 
               <div className="relative">
-                <div className="absolute left-4 top-1/2 transform -translate-y-1/2 z-10">
-                  <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                </div>
+                
                 <Input
                   type="date"
                   placeholder="Date of Birth"
                   value={formData.dob}
                   onChange={(e) => handleInputChange("dob", e.target.value)}
-                  className="pl-12 py-4 text-base bg-gray-50 border-gray-200 rounded-xl h-14"
+                  className="pl-5 py-4 text-[8px] bg-[#F9F8FF] border-0 rounded-xl h-14 placeholder:text-[#000]"
                   required
                 />
               </div>
@@ -190,7 +162,7 @@ export default function RegisterPage() {
             {/* Next Step Button */}
             <Button
               type="submit"
-              className="w-full bg-yellow-400 hover:bg-yellow-500 text-black font-bold py-4 px-6 rounded-xl text-lg h-14 transition-all duration-200 transform hover:scale-[1.02] shadow-lg hover:shadow-xl mt-8"
+              className="w-full bg-yellow-400 hover:bg-yellow-500 text-[#ffffff] font-bold py-4 px-6 rounded-xl text-[12px] h-14 transition-all duration-200 transform hover:scale-[1.02] shadow-lg hover:shadow-xl mt-8"
             >
               NEXT STEP
             </Button>
