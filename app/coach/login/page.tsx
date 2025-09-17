@@ -131,23 +131,29 @@ function CoachLoginFormContent() {
         return;
       }
 
+      // Ensure coach data has role field
+      const coachDataWithRole = {
+        ...data.coach,
+        role: "coach" // Ensure role is set
+      }
+
       // Store authentication data using unified token manager
       const { TokenManager } = await import("@/lib/tokenManager");
       const userData = TokenManager.storeAuthData({
         access_token: data.access_token,
         token_type: data.token_type,
         expires_in: data.expires_in,
-        coach: data.coach
+        coach: coachDataWithRole
       });
 
       // Store comprehensive coach data for coach-specific features
-      localStorage.setItem("coach", JSON.stringify(data.coach));
+      localStorage.setItem("coach", JSON.stringify(coachDataWithRole));
       
       console.log("Coach login successful:", {
-        coach_id: data.coach.id,
-        full_name: data.coach.full_name,
-        email: data.coach.email,
-        role: data.coach.role,
+        coach_id: coachDataWithRole.id,
+        full_name: coachDataWithRole.full_name,
+        email: coachDataWithRole.contact_info?.email || coachDataWithRole.email,
+        role: coachDataWithRole.role,
         access_token: data.access_token.substring(0, 20) + "...",
         expires_in: data.expires_in
       });
