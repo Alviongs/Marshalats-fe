@@ -447,7 +447,7 @@ export default function CourseDetailPage() {
                   variant="ghost"
                   size="sm"
                   onClick={handleBack}
-                  className="text-gray-600 hover:text-gray-900"
+                  className="text-[#7D8592] hover:text-gray-900"
                 >
                   <ArrowLeft className="w-4 h-4 mr-2" />
                   Back to Courses
@@ -457,27 +457,27 @@ export default function CourseDetailPage() {
                 </div>
               </div>
               <div className="flex items-center space-x-4">
-                <h1 className="text-3xl font-bold text-gray-900">
+                <h1 className="text-3xl font-bold text-[#4f5077]">
                   {course.name}
                 </h1>
                 <Badge 
                   variant={course.is_active ? "default" : "secondary"}
-                  className={course.is_active ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}
+                  className={course.is_active ? "bg-green-100 text-green-800 rounded" : "bg-red-100 text-red-800 rounded"}
                 >
                   {course.is_active ? "Active" : "Inactive"}
                 </Badge>
-                <Badge variant="outline">
+                <Badge variant="outline" className="rounded">
                   {course.difficulty_level}
                 </Badge>
                 {course.category && (
-                  <Badge variant="secondary" className="bg-purple-100 text-purple-800">
+                  <Badge variant="secondary" className="bg-purple-100 text-purple-800 rounded">
                     {course.category}
                   </Badge>
                 )}
               </div>
             </div>
             
-            <Button onClick={handleEdit} className="bg-yellow-400 hover:bg-yellow-500 text-black">
+            <Button onClick={handleEdit} className="bg-yellow-400 hover:bg-yellow-500 text-[#fff] text-sm">
               <Edit className="w-4 h-4 mr-2" />
               Edit Course
             </Button>
@@ -491,27 +491,27 @@ export default function CourseDetailPage() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center">
-                  <BookOpen className="w-5 h-5 mr-2" />
-                  Course Information
+                  <BookOpen className="w-5 h-5 mr-2 text-[#4f5077]" />
+                  <span className="text-[#4f5077]">Course Information</span> 
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
                 {/* Description */}
                 {course.description && (
                   <div>
-                    <h3 className="text-sm font-medium text-gray-900 mb-2">Description</h3>
-                    <p className="text-sm text-gray-600 leading-relaxed">{course.description}</p>
+                    <h3 className="text-sm font-medium text-[#7D8592] mb-2">Description</h3>
+                    <p className="text-sm text-[#7D8592] leading-relaxed">{course.description}</p>
                   </div>
                 )}
 
                 {/* Course Details */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <h3 className="text-sm font-medium text-gray-900 mb-2 flex items-center">
+                    <h3 className="text-sm font-medium text-[#7D8592] mb-2 flex items-center">
                       <Target className="w-4 h-4 mr-2" />
                       Difficulty Level
                     </h3>
-                    <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+                    <Badge variant="secondary" className="bg-blue-100 text-blue-800 rounded">
                       {course.difficulty_level}
                     </Badge>
                   </div>
@@ -538,11 +538,11 @@ export default function CourseDetailPage() {
 
                   {course.pricing && (
                     <div>
-                      <h3 className="text-sm font-medium text-gray-900 mb-2 flex items-center">
+                      <h3 className="text-sm font-medium text-[#7D8592] mb-2 flex items-center">
                         <DollarSign className="w-4 h-4 mr-2" />
                         Pricing
                       </h3>
-                      <p className="text-sm text-gray-600">
+                      <p className="text-sm text-[#7D8592]">
                         {course.pricing.currency} {course.pricing.amount.toLocaleString()}
                       </p>
                     </div>
@@ -552,11 +552,11 @@ export default function CourseDetailPage() {
                 {/* Schedule */}
                 {course.schedule && (
                   <div>
-                    <h3 className="text-sm font-medium text-gray-900 mb-2 flex items-center">
+                    <h3 className="text-sm font-medium text-[#7D8592] mb-2 flex items-center">
                       <Calendar className="w-4 h-4 mr-2" />
                       Schedule
                     </h3>
-                    <div className="text-sm text-gray-600">
+                    <div className="text-sm text-[#7D8592]">
                       <p><strong>Days:</strong> {course.schedule.days.join(', ')}</p>
                       <p><strong>Time:</strong> {course.schedule.time}</p>
                       <p><strong>Duration:</strong> {course.schedule.duration_minutes} minutes per session</p>
@@ -567,11 +567,11 @@ export default function CourseDetailPage() {
                 {/* Prerequisites */}
                 {course.prerequisites && course.prerequisites.length > 0 && (
                   <div>
-                    <h3 className="text-sm font-medium text-gray-900 mb-2 flex items-center">
+                    <h3 className="text-sm font-medium text-[#7D8592] mb-2 flex items-center">
                       <FileText className="w-4 h-4 mr-2" />
                       Prerequisites
                     </h3>
-                    <ul className="text-sm text-gray-600 space-y-1">
+                    <ul className="text-sm text-[#7D8592] space-y-1">
                       {course.prerequisites.map((prerequisite, index) => (
                         <li key={index} className="flex items-start">
                           <span className="w-2 h-2 bg-gray-400 rounded-full mt-2 mr-3 flex-shrink-0"></span>
@@ -585,11 +585,11 @@ export default function CourseDetailPage() {
                 {/* Learning Objectives */}
                 {course.learning_objectives && course.learning_objectives.length > 0 && (
                   <div>
-                    <h3 className="text-sm font-medium text-gray-900 mb-2 flex items-center">
+                    <h3 className="text-sm font-medium text-[#7D8592] mb-2 flex items-center">
                       <Award className="w-4 h-4 mr-2" />
                       Learning Objectives
                     </h3>
-                    <ul className="text-sm text-gray-600 space-y-1">
+                    <ul className="text-sm text-[#7D8592] space-y-1">
                       {course.learning_objectives.map((objective, index) => (
                         <li key={index} className="flex items-start">
                           <CheckCircle className="w-4 h-4 text-green-600 mt-0.5 mr-3 flex-shrink-0" />
@@ -603,13 +603,13 @@ export default function CourseDetailPage() {
                 {/* Branch Assignments */}
                 {course.branch_assignments && course.branch_assignments.length > 0 && (
                   <div>
-                    <h3 className="text-sm font-medium text-gray-900 mb-2 flex items-center">
+                    <h3 className="text-sm font-medium text-[#7D8592] mb-2 flex items-center">
                       <Building2 className="w-4 h-4 mr-2" />
                       Available at Branches
                     </h3>
                     <div className="flex flex-wrap gap-2">
                       {course.branch_assignments.map((branch, index) => (
-                        <Badge key={index} variant="outline" className="text-xs">
+                        <Badge key={index} variant="outline" className="text-xs rounded">
                           {branch}
                         </Badge>
                       ))}
@@ -620,8 +620,8 @@ export default function CourseDetailPage() {
                 {/* Timestamps */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t">
                   <div>
-                    <h3 className="text-sm font-medium text-gray-900 mb-1">Created</h3>
-                    <p className="text-sm text-gray-600">
+                    <h3 className="text-sm font-medium text-[#7D8592] mb-1">Created</h3>
+                    <p className="text-sm text-[#7D8592]">
                       {new Date(course.created_at).toLocaleDateString('en-US', {
                         year: 'numeric',
                         month: 'long',
@@ -631,8 +631,8 @@ export default function CourseDetailPage() {
                   </div>
 
                   <div>
-                    <h3 className="text-sm font-medium text-gray-900 mb-1">Last Updated</h3>
-                    <p className="text-sm text-gray-600">
+                    <h3 className="text-sm font-medium text-[#7D8592] mb-1">Last Updated</h3>
+                    <p className="text-sm text-[#7D8592]">
                       {new Date(course.updated_at).toLocaleDateString('en-US', {
                         year: 'numeric',
                         month: 'long',
@@ -648,15 +648,15 @@ export default function CourseDetailPage() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center">
-                  <FileText className="w-5 h-5 mr-2" />
-                  Course Curriculum ({courseModules.length} modules)
+                  <FileText className="w-5 h-5 mr-2 text-[#4f5077]" />
+                 <span className="text-[#4f5077]">Course Curriculum ({courseModules.length} modules)</span> 
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 {courseModules.length === 0 ? (
                   <div className="text-center py-8 text-gray-500">
                     <FileText className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                    <p>No curriculum modules defined yet</p>
+                    <p className="text-[#7D8592]">No curriculum modules defined yet</p>
                   </div>
                 ) : (
                   <div className="space-y-4">
@@ -664,10 +664,10 @@ export default function CourseDetailPage() {
                       <div key={module.id} className="p-4 bg-gray-50 rounded-lg">
                         <div className="flex items-center justify-between mb-2">
                           <div className="flex items-center space-x-2">
-                            <span className="text-sm font-medium text-gray-500">
+                            <span className="text-[10px] sm:text-sm font-medium text-[#7D8592]">
                               Module {module.order}
                             </span>
-                            <h4 className="font-medium text-gray-900">{module.title}</h4>
+                            <h4 className="font-medium text-[#7D8592] text-xs sm:text-sm">{module.title}</h4>
                           </div>
                           <div className="flex items-center space-x-2">
                             {module.is_completed ? (
@@ -677,19 +677,19 @@ export default function CourseDetailPage() {
                             )}
                             <Badge
                               variant="secondary"
-                              className={`text-xs ${module.is_completed ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}
+                              className={`text-xs ${module.is_completed ? 'bg-green-100 text-green-800 rounded' : 'bg-gray-100 text-gray-800 rounded'}`}
                             >
                               {module.is_completed ? 'Completed' : 'In Progress'}
                             </Badge>
                           </div>
                         </div>
 
-                        <p className="text-sm text-gray-600 mb-3">{module.description}</p>
+                        <p className="text-xs sm:text-sm text-[#7D8592] mb-3">{module.description}</p>
 
                         <div className="flex items-center justify-between text-sm text-gray-500">
                           <div className="flex items-center space-x-4">
                             <span>
-                              <Clock className="w-3 h-3 inline mr-1" />
+                              <Clock className="w-3 h-3 inline mr-1 text-[#7D8592]" />
                               {module.duration_minutes} min
                             </span>
                             {module.resources && (
@@ -705,7 +705,7 @@ export default function CourseDetailPage() {
                           <div className="mt-3 pt-3 border-t border-gray-200">
                             <div className="flex flex-wrap gap-1">
                               {module.resources.map((resource, index) => (
-                                <Badge key={index} variant="outline" className="text-xs">
+                                <Badge key={index} variant="outline" className="text-xs rounded text-[#7D8592]">
                                   {resource}
                                 </Badge>
                               ))}
@@ -723,27 +723,27 @@ export default function CourseDetailPage() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center">
-                  <Users className="w-5 h-5 mr-2" />
-                  Enrolled Students ({enrolledStudents.length})
+                  <Users className="w-5 h-5 mr-2 text-[#4f5077]" />
+                  <span className="text-[#4f5077]">Enrolled Students ({enrolledStudents.length})</span>
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 {enrolledStudents.length === 0 ? (
                   <div className="text-center py-8 text-gray-500">
                     <Users className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                    <p>No students enrolled yet</p>
+                    <p className="text-[#7D8592]">No students enrolled yet</p>
                   </div>
                 ) : (
                   <div className="space-y-4">
                     {enrolledStudents.slice(0, 10).map((student) => (
                       <div key={student.id} className="p-4 bg-gray-50 rounded-lg">
                         <div className="flex items-center justify-between mb-2">
-                          <h4 className="font-medium text-gray-900">{student.student_name}</h4>
+                          <h4 className="font-medium text-[#7D8592]">{student.student_name}</h4>
                           <div className="flex items-center space-x-2">
                             {getStatusIcon(student.status)}
                             <Badge
                               variant="secondary"
-                              className={`text-xs ${getStatusColor(student.status)}`}
+                              className={`text-xs ${getStatusColor(student.status)} rounded`}
                             >
                               {student.status}
                             </Badge>
@@ -752,24 +752,24 @@ export default function CourseDetailPage() {
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600 mb-3">
                           <div>
-                            <span className="font-medium">Enrolled:</span> {' '}
+                            <span className="font-medium text-[#7D8592]">Enrolled:</span> {' '}
                             {new Date(student.enrollment_date).toLocaleDateString()}
                           </div>
                           {student.last_activity && (
                             <div>
-                              <span className="font-medium">Last Activity:</span> {' '}
-                              {new Date(student.last_activity).toLocaleDateString()}
+                              <span className="font-medium text-[#7D8592]">Last Activity: {' '}
+                              {new Date(student.last_activity).toLocaleDateString()}</span>
                             </div>
                           )}
                         </div>
 
                         <div className="space-y-2">
                           <div className="flex items-center justify-between text-sm">
-                            <span className="text-gray-600">Progress</span>
+                            <span className="text-[#7D8592]">Progress</span>
                             <div className="flex items-center space-x-2">
-                              <span className="font-medium">{student.progress}%</span>
+                              <span className="font-medium text-[#7D8592]">{student.progress}%</span>
                               {student.grade && (
-                                <Badge variant="outline" className="text-xs">
+                                <Badge variant="outline" className="text-xs rounded">
                                   Grade: {student.grade}
                                 </Badge>
                               )}
@@ -780,7 +780,7 @@ export default function CourseDetailPage() {
                       </div>
                     ))}
                     {enrolledStudents.length > 10 && (
-                      <p className="text-sm text-gray-500 text-center pt-2">
+                      <p className="text-sm text-[#7D8592] text-center pt-2">
                         ... and {enrolledStudents.length - 10} more students
                       </p>
                     )}
@@ -793,8 +793,8 @@ export default function CourseDetailPage() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center">
-                  <Star className="w-5 h-5 mr-2" />
-                  Student Reviews ({courseReviews.length})
+                  <Star className="w-5 h-5 mr-2 text-[#4f5077]" />
+                  <span className="text-[#4f5077]"> Student Reviews ({courseReviews.length})</span>
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -808,15 +808,15 @@ export default function CourseDetailPage() {
                     {courseReviews.map((review) => (
                       <div key={review.id} className="p-4 bg-gray-50 rounded-lg">
                         <div className="flex items-center justify-between mb-2">
-                          <h4 className="font-medium text-gray-900">{review.student_name}</h4>
+                          <h4 className="font-medium text-[#7D8592]">{review.student_name}</h4>
                           <div className="flex items-center space-x-1">
                             {renderStars(review.rating)}
                           </div>
                         </div>
 
-                        <p className="text-sm text-gray-600 mb-2">{review.comment}</p>
+                        <p className="text-sm text-[#7D8592] mb-2">{review.comment}</p>
 
-                        <p className="text-xs text-gray-500">
+                        <p className="text-xs text-[#7D8592]">
                           {new Date(review.date).toLocaleDateString('en-US', {
                             year: 'numeric',
                             month: 'long',
@@ -837,38 +837,38 @@ export default function CourseDetailPage() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center">
-                  <TrendingUp className="w-5 h-5 mr-2" />
-                  Course Statistics
+                  <TrendingUp className="w-5 h-5 mr-2 text-[#4f5077]" />
+                   <span className="text-[#4f5077]"> Course Statistics</span>
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center">
-                    <Users className="w-4 h-4 mr-2 text-blue-600" />
-                    <span className="text-sm text-gray-600">Total Enrolled</span>
+                    <Users className="w-4 h-4 mr-2 text-[#7D8592]" />
+                    <span className="text-sm text-[#7D8592]">Total Enrolled</span>
                   </div>
-                  <span className="font-semibold">{course.total_enrolled || enrolledStudents.length}</span>
+                  <span className="font-semibold text-[#7D8592]">{course.total_enrolled || enrolledStudents.length}</span>
                 </div>
 
                 <div className="flex items-center justify-between">
                   <div className="flex items-center">
-                    <CheckCircle className="w-4 h-4 mr-2 text-green-600" />
-                    <span className="text-sm text-gray-600">Completed</span>
+                    <CheckCircle className="w-4 h-4 mr-2 text-[#7D8592]" />
+                    <span className="text-sm text-[#7D8592]">Completed</span>
                   </div>
-                  <span className="font-semibold">
+                  <span className="font-semibold text-[#7D8592]">
                     {enrolledStudents.filter(s => s.status === 'completed').length}
                   </span>
                 </div>
 
                 <div className="flex items-center justify-between">
                   <div className="flex items-center">
-                    <Target className="w-4 h-4 mr-2 text-purple-600" />
-                    <span className="text-sm text-gray-600">Completion Rate</span>
+                    <Target className="w-4 h-4 mr-2 text-[#7D8592]" />
+                    <span className="text-sm text-[#7D8592]">Completion Rate</span>
                   </div>
-                  <span className="font-semibold">
+                  <span className="font-semibold text-[#7D8592]">
                     {course.completion_rate ||
                      Math.round((enrolledStudents.filter(s => s.status === 'completed').length /
-                                Math.max(enrolledStudents.length, 1)) * 100)}%
+                      Math.max(enrolledStudents.length, 1)) * 100)}%
                   </span>
                 </div>
 
@@ -876,10 +876,10 @@ export default function CourseDetailPage() {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center">
                       <Star className="w-4 h-4 mr-2 text-yellow-600" />
-                      <span className="text-sm text-gray-600">Average Rating</span>
+                      <span className="text-sm text-[#7D8592]">Average Rating</span>
                     </div>
                     <div className="flex items-center space-x-1">
-                      <span className="font-semibold">{course.average_rating.toFixed(1)}</span>
+                      <span className="font-semibold text-[#7D8592]">{course.average_rating.toFixed(1)}</span>
                       <Star className="w-3 h-3 text-yellow-500 fill-current" />
                     </div>
                   </div>
@@ -889,9 +889,9 @@ export default function CourseDetailPage() {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center">
                       <DollarSign className="w-4 h-4 mr-2 text-green-600" />
-                      <span className="text-sm text-gray-600">Total Revenue</span>
+                      <span className="text-sm text-[#7D8592]">Total Revenue</span>
                     </div>
-                    <span className="font-semibold">₹{course.total_revenue.toLocaleString()}</span>
+                    <span className="font-semibold text-[#7D8592]">₹{course.total_revenue.toLocaleString()}</span>
                   </div>
                 )}
               </CardContent>
@@ -900,36 +900,36 @@ export default function CourseDetailPage() {
             {/* Course Status */}
             <Card>
               <CardHeader>
-                <CardTitle>Course Status</CardTitle>
+                <CardTitle className="text-[#4f5077]">Course Status</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Status</span>
+                    <span className="text-sm text-[#7D8592]">Status</span>
                     <Badge
                       variant={course.is_active ? "default" : "secondary"}
-                      className={course.is_active ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}
+                      className={course.is_active ? "bg-green-100 text-green-800 rounded" : "bg-red-100 text-red-800 rounded"}
                     >
                       {course.is_active ? "Active" : "Inactive"}
                     </Badge>
                   </div>
 
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Course ID</span>
-                    <span className="text-sm font-mono text-gray-900">{course.id}</span>
+                    <span className="text-sm text-[#7D8592]">Course ID</span>
+                    <span className="text-sm font-mono text-[#7D8592]">{course.id}</span>
                   </div>
 
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Difficulty</span>
-                    <Badge variant="outline" className="text-xs">
+                    <span className="text-sm text-[#7D8592]">Difficulty</span>
+                    <Badge variant="outline" className="text-xs rounded">
                       {course.difficulty_level}
                     </Badge>
                   </div>
 
                   {course.category && (
                     <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600">Category</span>
-                      <Badge variant="secondary" className="text-xs bg-purple-100 text-purple-800">
+                      <span className="text-sm text-[#4f5077]">Category</span>
+                      <Badge variant="secondary" className="text-xs rounded bg-purple-100 text-purple-800">
                         {course.category}
                       </Badge>
                     </div>
@@ -941,51 +941,51 @@ export default function CourseDetailPage() {
             {/* Quick Actions */}
             <Card>
               <CardHeader>
-                <CardTitle>Quick Actions</CardTitle>
+                <CardTitle className="text-[#4f5077]">Quick Actions</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 <Button
                   variant="outline"
-                  className="w-full justify-start"
+                  className="w-full justify-start text-[#7D8592]"
                   onClick={() => router.push(`/dashboard/courses/edit/${courseId}`)}
                 >
-                  <Edit className="w-4 h-4 mr-2" />
+                  <Edit className="w-4 h-4 mr-2 text-[#7D8592]" />
                   Edit Course Details
                 </Button>
 
                 <Button
                   variant="outline"
-                  className="w-full justify-start"
+                  className="w-full justify-start text-[#7D8592]"
                   onClick={() => router.push(`/dashboard/students?course_id=${courseId}`)}
                 >
-                  <Users className="w-4 h-4 mr-2" />
+                  <Users className="w-4 h-4 mr-2 text-[#7D8592]" />
                   View Enrolled Students
                 </Button>
 
                 <Button
                   variant="outline"
-                  className="w-full justify-start"
+                  className="w-full justify-start text-[#7D8592]"
                   onClick={() => router.push(`/dashboard/enrollments?course_id=${courseId}`)}
                 >
-                  <BookOpen className="w-4 h-4 mr-2" />
+                  <BookOpen className="w-4 h-4 mr-2 text-[#7D8592]" />
                   Manage Enrollments
                 </Button>
 
                 <Button
                   variant="outline"
-                  className="w-full justify-start"
+                  className="w-full justify-start text-[#7D8592]"
                   onClick={() => router.push(`/dashboard/curriculum?course_id=${courseId}`)}
                 >
-                  <FileText className="w-4 h-4 mr-2" />
+                  <FileText className="w-4 h-4 mr-2 text-[#7D8592]" />
                   Edit Curriculum
                 </Button>
 
                 <Button
                   variant="outline"
-                  className="w-full justify-start"
+                  className="w-full justify-start text-[#7D8592]"
                   onClick={() => router.push(`/dashboard/analytics?course_id=${courseId}`)}
                 >
-                  <TrendingUp className="w-4 h-4 mr-2" />
+                  <TrendingUp className="w-4 h-4 mr-2 text-[#7D8592]"/>
                   View Analytics
                 </Button>
               </CardContent>

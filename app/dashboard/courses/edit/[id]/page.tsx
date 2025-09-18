@@ -368,8 +368,8 @@ export default function EditCourse() {
         {/* Header with Back Button */}
         <div className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Edit Course</h1>
-            <p className="text-gray-600 mt-1">Update martial arts course details</p>
+            <h1 className="text-3xl font-bold text-[#4f5077]">Edit Course</h1>
+            <p className="text-[#7D8592] mt-1">Update martial arts course details</p>
           </div>
           <Button
             variant="outline"
@@ -377,7 +377,7 @@ export default function EditCourse() {
             className="flex items-center space-x-2"
           >
             <ArrowLeft className="w-4 h-4" />
-            <span>Back to Courses</span>
+            <span className="text-[#7D8592]">Back to Courses</span>
           </Button>
         </div>
 
@@ -388,8 +388,8 @@ export default function EditCourse() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
-                  <Star className="w-5 h-5 text-yellow-500" />
-                  <span>Course Information</span>
+                  <Star className="w-5 h-5 text-[#4f5077]" />
+                  <span className="text-[#4f5077]">Course Information</span>
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
@@ -398,19 +398,21 @@ export default function EditCourse() {
                   <div className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="courseTitle">Course Title *</Label>
+                        <Label htmlFor="courseTitle" className="text-[#7D8592] ">Course Title *</Label>
                         <Input
                           id="courseTitle"
                           value={formData.courseTitle}
                           onChange={(e) => setFormData({ ...formData, courseTitle: e.target.value })}
                           placeholder="e.g., Advanced Kung Fu Training"
+                          className="text-[#7D8592]"
                           required
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="courseCode">Course Code *</Label>
+                        <Label htmlFor="courseCode" className="text-[#7D8592]">Course Code *</Label>
                         <Input
                           id="courseCode"
+                          className="text-[#7D8592]"
                           value={formData.courseCode}
                           onChange={(e) => setFormData({ ...formData, courseCode: e.target.value })}
                           placeholder="e.g., KF-ADV-001"
@@ -420,9 +422,10 @@ export default function EditCourse() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="description">Course Description *</Label>
+                      <Label htmlFor="description" className="text-[#7D8592]">Course Description *</Label>
                       <Textarea
                         id="description"
+                        className="text-[#7D8592]"
                         value={formData.description}
                         onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                         placeholder="Provide a detailed description of the course, what students will learn, and benefits..."
@@ -433,19 +436,19 @@ export default function EditCourse() {
 
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="martialArtsStyle">Martial Arts Style *</Label>
+                        <Label htmlFor="martialArtsStyle" className="text-[#7D8592]">Martial Arts Style *</Label>
                         <Select
                           value={formData.martialArtsStyle}
                           onValueChange={(value) => setFormData({ ...formData, martialArtsStyle: value })}
                           disabled={isLoadingStyles}
                         >
-                          <SelectTrigger className="h-10 px-3 w-full">
+                          <SelectTrigger className="h-10 px-3 w-full text-[#7D8592]">
                             <SelectValue placeholder={isLoadingStyles ? "Loading styles..." : "Select martial arts style"} />
                           </SelectTrigger>
                           <SelectContent>
                             {martialArtsStyles.length > 0 ? (
                               martialArtsStyles.map((style) => (
-                                <SelectItem key={style.id} value={style.id}>
+                                <SelectItem key={style.id} value={style.id} className="text-[#7D8592]">
                                   {style.name}
                                 </SelectItem>
                               ))
@@ -459,42 +462,42 @@ export default function EditCourse() {
                       </div>
 
                       <div className="space-y-2">
-                        <Label htmlFor="difficultyLevel">Difficulty Level *</Label>
+                        <Label htmlFor="difficultyLevel" className="text-[#7D8592]">Difficulty Level *</Label>
                         <Select
                           value={formData.difficultyLevel}
                           onValueChange={(value) => setFormData({ ...formData, difficultyLevel: value })}
                         >
-                          <SelectTrigger className="h-10 px-3 w-full">
+                          <SelectTrigger className="h-10 px-3 w-full text-[#7D8592]">
                             <SelectValue placeholder="Select difficulty level" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="Beginner">Beginner</SelectItem>
-                            <SelectItem value="Intermediate">Intermediate</SelectItem>
-                            <SelectItem value="Advanced">Advanced</SelectItem>
-                            <SelectItem value="Expert">Expert</SelectItem>
+                            <SelectItem value="Beginner" className="text-[#7D8592]">Beginner</SelectItem>
+                            <SelectItem value="Intermediate" className="text-[#7D8592]">Intermediate</SelectItem>
+                            <SelectItem value="Advanced" className="text-[#7D8592]">Advanced</SelectItem>
+                            <SelectItem value="Expert" className="text-[#7D8592]">Expert</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
 
                       <div className="space-y-2">
-                        <Label htmlFor="category">Category *</Label>
+                        <Label htmlFor="category" className="text-[#7D8592]">Category *</Label>
                         <Select
                           value={formData.category}
                           onValueChange={(value) => setFormData({ ...formData, category: value })}
                           disabled={isLoadingCategories}
                         >
-                          <SelectTrigger className="h-10 px-3 w-full">
+                          <SelectTrigger className="h-10 px-3 w-full text-[#7D8592]">
                             <SelectValue placeholder={isLoadingCategories ? "Loading categories..." : "Select category"} />
                           </SelectTrigger>
                           <SelectContent>
                             {categories.length > 0 ? (
                               categories.map((category) => (
-                                <SelectItem key={category.id} value={category.id}>
+                                <SelectItem key={category.id} value={category.id} className="text-[#7D8592]">
                                   {category.name} ({category.course_count} courses)
                                 </SelectItem>
                               ))
                             ) : (
-                              <div className="p-4 text-center text-gray-500">
+                              <div className="p-4 text-center text-[#7D8592]">
                                 <p>No categories available</p>
                               </div>
                             )}
@@ -503,24 +506,24 @@ export default function EditCourse() {
                       </div>
 
                       <div className="space-y-2">
-                        <Label htmlFor="instructor">Assigned Instructor</Label>
+                        <Label htmlFor="instructor" className="text-[#7D8592]">Assigned Instructor</Label>
                         <Select
                           value={formData.instructor}
                           onValueChange={(value) => setFormData({ ...formData, instructor: value })}
                           disabled={isLoadingInstructors}
                         >
-                          <SelectTrigger className="h-10 px-3 w-full">
+                          <SelectTrigger className="h-10 px-3 w-full text-[#7D8592]">
                             <SelectValue placeholder={isLoadingInstructors ? "Loading instructors..." : "Select instructor"} />
                           </SelectTrigger>
                           <SelectContent>
                             {instructors.length > 0 ? (
                               instructors.map((instructor) => (
-                                <SelectItem key={instructor.id} value={instructor.id}>
+                                <SelectItem key={instructor.id} value={instructor.id} className="text-[#7D8592]">
                                   {instructor.name}
                                 </SelectItem>
                               ))
                             ) : (
-                              <div className="p-4 text-center text-gray-500">
+                              <div className="p-4 text-center text-[#7D8592]">
                                 <p className="text-sm">No instructors available</p>
                               </div>
                             )}
@@ -533,15 +536,16 @@ export default function EditCourse() {
                   {/* Student Requirements */}
                   <div className="space-y-4">
                     <h3 className="text-lg font-semibold text-gray-900 flex items-center space-x-2">
-                      <Users className="w-5 h-5" />
-                      <span>Student Requirements</span>
+                      <Users className="w-5 h-5 text-[#4f5077]"/>
+                      <span className="text-[#4f5077]">Student Requirements</span>
                     </h3>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="maxStudents">Maximum Students</Label>
+                        <Label htmlFor="maxStudents" className="text-[#7D8592]">Maximum Students</Label>
                         <Input
                           id="maxStudents"
+                          className="text-[#7D8592]"
                           type="number"
                           value={formData.maxStudents}
                           onChange={(e) => setFormData({ ...formData, maxStudents: e.target.value })}
@@ -551,9 +555,10 @@ export default function EditCourse() {
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="minAge">Minimum Age</Label>
+                        <Label htmlFor="minAge" className="text-[#7D8592]">Minimum Age</Label>
                         <Input
                           id="minAge"
+                          className="text-[#7D8592]"
                           type="number"
                           value={formData.minAge}
                           onChange={(e) => setFormData({ ...formData, minAge: e.target.value })}
@@ -563,9 +568,10 @@ export default function EditCourse() {
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="maxAge">Maximum Age</Label>
+                        <Label htmlFor="maxAge" className="text-[#7D8592]">Maximum Age</Label>
                         <Input
                           id="maxAge"
+                          className="text-[#7D8592]"
                           type="number"
                           value={formData.maxAge}
                           onChange={(e) => setFormData({ ...formData, maxAge: e.target.value })}
@@ -578,10 +584,11 @@ export default function EditCourse() {
 
                     {/* Prerequisites */}
                     <div className="space-y-2">
-                      <Label>Prerequisites</Label>
+                      <Label className="text-[#7D8592]">Prerequisites</Label>
                       <div className="flex space-x-2">
                         <Input
                           value={newPrerequisite}
+                           className="text-[#7D8592]"
                           onChange={(e) => setNewPrerequisite(e.target.value)}
                           placeholder="Add a prerequisite..."
                           onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addPrerequisite())}
@@ -598,7 +605,7 @@ export default function EditCourse() {
                               <button
                                 type="button"
                                 onClick={() => removePrerequisite(index)}
-                                className="ml-1 hover:text-red-500"
+                                className="ml-1 hover:text-red-500 text-[#7D8592]"
                               >
                                 <X className="w-3 h-3" />
                               </button>
@@ -611,14 +618,15 @@ export default function EditCourse() {
 
                   {/* Course Content */}
                   <div className="space-y-4">
-                    <h3 className="text-lg font-semibold text-gray-900">Course Content</h3>
+                    <h3 className="text-lg font-semibold text-[#4f5077]">Course Content</h3>
 
                     <div className="space-y-4">
                       <div className="space-y-2">
-                        <Label htmlFor="syllabus">Course Syllabus</Label>
+                        <Label htmlFor="syllabus" className="text-[#7D8592]">Course Syllabus</Label>
                         <Textarea
                           id="syllabus"
                           value={formData.syllabus}
+                          className="text-[#7D8592]"
                           onChange={(e) => setFormData({ ...formData, syllabus: e.target.value })}
                           placeholder="Outline the course curriculum, modules, techniques to be taught..."
                           rows={4}
@@ -626,10 +634,11 @@ export default function EditCourse() {
                       </div>
 
                       <div className="space-y-2">
-                        <Label htmlFor="equipmentRequired">Equipment Required</Label>
+                        <Label htmlFor="equipmentRequired" className="text-[#7D8592]">Equipment Required</Label>
                         <Textarea
                           id="equipmentRequired"
                           value={formData.equipmentRequired}
+                          className="text-[#7D8592]"
                           onChange={(e) => setFormData({ ...formData, equipmentRequired: e.target.value })}
                           placeholder="List any equipment students need to bring or purchase..."
                           rows={3}
@@ -640,28 +649,30 @@ export default function EditCourse() {
 
                   {/* Media and Resources */}
                   <div className="space-y-4">
-                    <h3 className="text-lg font-semibold text-gray-900">Media & Resources</h3>
+                    <h3 className="text-lg font-semibold text-[#4f5077]">Media & Resources</h3>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="imageUrl">Course Image URL</Label>
+                        <Label htmlFor="imageUrl" className="text-[#7D8592]">Course Image URL</Label>
                         <div className="flex space-x-2">
                           <Input
                             id="imageUrl"
+                            className="text-[#7D8592]"
                             value={formData.imageUrl}
                             onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
                             placeholder="https://example.com/course-image.jpg"
                           />
                           <Button type="button" variant="outline" size="sm">
-                            <Upload className="w-4 h-4" />
+                            <Upload className="w-4 h-4 text-[#7D8592]" />
                           </Button>
                         </div>
                       </div>
 
                       <div className="space-y-2">
-                        <Label htmlFor="videoUrl">Promotional Video URL</Label>
+                        <Label htmlFor="videoUrl" className="text-[#7D8592]">Promotional Video URL</Label>
                         <Input
                           id="videoUrl"
+                          className="text-[#7D8592]"
                           value={formData.videoUrl}
                           onChange={(e) => setFormData({ ...formData, videoUrl: e.target.value })}
                           placeholder="https://youtube.com/watch?v=..."
@@ -675,7 +686,7 @@ export default function EditCourse() {
                     <div className="flex space-x-4">
                       <Button
                         type="submit"
-                        className="bg-yellow-400 hover:bg-yellow-500 text-black px-8"
+                        className="bg-yellow-400 hover:bg-yellow-500 text-[#fff] text-sm px-8"
                         disabled={isSubmitting}
                       >
                         {isSubmitting ? (
@@ -690,6 +701,7 @@ export default function EditCourse() {
                       <Button
                         type="button"
                         variant="outline"
+                        className="text-[#4f5077]"
                         onClick={() => router.push("/dashboard/courses")}
                       >
                         Cancel
@@ -706,23 +718,23 @@ export default function EditCourse() {
             {/* Pricing */}
             <Card>
               <CardHeader>
-                <CardTitle>Pricing & Availability</CardTitle>
+                <CardTitle className="text-[#4f5077]">Pricing & Availability</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="price">Course Price *</Label>
+                  <Label htmlFor="price" className="text-[#7D8592]">Course Price *</Label>
                   <div className="flex space-x-2">
                     <Select
                       value={formData.currency}
                       onValueChange={(value) => setFormData({ ...formData, currency: value })}
                     >
-                      <SelectTrigger className="w-20">
+                      <SelectTrigger className="w-20 text-[#7D8592]">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="INR">INR</SelectItem>
-                        <SelectItem value="USD">USD</SelectItem>
-                        <SelectItem value="EUR">EUR</SelectItem>
+                        <SelectItem value="INR" className="text-[#7D8592]">INR</SelectItem>
+                        <SelectItem value="USD" className="text-[#7D8592]">USD</SelectItem>
+                        <SelectItem value="EUR" className="text-[#7D8592]">EUR</SelectItem>
                       </SelectContent>
                     </Select>
                     <Input
@@ -738,7 +750,7 @@ export default function EditCourse() {
                 </div>
 
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="branchSpecificPricing">Branch-specific pricing</Label>
+                  <Label htmlFor="branchSpecificPricing" className="text-[#7D8592]">Branch-specific pricing</Label>
                   <Switch
                     id="branchSpecificPricing"
                     checked={formData.branchSpecificPricing}
@@ -747,7 +759,7 @@ export default function EditCourse() {
                 </div>
 
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="certificationOffered">Offers Certification</Label>
+                  <Label htmlFor="certificationOffered" className="text-[#7D8592]">Offers Certification</Label>
                   <Switch
                     id="certificationOffered"
                     checked={formData.certificationOffered}
@@ -756,7 +768,7 @@ export default function EditCourse() {
                 </div>
 
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="isActive">Course Active</Label>
+                  <Label htmlFor="isActive" className="text-[#7D8592]">Course Active</Label>
                   <Switch
                     id="isActive"
                     checked={formData.isActive}
@@ -769,32 +781,32 @@ export default function EditCourse() {
             {/* Course Statistics Preview */}
             <Card>
               <CardHeader>
-                <CardTitle>Course Overview</CardTitle>
+                <CardTitle className="text-[#4f5077]">Course Overview</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Max Students:</span>
-                    <span className="font-medium">{formData.maxStudents || '—'}</span>
+                    <span className="text-[#7D8592]">Max Students:</span>
+                    <span className="font-medium text-[#7D8592]">{formData.maxStudents || '—'}</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Age Range:</span>
-                    <span className="font-medium">
+                    <span className="text-[#7D8592]">Age Range:</span>
+                    <span className="font-medium text-[#7D8592]">
                       {formData.minAge || '—'} - {formData.maxAge || '—'} years
                     </span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Price:</span>
-                    <span className="font-medium">
+                    <span className="text-[#7D8592]">Price:</span>
+                    <span className="font-medium text-[#7D8592]">
                       {formData.currency} {formData.price || '—'}
                     </span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Prerequisites:</span>
-                    <span className="font-medium">{prerequisites.length}</span>
+                    <span className="text-[#7D8592]">Prerequisites:</span>
+                    <span className="font-medium text-[#7D8592]">{prerequisites.length}</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Status:</span>
+                    <span className="text-[#7D8592]">Status:</span>
                     <Badge variant={formData.isActive ? "default" : "secondary"}>
                       {formData.isActive ? "Active" : "Inactive"}
                     </Badge>
