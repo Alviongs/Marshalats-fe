@@ -149,9 +149,7 @@ function SuperAdminLoginFormContent() {
       <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-yellow-400 via-yellow-500 to-yellow-600 items-center justify-center relative overflow-hidden">
         <div className="absolute inset-0 bg-black opacity-20"></div>
         <div className="relative z-10 text-center text-white space-y-6 p-8">
-          <div className="w-32 h-32 bg-white bg-opacity-20 rounded-full flex items-center justify-center mx-auto backdrop-blur-sm">
-            <Shield className="w-16 h-16 text-white" />
-          </div>
+         
           <h1 className="text-4xl font-bold">Super Admin Portal</h1>
           <p className="text-xl text-yellow-100">
             Secure access to administrative controls and system management
@@ -165,7 +163,7 @@ function SuperAdminLoginFormContent() {
       </div>
 
       {/* Right Side - Login Form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 bg-white">
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 bg-white mt-[100px]">
         <div className="w-full max-w-md space-y-6">
           {/* Header */}
           <div className="text-center space-y-4">
@@ -174,7 +172,7 @@ function SuperAdminLoginFormContent() {
               <h1 className="text-3xl font-bold text-gray-900">Super Admin</h1>
             </div>
             <div>
-              <h2 className="text-xl font-semibold text-gray-800">Secure Login</h2>
+              
               <p className="text-gray-500 text-sm">Access administrative dashboard with elevated privileges</p>
             </div>
           </div>
@@ -183,18 +181,27 @@ function SuperAdminLoginFormContent() {
           <form onSubmit={handleLogin} className="space-y-6">
             {/* Email Field */}
             <div className="space-y-2">
-              <label htmlFor="email" className="text-sm font-medium text-gray-700">
+              <label htmlFor="email" className="text-sm font-medium ml-[10px] text-gray-700">
                 Super Admin Email *
               </label>
               <div className="relative">
-                <Mail className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+               <div className="absolute left-4 top-1/2 transform -translate-y-1/2">
+                  <svg className="w-6 h-6 text-[#000]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                    />
+                  </svg>
+                </div>
                 <Input
                   id="email"
                   type="email"
                   placeholder="superadmin@example.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="pl-12 py-3 text-base bg-gray-50 border-gray-200 rounded-lg h-12 focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
+                  className="pl-14 py-4 text-base bg-[#F0EDFFCC] border-0 rounded-xl h-14 placeholder:text-gray-500"
                   required
                 />
               </div>
@@ -202,18 +209,27 @@ function SuperAdminLoginFormContent() {
 
             {/* Password Field */}
             <div className="space-y-2">
-              <label htmlFor="password" className="text-sm font-medium text-gray-700">
+              <label htmlFor="password" className="text-sm ml-[10px] font-medium text-gray-700">
                 Admin Password *
               </label>
               <div className="relative">
-                <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+               <div className="absolute left-4 top-1/2 transform -translate-y-1/2">
+                  <svg className="w-6 h-6 text-[#000]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                    />
+                  </svg>
+                </div>
                 <Input
                   id="password"
                   type="password"
                   placeholder="StrongPassword@123"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="pl-12 py-3 text-base bg-gray-50 border-gray-200 rounded-lg h-12 focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
+                  className="pl-14 py-4 text-base bg-[#F0EDFFCC] border-0 rounded-xl h-14 placeholder:text-gray-500"
                   required
                 />
               </div>
@@ -253,7 +269,7 @@ function SuperAdminLoginFormContent() {
             {/* Login Button */}
             <Button
               type="submit"
-              className="w-full bg-yellow-400 hover:bg-yellow-500 text-black font-bold py-3 px-6 rounded-lg text-base h-12 transition-all duration-200 shadow-lg hover:shadow-xl"
+              className="w-full bg-yellow-400 hover:bg-yellow-500 text-[#fff] font-bold py-3 px-6 rounded-lg text-sm h-12 transition-all duration-200 shadow-lg hover:shadow-xl"
               disabled={loading}
             >
               {loading ? (
@@ -270,7 +286,7 @@ function SuperAdminLoginFormContent() {
             </Button>
           </form>
 
-          {/* Quick Links */}
+          {/* Quick 
           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
             <h3 className="font-medium text-yellow-800 mb-2">Admin Resources</h3>
             <div className="space-y-1 text-sm text-yellow-700">
@@ -278,9 +294,9 @@ function SuperAdminLoginFormContent() {
               <p>• Monitor system performance and security</p>
               <p>• Access comprehensive admin tools</p>
             </div>
-          </div>
+          </div>Links */}
 
-          {/* API Information */}
+          {/* API Information
           <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
             <h3 className="font-medium text-gray-800 mb-2">API Endpoint</h3>
             <div className="space-y-1 text-xs text-gray-600 font-mono">
@@ -288,7 +304,7 @@ function SuperAdminLoginFormContent() {
               <p>Response: JWT token (24-hour expiry)</p>
               <p>Required: email, password</p>
             </div>
-          </div>
+          </div> */}
 
           {/* Navigation Links */}
           <div className="flex justify-center space-x-6 text-sm">

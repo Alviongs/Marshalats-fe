@@ -332,7 +332,7 @@ function LoginFormContent() {
             </div>
           </div>
 
-          {/* Debug Information */}
+          {/* Debug Information 
           <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
             <h3 className="font-medium text-gray-700 mb-2 text-sm">Debug Info</h3>
             <div className="space-y-1 text-xs text-gray-600 font-mono">
@@ -340,7 +340,7 @@ function LoginFormContent() {
               <p><strong>Expected Response:</strong> user + access_token</p>
               <p><strong>Role:</strong> student</p>
             </div>
-          </div>
+          </div>*/}
         </div>
       </div>
     </div>

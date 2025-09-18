@@ -152,94 +152,110 @@ export default function PaymentTrackingPage() {
     <div className="min-h-screen bg-gray-50">
       <DashboardHeader currentPage="Payment Tracking" />
 
-      <main className="w-full p-4 lg:p-6">
+      <main className="w-full p-4 lg:p-6 xl:px-12">
         <h1 className="text-2xl font-bold text-gray-900 mb-6">Payment Tracking</h1>
 
-        {/* Filter Bar */}
-        <div className="flex flex-wrap items-center gap-4 mb-6">
-          <Select>
-            <SelectTrigger className="w-48">
-              <SelectValue placeholder="Choose Branch" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="madhapur">Madhapur</SelectItem>
-              <SelectItem value="hitech">Hitech City</SelectItem>
-              <SelectItem value="gachibowli">Gachibowli</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Button className="bg-green-500 hover:bg-green-600 text-white">Send payment alerts</Button>
-
-          <Button className="bg-purple-500 hover:bg-purple-600 text-white">Export Report</Button>
-
-          <div className="flex items-center gap-2 ml-auto">
-            <span className="text-sm text-gray-600">View by:</span>
-            <Select defaultValue="weekly">
-              <SelectTrigger className="w-24">
-                <SelectValue />
+       {/* Filter Bar */}
+        <div className="flex  items-center justify-between border-1 shadow overflow-x-auto p-6 gap-6 mb-0">
+          {/* Branch Select */}
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium text-gray-700">Select Branch:</span>
+            <Select>
+              <SelectTrigger className="w-48 bg-gray-100 text-gray-600 border-0">
+                <SelectValue placeholder="Choose branch" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="weekly">Weekly</SelectItem>
-                <SelectItem value="monthly">Monthly</SelectItem>
-                <SelectItem value="yearly">Yearly</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <span className="text-sm text-gray-600">Filter by:</span>
-            <Select defaultValue="jan-2025">
-              <SelectTrigger className="w-32">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="jan-2025">Jan 2025</SelectItem>
-                <SelectItem value="feb-2025">Feb 2025</SelectItem>
-                <SelectItem value="mar-2025">Mar 2025</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Select defaultValue="april-2025">
-              <SelectTrigger className="w-32">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="april-2025">April 2025</SelectItem>
-                <SelectItem value="may-2025">May 2025</SelectItem>
-                <SelectItem value="june-2025">June 2025</SelectItem>
+                <SelectItem value="madhapur">Madhapur</SelectItem>
+                <SelectItem value="hitech">Hitech City</SelectItem>
+                <SelectItem value="gachibowli">Gachibowli</SelectItem>
               </SelectContent>
             </Select>
           </div>
-        </div>
 
+          {/* Payment Alerts Button */}
+          <Button className="bg-yellow-400 hover:bg-yellow-500  text-[#fff] text-[10px] px-6 py-2 w-[120px] rounded-md shadow-sm">
+            Payment alerts
+          </Button>
+
+          {/* Export Report Button */}
+          <Button className="bg-transparent border border-gray-300  text-[#5A6ACF] text-[10px] w-[120px] hover:bg-gray-100 px-6 py-2 rounded-md">
+            View Report
+          </Button>
+
+          {/* View & Filter Options */}
+        
+            {/* View By */}
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium text-gray-700">View by:</span>
+              <Select defaultValue="weekly">
+                <SelectTrigger className="w-28 bg-gray-100 border-0 text-gray-600">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="weekly">Weekly</SelectItem>
+                  <SelectItem value="monthly">Monthly</SelectItem>
+                  <SelectItem value="yearly">Yearly</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Filter By */}
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium text-gray-700">Filter by:</span>
+              <Select defaultValue="jan-2025">
+                <SelectTrigger className="w-32 bg-gray-100 border-0 text-gray-600">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="jan-2025">Jan 2025</SelectItem>
+                  <SelectItem value="feb-2025">Feb 2025</SelectItem>
+                  <SelectItem value="mar-2025">Mar 2025</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Select defaultValue="april-2025">
+                <SelectTrigger className="w-32 bg-gray-100 border-0 text-gray-600">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="april-2025">April 2025</SelectItem>
+                  <SelectItem value="may-2025">May 2025</SelectItem>
+                  <SelectItem value="june-2025">June 2025</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          
+        </div>
         {/* Payment Table */}
-        <div className="bg-white rounded-lg shadow overflow-x-auto">
+        <div className="bg-white  rounded-b-xl shadow overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-[#000] uppercase tracking-wider">
                   Student Name
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-[#000] uppercase tracking-wider">
                   Course enrolled
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-[#000] uppercase tracking-wider">
                   Invoice Amount
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-[#000] uppercase tracking-wider">
                   Paid Amount
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-[#000] uppercase tracking-wider">
                   Due Amount
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-[#000] uppercase tracking-wider">
                   Payment date
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-[#000] uppercase tracking-wider">
                   Description
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-[#000] uppercase tracking-wider">
                   Status
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-[#000] uppercase tracking-wider">
                   Action Alerts
                 </th>
               </tr>
