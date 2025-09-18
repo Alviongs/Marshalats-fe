@@ -309,27 +309,27 @@ export default function CoachDetailPage() {
     <div className="min-h-screen bg-gray-50">
       <DashboardHeader />
       
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="mx-auto px-4 sm:px-6 xl:px-12 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center justify-between">
-            <div>
-              <div className="flex items-center space-x-4 mb-2">
+            <div className="flex flex-row gap-2 items-center text-[#4F5077]">
+              <div className="flex items-center space-x-4 border-r border-gray-300 pr-4">
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={handleBack}
-                  className="text-gray-600 hover:text-gray-900"
+                  className=" hover:text-gray-900"
                 >
                   <ArrowLeft className="w-4 h-4 mr-2" />
                   Back to Coaches
                 </Button>
-                <div className="text-sm text-gray-500">
+                {/* <div className="text-sm text-gray-500">
                   Dashboard &gt; Coaches &gt; {coach.full_name}
-                </div>
+                </div> */}
               </div>
-              <div className="flex items-center space-x-4">
-                <h1 className="text-3xl font-bold text-gray-900">
+              <div className="flex items-center space-x-4 ml-4">
+                <h1 className="text-3xl font-bold uppercase">
                   {coach.full_name}
                 </h1>
                 <Badge 
@@ -346,7 +346,7 @@ export default function CoachDetailPage() {
               </div>
             </div>
             
-            <Button onClick={handleEdit} className="bg-yellow-400 hover:bg-yellow-500 text-black">
+            <Button onClick={handleEdit} className="bg-yellow-400 hover:bg-yellow-500 text-white">
               <Edit className="w-4 h-4 mr-2" />
               Edit Coach
             </Button>
@@ -359,37 +359,36 @@ export default function CoachDetailPage() {
             {/* Professional Information */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center">
-                  <User className="w-5 h-5 mr-2" />
+                <CardTitle className="flex items-center font-bold text-[#4F5077]">
                   Professional Information
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-6">
+              <CardContent className="space-y-6 text-[#7D8592]">
                 {/* Contact Info */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <h3 className="text-sm font-medium text-gray-900 mb-2 flex items-center">
+                    <h3 className="text-sm font-medium mb-2 flex items-center">
                       <Mail className="w-4 h-4 mr-2" />
                       Email
                     </h3>
-                    <p className="text-sm text-gray-600">{coach.contact_info.email}</p>
+                    <p className="text-sm ">{coach.contact_info.email}</p>
                   </div>
 
                   <div>
-                    <h3 className="text-sm font-medium text-gray-900 mb-2 flex items-center">
+                    <h3 className="text-sm font-medium mb-2 flex items-center">
                       <Phone className="w-4 h-4 mr-2" />
                       Phone
                     </h3>
-                    <p className="text-sm text-gray-600">{coach.contact_info.phone}</p>
+                    <p className="text-sm ">{coach.contact_info.phone}</p>
                   </div>
 
                   {coach.hire_date && (
                     <div>
-                      <h3 className="text-sm font-medium text-gray-900 mb-2 flex items-center">
+                      <h3 className="text-sm font-medium mb-2 flex items-center">
                         <Calendar className="w-4 h-4 mr-2" />
                         Hire Date
                       </h3>
-                      <p className="text-sm text-gray-600">
+                      <p className="text-sm ">
                         {new Date(coach.hire_date).toLocaleDateString('en-US', {
                           year: 'numeric',
                           month: 'long',
@@ -401,15 +400,15 @@ export default function CoachDetailPage() {
 
                   {coach.experience_years && (
                     <div>
-                      <h3 className="text-sm font-medium text-gray-900 mb-1">Experience</h3>
-                      <p className="text-sm text-gray-600">{coach.experience_years} years</p>
+                      <h3 className="text-sm font-medium mb-1">Experience</h3>
+                      <p className="text-sm ">{coach.experience_years} years</p>
                     </div>
                   )}
                 </div>
 
                 {/* Areas of Expertise */}
                 <div>
-                  <h3 className="text-sm font-medium text-gray-900 mb-2 flex items-center">
+                  <h3 className="text-sm font-medium mb-2 flex items-center">
                     <Target className="w-4 h-4 mr-2" />
                     Areas of Expertise
                   </h3>
@@ -425,11 +424,11 @@ export default function CoachDetailPage() {
                 {/* Qualifications */}
                 {coach.qualifications && coach.qualifications.length > 0 && (
                   <div>
-                    <h3 className="text-sm font-medium text-gray-900 mb-2 flex items-center">
+                    <h3 className="text-sm font-medium mb-2 flex items-center">
                       <GraduationCap className="w-4 h-4 mr-2" />
                       Qualifications
                     </h3>
-                    <ul className="text-sm text-gray-600 space-y-1">
+                    <ul className="text-sm  space-y-1">
                       {coach.qualifications.map((qualification, index) => (
                         <li key={index} className="flex items-start">
                           <span className="w-2 h-2 bg-gray-400 rounded-full mt-2 mr-3 flex-shrink-0"></span>
@@ -443,7 +442,7 @@ export default function CoachDetailPage() {
                 {/* Certifications */}
                 {coach.certifications && coach.certifications.length > 0 && (
                   <div>
-                    <h3 className="text-sm font-medium text-gray-900 mb-2 flex items-center">
+                    <h3 className="text-sm font-medium mb-2 flex items-center">
                       <Award className="w-4 h-4 mr-2" />
                       Certifications
                     </h3>
@@ -460,19 +459,19 @@ export default function CoachDetailPage() {
                 {/* Bio */}
                 {coach.bio && (
                   <div>
-                    <h3 className="text-sm font-medium text-gray-900 mb-2">Biography</h3>
-                    <p className="text-sm text-gray-600 leading-relaxed">{coach.bio}</p>
+                    <h3 className="text-sm font-medium mb-2">Biography</h3>
+                    <p className="text-sm  leading-relaxed">{coach.bio}</p>
                   </div>
                 )}
 
                 {/* Address */}
                 {coach.contact_info.address && (
                   <div>
-                    <h3 className="text-sm font-medium text-gray-900 mb-2 flex items-center">
+                    <h3 className="text-sm font-medium mb-2 flex items-center">
                       <MapPin className="w-4 h-4 mr-2" />
                       Address
                     </h3>
-                    <div className="text-sm text-gray-600">
+                    <div className="text-sm ">
                       {coach.contact_info.address.street && <p>{coach.contact_info.address.street}</p>}
                       {(coach.contact_info.address.city || coach.contact_info.address.state || coach.contact_info.address.postal_code) && (
                         <p>
@@ -489,8 +488,8 @@ export default function CoachDetailPage() {
                 {/* Timestamps */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t">
                   <div>
-                    <h3 className="text-sm font-medium text-gray-900 mb-1">Joined</h3>
-                    <p className="text-sm text-gray-600">
+                    <h3 className="text-sm font-medium mb-1">Joined</h3>
+                    <p className="text-sm ">
                       {new Date(coach.created_at).toLocaleDateString('en-US', {
                         year: 'numeric',
                         month: 'long',
@@ -500,8 +499,8 @@ export default function CoachDetailPage() {
                   </div>
 
                   <div>
-                    <h3 className="text-sm font-medium text-gray-900 mb-1">Last Updated</h3>
-                    <p className="text-sm text-gray-600">
+                    <h3 className="text-sm font-medium mb-1">Last Updated</h3>
+                    <p className="text-sm ">
                       {new Date(coach.updated_at).toLocaleDateString('en-US', {
                         year: 'numeric',
                         month: 'long',
@@ -516,12 +515,11 @@ export default function CoachDetailPage() {
             {/* Course Assignments */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center">
-                  <BookOpen className="w-5 h-5 mr-2" />
+                <CardTitle className="flex items-center font-bold text-[#4F5077]">
                   Course Assignments ({coursesLoading ? '...' : courseAssignments.length})
                 </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="text-[#7D8592]">
                 {coursesLoading ? (
                   <div className="space-y-4">
                     {[1, 2].map((i) => (
@@ -546,7 +544,7 @@ export default function CoachDetailPage() {
                     {courseAssignments.map((course) => (
                       <div key={course.id} className="p-4 bg-gray-50 rounded-lg">
                         <div className="flex items-center justify-between mb-2">
-                          <h4 className="font-medium text-gray-900">{course.course_name}</h4>
+                          <h4 className="font-medium">{course.course_name}</h4>
                           <Badge
                             variant="secondary"
                             className={`text-xs ${getStatusColor(course.status)}`}
@@ -555,7 +553,7 @@ export default function CoachDetailPage() {
                           </Badge>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-600">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm ">
                           <div>
                             <span className="font-medium">Level:</span> {course.difficulty_level}
                           </div>
@@ -570,7 +568,7 @@ export default function CoachDetailPage() {
                         </div>
 
                         {course.schedule && (
-                          <div className="mt-2 text-sm text-gray-600">
+                          <div className="mt-2 text-sm ">
                             <span className="font-medium">Schedule:</span> {course.schedule}
                           </div>
                         )}
@@ -584,12 +582,12 @@ export default function CoachDetailPage() {
             {/* Student Assignments */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center">
+                <CardTitle className="flex items-center font-bold text-[#4F5077]">
                   <Users className="w-5 h-5 mr-2" />
                   Student Assignments ({studentsLoading ? '...' : studentAssignments.length})
                 </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="text-[#7D8592]">
                 {studentsLoading ? (
                   <div className="space-y-4">
                     {[1, 2, 3].map((i) => (
@@ -615,7 +613,7 @@ export default function CoachDetailPage() {
                     {studentAssignments.slice(0, 10).map((student) => (
                       <div key={student.id} className="p-4 bg-gray-50 rounded-lg">
                         <div className="flex items-center justify-between mb-2">
-                          <h4 className="font-medium text-gray-900">{student.student_name}</h4>
+                          <h4 className="font-medium">{student.student_name}</h4>
                           <Badge
                             variant="secondary"
                             className={`text-xs ${getStatusColor(student.status)}`}
@@ -624,7 +622,7 @@ export default function CoachDetailPage() {
                           </Badge>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600 mb-3">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm  mb-3">
                           <div>
                             <span className="font-medium">Course:</span> {student.course_name}
                           </div>
@@ -636,7 +634,7 @@ export default function CoachDetailPage() {
 
                         <div className="space-y-2">
                           <div className="flex items-center justify-between text-sm">
-                            <span className="text-gray-600">Progress</span>
+                            <span className="">Progress</span>
                             <span className="font-medium">{student.progress}%</span>
                           </div>
                           <div className="w-full bg-gray-200 rounded-full h-2">
@@ -664,24 +662,23 @@ export default function CoachDetailPage() {
             {/* Performance Metrics */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center">
-                  <TrendingUp className="w-5 h-5 mr-2" />
+                <CardTitle className="flex items-center font-bold text-[#4F5077]">
                   Performance Metrics
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-4 text-[#7D8592]">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center">
-                    <Users className="w-4 h-4 mr-2 text-blue-600" />
-                    <span className="text-sm text-gray-600">Total Students</span>
+                    <Users className="w-4 h-4 mr-2" />
+                    <span className="text-sm ">Total Students</span>
                   </div>
                   <span className="font-semibold">{coach.total_students || studentAssignments.length}</span>
                 </div>
 
                 <div className="flex items-center justify-between">
                   <div className="flex items-center">
-                    <BookOpen className="w-4 h-4 mr-2 text-green-600" />
-                    <span className="text-sm text-gray-600">Active Courses</span>
+                    <BookOpen className="w-4 h-4 mr-2" />
+                    <span className="text-sm">Active Courses</span>
                   </div>
                   <span className="font-semibold">{coach.active_courses || courseAssignments.filter(c => c.status === 'active').length}</span>
                 </div>
@@ -714,12 +711,12 @@ export default function CoachDetailPage() {
             {/* Coach Status */}
             <Card>
               <CardHeader>
-                <CardTitle>Coach Status</CardTitle>
+                <CardTitle className="font-bold text-[#4F5077]">Coach Status</CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="text-[#7D8592]">
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Status</span>
+                    <span className="text-sm">Status</span>
                     <Badge
                       variant={coach.is_active ? "default" : "secondary"}
                       className={coach.is_active ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}
@@ -729,13 +726,13 @@ export default function CoachDetailPage() {
                   </div>
 
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Coach ID</span>
-                    <span className="text-sm font-mono text-gray-900">{coach.id}</span>
+                    <span className="text-sm ">Coach ID</span>
+                    <span className="text-sm font-mono">{coach.id}</span>
                   </div>
 
                   {coach.branch_assignments && coach.branch_assignments.length > 0 && (
                     <div>
-                      <span className="text-sm text-gray-600 block mb-2">Branch Assignments</span>
+                      <span className="text-sm block mb-2">Branch Assignments</span>
                       <div className="space-y-1">
                         {coach.branch_assignments.map((branch, index) => (
                           <Badge key={index} variant="outline" className="text-xs mr-1">
@@ -752,9 +749,9 @@ export default function CoachDetailPage() {
             {/* Quick Actions */}
             <Card>
               <CardHeader>
-                <CardTitle>Quick Actions</CardTitle>
+                <CardTitle className="font-bold text-[#4F5077]">Quick Actions</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3">
+              <CardContent className="space-y-3 text-[#7D8592]">
                 <Button
                   variant="outline"
                   className="w-full justify-start"

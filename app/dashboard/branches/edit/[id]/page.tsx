@@ -66,7 +66,7 @@ export default function EditBranch() {
   const branchId = params.id as string
   const { user } = useAuth()
   const { toast } = useToast()
-  
+
   // Loading states
   const [isLoading, setIsLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -408,7 +408,7 @@ export default function EditBranch() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     if (!validateForm()) {
       return
     }
@@ -443,12 +443,12 @@ export default function EditBranch() {
 
       console.log("Branch updated successfully:", result)
       setShowSuccessPopup(true)
-      
+
       setTimeout(() => {
         setShowSuccessPopup(false)
         router.push("/dashboard/branches")
       }, 2000)
-      
+
     } catch (error) {
       console.error("Error updating branch:", error)
       toast({
@@ -501,303 +501,501 @@ export default function EditBranch() {
     <div className="min-h-screen bg-gray-50">
       <DashboardHeader currentPage="Edit Branch" />
 
-      <main className="w-full p-4 lg:p-6">
+      <main className="w-full p-4 lg:p-6 xl:px-12">
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center space-x-4">
             <Button
               variant="ghost"
               onClick={() => router.push("/dashboard/branches")}
-              className="flex items-center space-x-2 hover:bg-gray-100"
+              className="flex items-center space-x-2 hover:bg-gray-100 text-[#4F5077]"
             >
               <ArrowLeft className="w-4 h-4" />
               <span>Back to Branches</span>
             </Button>
             <div className="w-px h-6 bg-gray-300"></div>
-            <h1 className="text-2xl font-bold text-gray-900">Edit Branch</h1>
+            <h1 className="text-2xl font-bold text-[#4F5077]">Edit Branch</h1>
           </div>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* 2x2 Card Grid Layout */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Top Left Card - Branch & Address Information */}
-            <Card className="h-fit">
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <Building className="w-5 h-5 text-yellow-600" />
-                  <span>Branch & Address Information</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {/* Branch Basic Info */}
-                <div className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="branchName">Branch Name *</Label>
-                      <Input
-                        id="branchName"
-                        value={formData.branch.name}
-                        onChange={(e) => setFormData({
-                          ...formData,
-                          branch: { ...formData.branch, name: e.target.value }
-                        })}
-                        placeholder="Enter branch name"
-                        className={errors.branchName ? "border-red-500" : ""}
-                      />
-                      {errors.branchName && <p className="text-red-500 text-sm">{errors.branchName}</p>}
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="branchCode">Branch Code *</Label>
-                      <Input
-                        id="branchCode"
-                        value={formData.branch.code}
-                        onChange={(e) => setFormData({
-                          ...formData,
-                          branch: { ...formData.branch, code: e.target.value }
-                        })}
-                        placeholder="Enter branch code (e.g., RMA01)"
-                        className={errors.branchCode ? "border-red-500" : ""}
-                      />
-                      {errors.branchCode && <p className="text-red-500 text-sm">{errors.branchCode}</p>}
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="branchEmail">Email *</Label>
-                      <Input
-                        id="branchEmail"
-                        type="email"
-                        value={formData.branch.email}
-                        onChange={(e) => setFormData({
-                          ...formData,
-                          branch: { ...formData.branch, email: e.target.value }
-                        })}
-                        placeholder="Enter branch email"
-                        className={errors.branchEmail ? "border-red-500" : ""}
-                      />
-                      {errors.branchEmail && <p className="text-red-500 text-sm">{errors.branchEmail}</p>}
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="branchPhone">Phone *</Label>
-                      <Input
-                        id="branchPhone"
-                        value={formData.branch.phone}
-                        onChange={(e) => setFormData({
-                          ...formData,
-                          branch: { ...formData.branch, phone: e.target.value }
-                        })}
-                        placeholder="Enter phone number"
-                        className={errors.branchPhone ? "border-red-500" : ""}
-                      />
-                      {errors.branchPhone && <p className="text-red-500 text-sm">{errors.branchPhone}</p>}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Address Section */}
-                <div className="pt-4 border-t">
-                  <div className="flex items-center space-x-2 mb-4">
-                    <MapPin className="w-4 h-4 text-yellow-600" />
-                    <span className="font-medium">Address Details</span>
-                  </div>
-
+          <div className="flex flex-row gap-6">
+            <div className="flex flex-col gap-6 w-full">
+              {/* Top Left Card - Branch & Address Information */}
+              <Card className="h-fit">
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-2 text-[#4F5077]">
+                    <span>Branch & Address Information</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4 text-[#7D8592]">
+                  {/* Branch Basic Info */}
                   <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="addressLine1">Address Line 1 *</Label>
-                      <Input
-                        id="addressLine1"
-                        value={formData.branch.address.line1}
-                        onChange={(e) => setFormData({
-                          ...formData,
-                          branch: {
-                            ...formData.branch,
-                            address: { ...formData.branch.address, line1: e.target.value }
-                          }
-                        })}
-                        placeholder="Enter street address"
-                        className={errors.addressLine1 ? "border-red-500" : ""}
-                      />
-                      {errors.addressLine1 && <p className="text-red-500 text-sm">{errors.addressLine1}</p>}
-                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="branchName">Branch Name *</Label>
+                        <Input
+                          id="branchName"
+                          value={formData.branch.name}
+                          onChange={(e) => setFormData({
+                            ...formData,
+                            branch: { ...formData.branch, name: e.target.value }
+                          })}
+                          placeholder="Enter branch name"
+                          className={errors.branchName ? "border-red-500" : ""}
+                        />
+                        {errors.branchName && <p className="text-red-500 text-sm">{errors.branchName}</p>}
+                      </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="area">Area/Locality</Label>
-                      <Input
-                        id="area"
-                        value={formData.branch.address.area}
-                        onChange={(e) => setFormData({
-                          ...formData,
-                          branch: {
-                            ...formData.branch,
-                            address: { ...formData.branch.address, area: e.target.value }
-                          }
-                        })}
-                        placeholder="Enter area or locality"
-                      />
+                      <div className="space-y-2">
+                        <Label htmlFor="branchCode">Branch Code *</Label>
+                        <Input
+                          id="branchCode"
+                          value={formData.branch.code}
+                          onChange={(e) => setFormData({
+                            ...formData,
+                            branch: { ...formData.branch, code: e.target.value }
+                          })}
+                          placeholder="Enter branch code (e.g., RMA01)"
+                          className={errors.branchCode ? "border-red-500" : ""}
+                        />
+                        {errors.branchCode && <p className="text-red-500 text-sm">{errors.branchCode}</p>}
+                      </div>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="city">City *</Label>
+                        <Label htmlFor="branchEmail">Email *</Label>
                         <Input
-                          id="city"
-                          value={formData.branch.address.city}
+                          id="branchEmail"
+                          type="email"
+                          value={formData.branch.email}
+                          onChange={(e) => setFormData({
+                            ...formData,
+                            branch: { ...formData.branch, email: e.target.value }
+                          })}
+                          placeholder="Enter branch email"
+                          className={errors.branchEmail ? "border-red-500" : ""}
+                        />
+                        {errors.branchEmail && <p className="text-red-500 text-sm">{errors.branchEmail}</p>}
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="branchPhone">Phone *</Label>
+                        <Input
+                          id="branchPhone"
+                          value={formData.branch.phone}
+                          onChange={(e) => setFormData({
+                            ...formData,
+                            branch: { ...formData.branch, phone: e.target.value }
+                          })}
+                          placeholder="Enter phone number"
+                          className={errors.branchPhone ? "border-red-500" : ""}
+                        />
+                        {errors.branchPhone && <p className="text-red-500 text-sm">{errors.branchPhone}</p>}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Address Section */}
+                  <div className="pt-4 border-t">
+                    <div className="flex items-center space-x-2 mb-4">
+                      <span className="font-medium">Address Details</span>
+                    </div>
+
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="addressLine1">Address Line 1 *</Label>
+                        <Input
+                          id="addressLine1"
+                          value={formData.branch.address.line1}
                           onChange={(e) => setFormData({
                             ...formData,
                             branch: {
                               ...formData.branch,
-                              address: { ...formData.branch.address, city: e.target.value }
+                              address: { ...formData.branch.address, line1: e.target.value }
                             }
                           })}
-                          placeholder="Enter city"
-                          className={errors.city ? "border-red-500" : ""}
+                          placeholder="Enter street address"
+                          className={errors.addressLine1 ? "border-red-500" : ""}
                         />
-                        {errors.city && <p className="text-red-500 text-sm">{errors.city}</p>}
+                        {errors.addressLine1 && <p className="text-red-500 text-sm">{errors.addressLine1}</p>}
                       </div>
 
                       <div className="space-y-2">
-                        <Label htmlFor="state">State *</Label>
-                        <Select
-                          value={formData.branch.address.state}
-                          onValueChange={(value) => setFormData({
+                        <Label htmlFor="area">Area/Locality</Label>
+                        <Input
+                          id="area"
+                          value={formData.branch.address.area}
+                          onChange={(e) => setFormData({
                             ...formData,
                             branch: {
                               ...formData.branch,
-                              address: { ...formData.branch.address, state: value }
+                              address: { ...formData.branch.address, area: e.target.value }
                             }
                           })}
-                          disabled={isLoadingStates}
-                        >
-                          <SelectTrigger className={errors.state ? "border-red-500" : ""}>
-                            <SelectValue placeholder={isLoadingStates ? "Loading states..." : "Select state"} />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {states.map((stateData) => (
-                              <SelectItem key={stateData.state} value={stateData.state}>
-                                {stateData.state} ({stateData.location_count} location{stateData.location_count !== 1 ? 's' : ''})
+                          placeholder="Enter area or locality"
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="city">City *</Label>
+                          <Input
+                            id="city"
+                            value={formData.branch.address.city}
+                            onChange={(e) => setFormData({
+                              ...formData,
+                              branch: {
+                                ...formData.branch,
+                                address: { ...formData.branch.address, city: e.target.value }
+                              }
+                            })}
+                            placeholder="Enter city"
+                            className={errors.city ? "border-red-500" : ""}
+                          />
+                          {errors.city && <p className="text-red-500 text-sm">{errors.city}</p>}
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="state">State *</Label>
+                          <Select
+                            value={formData.branch.address.state}
+                            onValueChange={(value) => setFormData({
+                              ...formData,
+                              branch: {
+                                ...formData.branch,
+                                address: { ...formData.branch.address, state: value }
+                              }
+                            })}
+                            disabled={isLoadingStates}
+                          >
+                            <SelectTrigger className={errors.state ? "border-red-500" : ""}>
+                              <SelectValue placeholder={isLoadingStates ? "Loading states..." : "Select state"} />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {states.map((stateData) => (
+                                <SelectItem key={stateData.state} value={stateData.state}>
+                                  {stateData.state} ({stateData.location_count} location{stateData.location_count !== 1 ? 's' : ''})
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          {errors.state && <p className="text-red-500 text-sm">{errors.state}</p>}
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="pincode">Pincode *</Label>
+                          <Input
+                            id="pincode"
+                            value={formData.branch.address.pincode}
+                            onChange={(e) => setFormData({
+                              ...formData,
+                              branch: {
+                                ...formData.branch,
+                                address: { ...formData.branch.address, pincode: e.target.value }
+                              }
+                            })}
+                            placeholder="Enter pincode"
+                            className={errors.pincode ? "border-red-500" : ""}
+                          />
+                          {errors.pincode && <p className="text-red-500 text-sm">{errors.pincode}</p>}
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="country">Country</Label>
+                          <Select
+                            value={formData.branch.address.country}
+                            onValueChange={(value) => setFormData({
+                              ...formData,
+                              branch: {
+                                ...formData.branch,
+                                address: { ...formData.branch.address, country: value }
+                              }
+                            })}
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="India">India</SelectItem>
+                              <SelectItem value="USA">USA</SelectItem>
+                              <SelectItem value="UK">UK</SelectItem>
+                              <SelectItem value="Canada">Canada</SelectItem>
+                              <SelectItem value="Australia">Australia</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  {/* Branch Manager */}
+                  <div className="pt-4 border-t">
+                    <div className="flex items-center space-x-2 mb-4">
+                      <span className="font-medium">Branch Manager</span>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="managerId">Select Branch Manager</Label>
+                      <Select
+                        value={formData.manager_id}
+                        onValueChange={(value) => setFormData({ ...formData, manager_id: value })}
+                        disabled={isLoadingManagers}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder={isLoadingManagers ? "Loading managers..." : "Select a manager"} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {availableManagers.length > 0 ? (
+                            availableManagers.map((manager) => (
+                              <SelectItem key={manager.id} value={manager.id}>
+                                {manager.name}
                               </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        {errors.state && <p className="text-red-500 text-sm">{errors.state}</p>}
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="pincode">Pincode *</Label>
-                        <Input
-                          id="pincode"
-                          value={formData.branch.address.pincode}
-                          onChange={(e) => setFormData({
-                            ...formData,
-                            branch: {
-                              ...formData.branch,
-                              address: { ...formData.branch.address, pincode: e.target.value }
-                            }
-                          })}
-                          placeholder="Enter pincode"
-                          className={errors.pincode ? "border-red-500" : ""}
-                        />
-                        {errors.pincode && <p className="text-red-500 text-sm">{errors.pincode}</p>}
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="country">Country</Label>
-                        <Select
-                          value={formData.branch.address.country}
-                          onValueChange={(value) => setFormData({
-                            ...formData,
-                            branch: {
-                              ...formData.branch,
-                              address: { ...formData.branch.address, country: value }
-                            }
-                          })}
-                        >
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="India">India</SelectItem>
-                            <SelectItem value="USA">USA</SelectItem>
-                            <SelectItem value="UK">UK</SelectItem>
-                            <SelectItem value="Canada">Canada</SelectItem>
-                            <SelectItem value="Australia">Australia</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
+                            ))
+                          ) : (
+                            <div className="p-4 text-center text-gray-500">
+                              <p className="text-sm">No managers available</p>
+                            </div>
+                          )}
+                        </SelectContent>
+                      </Select>
                     </div>
                   </div>
-                </div>
-                {/* Branch Manager */}
-                <div className="pt-4 border-t">
-                  <div className="flex items-center space-x-2 mb-4">
-                    <Users className="w-4 h-4 text-yellow-600" />
-                    <span className="font-medium">Branch Manager</span>
+                </CardContent>
+              </Card>
+              {/* Bottom Left Card - Course & Staff Assignments */}
+              <Card className="h-fit">
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-2 text-[#4F5077]">
+                    <span>Course & Staff Assignments</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6 text-[#7D8592]">
+                  {/* Accessories Available */}
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="accessoriesAvailable"
+                      checked={formData.assignments.accessories_available}
+                      onCheckedChange={(checked) => setFormData({
+                        ...formData,
+                        assignments: { ...formData.assignments, accessories_available: checked }
+                      })}
+                    />
+                    <Label htmlFor="accessoriesAvailable">Accessories Available at Branch</Label>
                   </div>
+
+                  {/* Course Assignments */}
                   <div className="space-y-2">
-                    <Label htmlFor="managerId">Select Branch Manager</Label>
-                    <Select
-                      value={formData.manager_id}
-                      onValueChange={(value) => setFormData({ ...formData, manager_id: value })}
-                      disabled={isLoadingManagers}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder={isLoadingManagers ? "Loading managers..." : "Select a manager"} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {availableManagers.length > 0 ? (
-                          availableManagers.map((manager) => (
-                            <SelectItem key={manager.id} value={manager.id}>
-                              {manager.name}
-                            </SelectItem>
+                    <Label>Assign Courses to Branch</Label>
+                    {isLoadingCourses ? (
+                      <div className="p-4 text-center text-gray-500">
+                        <p className="text-sm">Loading courses...</p>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 gap-3 max-h-40 overflow-y-auto">
+                        {availableCourses.length > 0 ? (
+                          availableCourses.map((course) => (
+                            <div key={course.id} className="flex items-center space-x-2">
+                              <Checkbox
+                                id={`course-assign-${course.id}`}
+                                checked={formData.assignments.courses.includes(course.id)}
+                                onCheckedChange={() => {
+                                  const isSelected = formData.assignments.courses.includes(course.id)
+                                  const updatedCourses = isSelected
+                                    ? formData.assignments.courses.filter(c => c !== course.id)
+                                    : [...formData.assignments.courses, course.id]
+
+                                  setFormData({
+                                    ...formData,
+                                    assignments: {
+                                      ...formData.assignments,
+                                      courses: updatedCourses
+                                    }
+                                  })
+                                }}
+                              />
+                              <Label htmlFor={`course-assign-${course.id}`} className="text-sm cursor-pointer">
+                                {course.name}
+                              </Label>
+                            </div>
                           ))
                         ) : (
                           <div className="p-4 text-center text-gray-500">
-                            <p className="text-sm">No managers available</p>
+                            <p className="text-sm">No courses available</p>
                           </div>
                         )}
-                      </SelectContent>
-                    </Select>
+                      </div>
+                    )}
+
+                    {formData.assignments.courses.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mt-2 max-h-24 overflow-y-auto">
+                        {formData.assignments.courses.map((courseId) => {
+                          const course = availableCourses.find(c => c.id === courseId)
+                          return course ? (
+                            <Badge key={courseId} variant="secondary" className="bg-green-100 text-green-800">
+                              {course.name}
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const updatedCourses = formData.assignments.courses.filter(c => c !== courseId)
+                                  setFormData({
+                                    ...formData,
+                                    assignments: {
+                                      ...formData.assignments,
+                                      courses: updatedCourses
+                                    }
+                                  })
+                                }}
+                                className="ml-2 hover:text-red-600"
+                              >
+                                <X className="w-3 h-3" />
+                              </button>
+                            </Badge>
+                          ) : null
+                        })}
+                      </div>
+                    )}
                   </div>
-                </div>
-              </CardContent>
-            </Card>
 
-            {/* Top Right Card - Operational Details */}
-            <Card className="h-fit">
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <Clock className="w-5 h-5 text-yellow-600" />
-                  <span>Operational Details</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                {/* Courses Offered */}
-                <div className="space-y-2">
-                  <Label>Courses Offered *</Label>
-                  {isLoadingCourses ? (
-                    <div className="p-4 text-center text-gray-500">
-                      <p className="text-sm">Loading courses...</p>
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-1 gap-3 max-h-48 overflow-y-auto">
-                      {availableCourses.length > 0 ? (
-                        availableCourses.map((course) => (
-                          <div key={course.id} className="flex items-center space-x-2">
-                            <Checkbox
-                              id={`course-offered-${course.id}`}
-                              checked={formData.operational_details.courses_offered.includes(course.name)}
-                              onCheckedChange={() => {
-                                const isSelected = formData.operational_details.courses_offered.includes(course.name)
-                                const updatedCourses = isSelected
-                                  ? formData.operational_details.courses_offered.filter(c => c !== course.name)
-                                  : [...formData.operational_details.courses_offered, course.name]
+                  {/* Branch Admins */}
+                  <div className="space-y-2">
+                    <Label>Branch Administrators</Label>
+                    {isLoadingAdmins ? (
+                      <div className="p-4 text-center text-gray-500">
+                        <p className="text-sm">Loading administrators...</p>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 gap-3 max-h-32 overflow-y-auto">
+                        {availableAdmins.length > 0 ? (
+                          availableAdmins.map((admin) => (
+                            <div key={admin.id} className="flex items-center space-x-2">
+                              <Checkbox
+                                id={`admin-${admin.id}`}
+                                checked={formData.assignments.branch_admins.includes(admin.id)}
+                                onCheckedChange={() => {
+                                  const isSelected = formData.assignments.branch_admins.includes(admin.id)
+                                  const updatedAdmins = isSelected
+                                    ? formData.assignments.branch_admins.filter(a => a !== admin.id)
+                                    : [...formData.assignments.branch_admins, admin.id]
 
+                                  setFormData({
+                                    ...formData,
+                                    assignments: {
+                                      ...formData.assignments,
+                                      branch_admins: updatedAdmins
+                                    }
+                                  })
+                                }}
+                              />
+                              <Label htmlFor={`admin-${admin.id}`} className="text-sm cursor-pointer">
+                                {admin.name}
+                              </Label>
+                            </div>
+                          ))
+                        ) : (
+                          <div className="p-4 text-center text-gray-500">
+                            <p className="text-sm">No administrators available</p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {formData.assignments.branch_admins.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {formData.assignments.branch_admins.map((adminId) => {
+                          const admin = availableAdmins.find(a => a.id === adminId)
+                          return admin ? (
+                            <Badge key={adminId} variant="secondary" className="bg-purple-100 text-purple-800">
+                              {admin.name}
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const updatedAdmins = formData.assignments.branch_admins.filter(a => a !== adminId)
+                                  setFormData({
+                                    ...formData,
+                                    assignments: {
+                                      ...formData.assignments,
+                                      branch_admins: updatedAdmins
+                                    }
+                                  })
+                                }}
+                                className="ml-2 hover:text-red-600"
+                              >
+                                <X className="w-3 h-3" />
+                              </button>
+                            </Badge>
+                          ) : null
+                        })}
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+            <div className="flex flex-col gap-6 w-full">
+              {/* Top Right Card - Operational Details */}
+              <Card className="h-fit">
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-2 text-[#4F5077]">
+                    <span>Operational Details</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6 text-[#7D8592]">
+                  {/* Courses Offered */}
+                  <div className="space-y-2">
+                    <Label>Courses Offered *</Label>
+                    {isLoadingCourses ? (
+                      <div className="p-4 text-center text-gray-500">
+                        <p className="text-sm">Loading courses...</p>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 gap-3 max-h-48 overflow-y-auto">
+                        {availableCourses.length > 0 ? (
+                          availableCourses.map((course) => (
+                            <div key={course.id} className="flex items-center space-x-2">
+                              <Checkbox
+                                id={`course-offered-${course.id}`}
+                                checked={formData.operational_details.courses_offered.includes(course.name)}
+                                onCheckedChange={() => {
+                                  const isSelected = formData.operational_details.courses_offered.includes(course.name)
+                                  const updatedCourses = isSelected
+                                    ? formData.operational_details.courses_offered.filter(c => c !== course.name)
+                                    : [...formData.operational_details.courses_offered, course.name]
+
+                                  setFormData({
+                                    ...formData,
+                                    operational_details: {
+                                      ...formData.operational_details,
+                                      courses_offered: updatedCourses
+                                    }
+                                  })
+                                }}
+                              />
+                              <Label htmlFor={`course-offered-${course.id}`} className="text-sm cursor-pointer">
+                                {course.name}
+                              </Label>
+                            </div>
+                          ))
+                        ) : (
+                          <div className="p-4 text-center text-gray-500">
+                            <p className="text-sm">No courses available</p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    {errors.coursesOffered && <p className="text-red-500 text-sm">{errors.coursesOffered}</p>}
+
+                    {formData.operational_details.courses_offered.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {formData.operational_details.courses_offered.map((course) => (
+                          <Badge key={course} variant="secondary" className="bg-yellow-100 text-yellow-800">
+                            {course}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const updatedCourses = formData.operational_details.courses_offered.filter(c => c !== course)
                                 setFormData({
                                   ...formData,
                                   operational_details: {
@@ -806,438 +1004,234 @@ export default function EditBranch() {
                                   }
                                 })
                               }}
-                            />
-                            <Label htmlFor={`course-offered-${course.id}`} className="text-sm cursor-pointer">
-                              {course.name}
-                            </Label>
-                          </div>
-                        ))
-                      ) : (
-                        <div className="p-4 text-center text-gray-500">
-                          <p className="text-sm">No courses available</p>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                  {errors.coursesOffered && <p className="text-red-500 text-sm">{errors.coursesOffered}</p>}
+                              className="ml-2 hover:text-red-600"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+                  </div>
 
-                  {formData.operational_details.courses_offered.length > 0 && (
-                    <div className="flex flex-wrap gap-2 mt-2">
-                      {formData.operational_details.courses_offered.map((course) => (
-                        <Badge key={course} variant="secondary" className="bg-yellow-100 text-yellow-800">
-                          {course}
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const updatedCourses = formData.operational_details.courses_offered.filter(c => c !== course)
-                              setFormData({
-                                ...formData,
-                                operational_details: {
-                                  ...formData.operational_details,
-                                  courses_offered: updatedCourses
-                                }
-                              })
-                            }}
-                            className="ml-2 hover:text-red-600"
+                  {/* Operating Hours - Dynamic */}
+                  <div className="space-y-2">
+                    <Label>Operating Hours</Label>
+
+                    {/* Add New Timing Form */}
+                    <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                      <div className="grid grid-cols-1 md:grid-cols-4 gap-2 items-end">
+                        <div className="space-y-1">
+                          <Label className="text-xs">Day</Label>
+                          <Select
+                            value={newTiming.day}
+                            onValueChange={(value) => setNewTiming(prev => ({ ...prev, day: value }))}
                           >
-                            <X className="w-3 h-3" />
-                          </button>
-                        </Badge>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                {/* Operating Hours - Dynamic */}
-                <div className="space-y-2">
-                  <Label>Operating Hours</Label>
-
-                  {/* Add New Timing Form */}
-                  <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-2 items-end">
-                      <div className="space-y-1">
-                        <Label className="text-xs">Day</Label>
-                        <Select
-                          value={newTiming.day}
-                          onValueChange={(value) => setNewTiming(prev => ({ ...prev, day: value }))}
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select day" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {daysOfWeek.map((day) => (
+                                <SelectItem key={day} value={day}>
+                                  {day}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs">Open Time</Label>
+                          <Input
+                            type="time"
+                            value={newTiming.open}
+                            onChange={(e) => setNewTiming(prev => ({ ...prev, open: e.target.value }))}
+                            className="text-xs"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs">Close Time</Label>
+                          <Input
+                            type="time"
+                            value={newTiming.close}
+                            onChange={(e) => setNewTiming(prev => ({ ...prev, close: e.target.value }))}
+                            className="text-xs"
+                          />
+                        </div>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={addTiming}
+                          disabled={!newTiming.day}
+                          className="bg-yellow-50 hover:bg-yellow-100 border-yellow-300"
                         >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select day" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {daysOfWeek.map((day) => (
-                              <SelectItem key={day} value={day}>
-                                {day}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                          {formData.operational_details.timings.some(t => t.day === newTiming.day) ? 'Update' : 'Add'}
+                        </Button>
                       </div>
-                      <div className="space-y-1">
-                        <Label className="text-xs">Open Time</Label>
-                        <Input
-                          type="time"
-                          value={newTiming.open}
-                          onChange={(e) => setNewTiming(prev => ({ ...prev, open: e.target.value }))}
-                          className="text-xs"
-                        />
+                    </div>
+
+                    {/* Display Added Timings */}
+                    {formData.operational_details.timings.length > 0 && (
+                      <div className="space-y-2 max-h-48 overflow-y-auto">
+                        <Label className="text-sm font-medium">Configured Operating Hours:</Label>
+                        {formData.operational_details.timings.map((timing, index) => (
+                          <div key={`${timing.day}-${index}`} className="grid grid-cols-4 gap-2 items-center p-2 bg-white border rounded">
+                            <div className="font-medium text-sm">{timing.day}</div>
+                            <Input
+                              type="time"
+                              value={timing.open}
+                              onChange={(e) => handleTimingChange(index, 'open', e.target.value)}
+                              className="text-xs"
+                            />
+                            <Input
+                              type="time"
+                              value={timing.close}
+                              onChange={(e) => handleTimingChange(index, 'close', e.target.value)}
+                              className="text-xs"
+                            />
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => removeTiming(index)}
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                            >
+                              <X className="w-3 h-3" />
+                            </Button>
+                          </div>
+                        ))}
                       </div>
-                      <div className="space-y-1">
-                        <Label className="text-xs">Close Time</Label>
-                        <Input
-                          type="time"
-                          value={newTiming.close}
-                          onChange={(e) => setNewTiming(prev => ({ ...prev, close: e.target.value }))}
-                          className="text-xs"
-                        />
-                      </div>
+                    )}
+
+                    {formData.operational_details.timings.length === 0 && (
+                      <p className="text-sm text-gray-500 italic">No operating hours configured yet. Add days and times above.</p>
+                    )}
+                  </div>
+
+                  {/* Holidays */}
+                  <div className="space-y-2">
+                    <Label>Holidays</Label>
+                    <div className="flex space-x-2">
+                      <Input
+                        type="date"
+                        id="holidayDate"
+                        className="text-sm"
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault()
+                            const input = e.target as HTMLInputElement
+                            addHoliday(input.value)
+                            input.value = ''
+                          }
+                        }}
+                      />
                       <Button
                         type="button"
                         variant="outline"
                         size="sm"
-                        onClick={addTiming}
-                        disabled={!newTiming.day}
-                        className="bg-yellow-50 hover:bg-yellow-100 border-yellow-300"
-                      >
-                        {formData.operational_details.timings.some(t => t.day === newTiming.day) ? 'Update' : 'Add'}
-                      </Button>
-                    </div>
-                  </div>
-
-                  {/* Display Added Timings */}
-                  {formData.operational_details.timings.length > 0 && (
-                    <div className="space-y-2 max-h-48 overflow-y-auto">
-                      <Label className="text-sm font-medium">Configured Operating Hours:</Label>
-                      {formData.operational_details.timings.map((timing, index) => (
-                        <div key={`${timing.day}-${index}`} className="grid grid-cols-4 gap-2 items-center p-2 bg-white border rounded">
-                          <div className="font-medium text-sm">{timing.day}</div>
-                          <Input
-                            type="time"
-                            value={timing.open}
-                            onChange={(e) => handleTimingChange(index, 'open', e.target.value)}
-                            className="text-xs"
-                          />
-                          <Input
-                            type="time"
-                            value={timing.close}
-                            onChange={(e) => handleTimingChange(index, 'close', e.target.value)}
-                            className="text-xs"
-                          />
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => removeTiming(index)}
-                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                          >
-                            <X className="w-3 h-3" />
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {formData.operational_details.timings.length === 0 && (
-                    <p className="text-sm text-gray-500 italic">No operating hours configured yet. Add days and times above.</p>
-                  )}
-                </div>
-
-                {/* Holidays */}
-                <div className="space-y-2">
-                  <Label>Holidays</Label>
-                  <div className="flex space-x-2">
-                    <Input
-                      type="date"
-                      id="holidayDate"
-                      className="text-sm"
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault()
-                          const input = e.target as HTMLInputElement
+                        onClick={() => {
+                          const input = document.getElementById('holidayDate') as HTMLInputElement
                           addHoliday(input.value)
                           input.value = ''
-                        }
-                      }}
+                        }}
+                      >
+                        Add
+                      </Button>
+                    </div>
+
+                    {formData.operational_details.holidays.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mt-2 max-h-24 overflow-y-auto">
+                        {formData.operational_details.holidays.map((holiday, index) => (
+                          <Badge key={holiday} variant="secondary" className="bg-blue-100 text-blue-800">
+                            {holiday}
+                            <button
+                              type="button"
+                              onClick={() => removeHoliday(index)}
+                              className="ml-2 hover:text-red-600"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+              {/* Bottom Right Card - Bank Details */}
+              <Card className="h-fit">
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-2 text-[#4F5077]">
+                    <span>Bank Details</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4 text-[#7D8592]">
+                  <div className="space-y-2">
+                    <Label htmlFor="bankName">Bank Name</Label>
+                    <Input
+                      id="bankName"
+                      value={formData.bank_details.bank_name}
+                      onChange={(e) => setFormData({
+                        ...formData,
+                        bank_details: { ...formData.bank_details, bank_name: e.target.value }
+                      })}
+                      placeholder="Enter bank name"
                     />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        const input = document.getElementById('holidayDate') as HTMLInputElement
-                        addHoliday(input.value)
-                        input.value = ''
-                      }}
-                    >
-                      Add
-                    </Button>
                   </div>
 
-                  {formData.operational_details.holidays.length > 0 && (
-                    <div className="flex flex-wrap gap-2 mt-2 max-h-24 overflow-y-auto">
-                      {formData.operational_details.holidays.map((holiday, index) => (
-                        <Badge key={holiday} variant="secondary" className="bg-blue-100 text-blue-800">
-                          {holiday}
-                          <button
-                            type="button"
-                            onClick={() => removeHoliday(index)}
-                            className="ml-2 hover:text-red-600"
-                          >
-                            <X className="w-3 h-3" />
-                          </button>
-                        </Badge>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Bottom Left Card - Course & Staff Assignments */}
-            <Card className="h-fit">
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <Users className="w-5 h-5 text-yellow-600" />
-                  <span>Course & Staff Assignments</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                {/* Accessories Available */}
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="accessoriesAvailable"
-                    checked={formData.assignments.accessories_available}
-                    onCheckedChange={(checked) => setFormData({
-                      ...formData,
-                      assignments: { ...formData.assignments, accessories_available: checked }
-                    })}
-                  />
-                  <Label htmlFor="accessoriesAvailable">Accessories Available at Branch</Label>
-                </div>
-
-                {/* Course Assignments */}
-                <div className="space-y-2">
-                  <Label>Assign Courses to Branch</Label>
-                  {isLoadingCourses ? (
-                    <div className="p-4 text-center text-gray-500">
-                      <p className="text-sm">Loading courses...</p>
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-1 gap-3 max-h-40 overflow-y-auto">
-                      {availableCourses.length > 0 ? (
-                        availableCourses.map((course) => (
-                          <div key={course.id} className="flex items-center space-x-2">
-                            <Checkbox
-                              id={`course-assign-${course.id}`}
-                              checked={formData.assignments.courses.includes(course.id)}
-                              onCheckedChange={() => {
-                                const isSelected = formData.assignments.courses.includes(course.id)
-                                const updatedCourses = isSelected
-                                  ? formData.assignments.courses.filter(c => c !== course.id)
-                                  : [...formData.assignments.courses, course.id]
-
-                                setFormData({
-                                  ...formData,
-                                  assignments: {
-                                    ...formData.assignments,
-                                    courses: updatedCourses
-                                  }
-                                })
-                              }}
-                            />
-                            <Label htmlFor={`course-assign-${course.id}`} className="text-sm cursor-pointer">
-                              {course.name}
-                            </Label>
-                          </div>
-                        ))
-                      ) : (
-                        <div className="p-4 text-center text-gray-500">
-                          <p className="text-sm">No courses available</p>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {formData.assignments.courses.length > 0 && (
-                    <div className="flex flex-wrap gap-2 mt-2 max-h-24 overflow-y-auto">
-                      {formData.assignments.courses.map((courseId) => {
-                        const course = availableCourses.find(c => c.id === courseId)
-                        return course ? (
-                          <Badge key={courseId} variant="secondary" className="bg-green-100 text-green-800">
-                            {course.name}
-                            <button
-                              type="button"
-                              onClick={() => {
-                                const updatedCourses = formData.assignments.courses.filter(c => c !== courseId)
-                                setFormData({
-                                  ...formData,
-                                  assignments: {
-                                    ...formData.assignments,
-                                    courses: updatedCourses
-                                  }
-                                })
-                              }}
-                              className="ml-2 hover:text-red-600"
-                            >
-                              <X className="w-3 h-3" />
-                            </button>
-                          </Badge>
-                        ) : null
+                  <div className="space-y-2">
+                    <Label htmlFor="accountNumber">Account Number</Label>
+                    <Input
+                      id="accountNumber"
+                      value={formData.bank_details.account_number}
+                      onChange={(e) => setFormData({
+                        ...formData,
+                        bank_details: { ...formData.bank_details, account_number: e.target.value }
                       })}
-                    </div>
-                  )}
-                </div>
+                      placeholder="Enter account number"
+                    />
+                  </div>
 
-                {/* Branch Admins */}
-                <div className="space-y-2">
-                  <Label>Branch Administrators</Label>
-                  {isLoadingAdmins ? (
-                    <div className="p-4 text-center text-gray-500">
-                      <p className="text-sm">Loading administrators...</p>
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-1 gap-3 max-h-32 overflow-y-auto">
-                      {availableAdmins.length > 0 ? (
-                        availableAdmins.map((admin) => (
-                          <div key={admin.id} className="flex items-center space-x-2">
-                            <Checkbox
-                              id={`admin-${admin.id}`}
-                              checked={formData.assignments.branch_admins.includes(admin.id)}
-                              onCheckedChange={() => {
-                                const isSelected = formData.assignments.branch_admins.includes(admin.id)
-                                const updatedAdmins = isSelected
-                                  ? formData.assignments.branch_admins.filter(a => a !== admin.id)
-                                  : [...formData.assignments.branch_admins, admin.id]
-
-                                setFormData({
-                                  ...formData,
-                                  assignments: {
-                                    ...formData.assignments,
-                                    branch_admins: updatedAdmins
-                                  }
-                                })
-                              }}
-                            />
-                            <Label htmlFor={`admin-${admin.id}`} className="text-sm cursor-pointer">
-                              {admin.name}
-                            </Label>
-                          </div>
-                        ))
-                      ) : (
-                        <div className="p-4 text-center text-gray-500">
-                          <p className="text-sm">No administrators available</p>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {formData.assignments.branch_admins.length > 0 && (
-                    <div className="flex flex-wrap gap-2 mt-2">
-                      {formData.assignments.branch_admins.map((adminId) => {
-                        const admin = availableAdmins.find(a => a.id === adminId)
-                        return admin ? (
-                          <Badge key={adminId} variant="secondary" className="bg-purple-100 text-purple-800">
-                            {admin.name}
-                            <button
-                              type="button"
-                              onClick={() => {
-                                const updatedAdmins = formData.assignments.branch_admins.filter(a => a !== adminId)
-                                setFormData({
-                                  ...formData,
-                                  assignments: {
-                                    ...formData.assignments,
-                                    branch_admins: updatedAdmins
-                                  }
-                                })
-                              }}
-                              className="ml-2 hover:text-red-600"
-                            >
-                              <X className="w-3 h-3" />
-                            </button>
-                          </Badge>
-                        ) : null
+                  <div className="space-y-2">
+                    <Label htmlFor="upiId">UPI ID</Label>
+                    <Input
+                      id="upiId"
+                      value={formData.bank_details.upi_id}
+                      onChange={(e) => setFormData({
+                        ...formData,
+                        bank_details: { ...formData.bank_details, upi_id: e.target.value }
                       })}
-                    </div>
+                      placeholder="Enter UPI ID"
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+              {/* Submit Button */}
+              <div className="flex justify-end space-x-4 pt-6 border-t">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => router.push("/dashboard/branches")}
+                  className="px-6 py-2"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  className="bg-yellow-400 hover:bg-yellow-500 text-white px-6 py-2"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Updating Branch...
+                    </>
+                  ) : (
+                    'Update Branch'
                   )}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Bottom Right Card - Bank Details */}
-            <Card className="h-fit">
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <CreditCard className="w-5 h-5 text-yellow-600" />
-                  <span>Bank Details</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="bankName">Bank Name</Label>
-                  <Input
-                    id="bankName"
-                    value={formData.bank_details.bank_name}
-                    onChange={(e) => setFormData({
-                      ...formData,
-                      bank_details: { ...formData.bank_details, bank_name: e.target.value }
-                    })}
-                    placeholder="Enter bank name"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="accountNumber">Account Number</Label>
-                  <Input
-                    id="accountNumber"
-                    value={formData.bank_details.account_number}
-                    onChange={(e) => setFormData({
-                      ...formData,
-                      bank_details: { ...formData.bank_details, account_number: e.target.value }
-                    })}
-                    placeholder="Enter account number"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="upiId">UPI ID</Label>
-                  <Input
-                    id="upiId"
-                    value={formData.bank_details.upi_id}
-                    onChange={(e) => setFormData({
-                      ...formData,
-                      bank_details: { ...formData.bank_details, upi_id: e.target.value }
-                    })}
-                    placeholder="Enter UPI ID"
-                  />
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Submit Button */}
-          <div className="flex justify-end space-x-4 pt-6 border-t">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => router.push("/dashboard/branches")}
-              className="px-6 py-2"
-            >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              className="bg-yellow-400 hover:bg-yellow-500 text-black px-6 py-2"
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Updating Branch...
-                </>
-              ) : (
-                'Update Branch'
-              )}
-            </Button>
+                </Button>
+              </div>
+            </div>
           </div>
         </form>
 

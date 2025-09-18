@@ -264,27 +264,27 @@ export default function BranchDetailPage() {
     <div className="min-h-screen bg-gray-50">
       <DashboardHeader />
       
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="xl:px-12 mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center justify-between">
-            <div>
-              <div className="flex items-center space-x-4 mb-2">
+            <div className="flex flex-row gap-1 items-center">
+              <div className="flex space-x-4 border-r border-gray-200 pr-2">
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={handleBack}
-                  className="text-gray-600 hover:text-gray-900"
+                  className="text-gray-600 hover:text-[#4F5077]"
                 >
                   <ArrowLeft className="w-4 h-4 mr-2" />
                   Back to Branches
                 </Button>
-                <div className="text-sm text-gray-500">
+                {/* <div className="text-sm text-gray-500">
                   Dashboard &gt; Branches &gt; {branch.branch.name}
-                </div>
+                </div> */}
               </div>
-              <div className="flex items-center space-x-4">
-                <h1 className="text-3xl font-bold text-gray-900">
+              <div className="flex items-center space-x-4 pl-4">
+                <h1 className="text-3xl font-bold text-[#4F5077] uppercase">
                   {branch.branch.name}
                 </h1>
                 <Badge 
@@ -296,7 +296,7 @@ export default function BranchDetailPage() {
               </div>
             </div>
             
-            <Button onClick={handleEdit} className="bg-yellow-400 hover:bg-yellow-500 text-black">
+            <Button onClick={handleEdit} className="bg-yellow-400 hover:bg-yellow-500 text-white">
               <Edit className="w-4 h-4 mr-2" />
               Edit Branch
             </Button>
@@ -309,19 +309,18 @@ export default function BranchDetailPage() {
             {/* Branch Information */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Building2 className="w-5 h-5 mr-2" />
+                <CardTitle className="flex items-center text-[#4F5077] font-bold">
                   Branch Information
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-6">
+              <CardContent className="space-y-6 text-[#7D8592]">
                 {/* Address */}
                 <div>
-                  <h3 className="text-sm font-medium text-gray-900 mb-2 flex items-center">
+                  <h3 className="text-sm font-medium mb-2 flex items-center">
                     <MapPin className="w-4 h-4 mr-2" />
                     Address
                   </h3>
-                  <div className="text-sm text-gray-600">
+                  <div className="text-sm">
                     <p>{branch.branch.address.street}</p>
                     <p>{branch.branch.address.city}, {branch.branch.address.state} {branch.branch.address.postal_code}</p>
                     <p>{branch.branch.address.country}</p>
@@ -331,31 +330,31 @@ export default function BranchDetailPage() {
                 {/* Contact Information */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <h3 className="text-sm font-medium text-gray-900 mb-2 flex items-center">
+                    <h3 className="text-sm font-medium mb-2 flex items-center">
                       <Phone className="w-4 h-4 mr-2" />
                       Phone
                     </h3>
-                    <p className="text-sm text-gray-600">{branch.branch.phone || 'Not provided'}</p>
+                    <p className="text-sm">{branch.branch.phone || 'Not provided'}</p>
                   </div>
                   
                   {branch.branch.email && (
                     <div>
-                      <h3 className="text-sm font-medium text-gray-900 mb-2 flex items-center">
+                      <h3 className="text-sm font-medium mb-2 flex items-center">
                         <Mail className="w-4 h-4 mr-2" />
                         Email
                       </h3>
-                      <p className="text-sm text-gray-600">{branch.branch.email}</p>
+                      <p className="text-sm">{branch.branch.email}</p>
                     </div>
                   )}
                 </div>
 
                 {/* Operating Hours */}
                 <div>
-                  <h3 className="text-sm font-medium text-gray-900 mb-2 flex items-center">
+                  <h3 className="text-sm font-medium mb-2 flex items-center">
                     <Clock className="w-4 h-4 mr-2" />
                     Operating Hours
                   </h3>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm">
                     {formatOperatingHours(branch.branch.operating_hours)}
                   </p>
                 </div>
@@ -363,8 +362,8 @@ export default function BranchDetailPage() {
                 {/* Timestamps */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t">
                   <div>
-                    <h3 className="text-sm font-medium text-gray-900 mb-1">Created</h3>
-                    <p className="text-sm text-gray-600">
+                    <h3 className="text-sm font-medium mb-1">Created</h3>
+                    <p className="text-sm">
                       {new Date(branch.created_at).toLocaleDateString('en-US', {
                         year: 'numeric',
                         month: 'long',
@@ -376,8 +375,8 @@ export default function BranchDetailPage() {
                   </div>
                   
                   <div>
-                    <h3 className="text-sm font-medium text-gray-900 mb-1">Last Updated</h3>
-                    <p className="text-sm text-gray-600">
+                    <h3 className="text-sm font-medium mb-1">Last Updated</h3>
+                    <p className="text-sm">
                       {new Date(branch.updated_at).toLocaleDateString('en-US', {
                         year: 'numeric',
                         month: 'long',
@@ -394,9 +393,8 @@ export default function BranchDetailPage() {
             {/* Courses at this Branch */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <BookOpen className="w-5 h-5 mr-2" />
+                <CardTitle className="flex items-center justify-between text-[#4F5077]">
+                  <div className="flex items-center font-bold">
                     Courses ({courses.length})
                   </div>
                   <Button
@@ -408,10 +406,10 @@ export default function BranchDetailPage() {
                   </Button>
                 </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="text-[#7D8592]">
                 {courses.length === 0 ? (
-                  <div className="text-center py-8 text-gray-500">
-                    <BookOpen className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                  <div className="text-center py-8">
+                    <BookOpen className="w-12 h-12 mx-auto mb-4" />
                     <p>No courses assigned to this branch yet</p>
                   </div>
                 ) : (
@@ -419,7 +417,7 @@ export default function BranchDetailPage() {
                     {courses.slice(0, 5).map((course) => (
                       <div key={course.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                         <div>
-                          <h4 className="font-medium text-gray-900">{course.name}</h4>
+                          <h4 className="font-medium">{course.name}</h4>
                           <div className="flex items-center space-x-4 mt-1">
                             <Badge variant="secondary" className="text-xs">
                               {course.difficulty_level}
@@ -438,6 +436,7 @@ export default function BranchDetailPage() {
                           variant="ghost"
                           size="sm"
                           onClick={() => router.push(`/dashboard/courses/${course.id}`)}
+                          className="border border-gray-200"
                         >
                           View
                         </Button>
@@ -456,9 +455,8 @@ export default function BranchDetailPage() {
             {/* Coaches at this Branch */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <Users className="w-5 h-5 mr-2" />
+                <CardTitle className="flex items-center justify-between text-[#4F5077]">
+                  <div className="flex items-center font-bold">
                     Coaches ({coaches.length})
                   </div>
                   <Button
@@ -479,11 +477,11 @@ export default function BranchDetailPage() {
                 ) : (
                   <div className="space-y-4">
                     {coaches.slice(0, 5).map((coach) => (
-                      <div key={coach.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                      <div key={coach.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg text-[#7D8592]">
                         <div>
-                          <h4 className="font-medium text-gray-900">{coach.full_name}</h4>
+                          <h4 className="font-medium">{coach.full_name}</h4>
                           <div className="flex items-center space-x-4 mt-1">
-                            <span className="text-sm text-gray-600">{coach.contact_info.email}</span>
+                            <span className="text-sm">{coach.contact_info.email}</span>
                             <Badge
                               variant={coach.is_active ? "default" : "secondary"}
                               className={`text-xs ${coach.is_active ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}`}
@@ -494,7 +492,7 @@ export default function BranchDetailPage() {
                           {coach.areas_of_expertise.length > 0 && (
                             <div className="flex flex-wrap gap-1 mt-2">
                               {coach.areas_of_expertise.slice(0, 3).map((expertise, index) => (
-                                <Badge key={index} variant="outline" className="text-xs">
+                                <Badge key={index} variant="outline" className="text-xs rounded bg-[#D9D9D9] text-[#7D8592]">
                                   {expertise}
                                 </Badge>
                               ))}
@@ -510,6 +508,7 @@ export default function BranchDetailPage() {
                           variant="ghost"
                           size="sm"
                           onClick={() => router.push(`/dashboard/coaches/${coach.id}`)}
+                          className="border border-gray-200"
                         >
                           View
                         </Button>
@@ -531,32 +530,31 @@ export default function BranchDetailPage() {
             {/* Quick Stats */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center">
-                  <TrendingUp className="w-5 h-5 mr-2" />
+                <CardTitle className="flex items-center text-[#4F5077] font-bold">
                   Quick Stats
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-4 text-[#7D8592]">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center">
-                    <Users className="w-4 h-4 mr-2 text-blue-600" />
-                    <span className="text-sm text-gray-600">Total Students</span>
+                    <Users className="w-4 h-4 mr-2" />
+                    <span className="text-sm">Total Students</span>
                   </div>
                   <span className="font-semibold">{branch.total_students || 0}</span>
                 </div>
 
                 <div className="flex items-center justify-between">
                   <div className="flex items-center">
-                    <Users className="w-4 h-4 mr-2 text-green-600" />
-                    <span className="text-sm text-gray-600">Active Coaches</span>
+                    <Users className="w-4 h-4 mr-2" />
+                    <span className="text-sm">Active Coaches</span>
                   </div>
                   <span className="font-semibold">{coaches.filter(c => c.is_active).length}</span>
                 </div>
 
                 <div className="flex items-center justify-between">
                   <div className="flex items-center">
-                    <BookOpen className="w-4 h-4 mr-2 text-purple-600" />
-                    <span className="text-sm text-gray-600">Active Courses</span>
+                    <BookOpen className="w-4 h-4 mr-2" />
+                    <span className="text-sm">Active Courses</span>
                   </div>
                   <span className="font-semibold">{courses.length}</span>
                 </div>
@@ -564,8 +562,8 @@ export default function BranchDetailPage() {
                 {branch.monthly_revenue && (
                   <div className="flex items-center justify-between">
                     <div className="flex items-center">
-                      <DollarSign className="w-4 h-4 mr-2 text-yellow-600" />
-                      <span className="text-sm text-gray-600">Monthly Revenue</span>
+                      <DollarSign className="w-4 h-4 mr-2" />
+                      <span className="text-sm">Monthly Revenue</span>
                     </div>
                     <span className="font-semibold">₹{branch.monthly_revenue.toLocaleString()}</span>
                   </div>
@@ -576,12 +574,12 @@ export default function BranchDetailPage() {
             {/* Branch Status */}
             <Card>
               <CardHeader>
-                <CardTitle>Branch Status</CardTitle>
+                <CardTitle className="text-[#4F5077]">Branch Status</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-3">
+                <div className="space-y-3 text-[#7D8592]">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Status</span>
+                    <span className="text-sm">Status</span>
                     <Badge
                       variant={branch.is_active ? "default" : "secondary"}
                       className={branch.is_active ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}
@@ -591,8 +589,8 @@ export default function BranchDetailPage() {
                   </div>
 
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Branch ID</span>
-                    <span className="text-sm font-mono text-gray-900">{branch.id}</span>
+                    <span className="text-sm">Branch ID</span>
+                    <span className="text-sm font-mono">{branch.id}</span>
                   </div>
                 </div>
               </CardContent>
@@ -601,9 +599,9 @@ export default function BranchDetailPage() {
             {/* Quick Actions */}
             <Card>
               <CardHeader>
-                <CardTitle>Quick Actions</CardTitle>
+                <CardTitle className="text-[#4F5077]">Quick Actions</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3">
+              <CardContent className="space-y-3 text-[#7D8592]">
                 <Button
                   variant="outline"
                   className="w-full justify-start"

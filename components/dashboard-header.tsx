@@ -366,7 +366,7 @@ export default function DashboardHeader({ currentPage = "Dashboard" }: Dashboard
               </button>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="mb-2 text-gray-600 hover:text-gray-800 p-2 cursor-pointer rounded-lg hover:bg-gray-100/80 transition-all duration-200 hover:shadow-sm">
+                  <button className="mb-3 text-gray-600 hover:text-gray-800 p-2 cursor-pointer rounded-lg hover:bg-gray-100/80 transition-all duration-200 hover:shadow-sm">
                     <MoreVertical className="w-5 h-5" />
                   </button>
                 </DropdownMenuTrigger>
