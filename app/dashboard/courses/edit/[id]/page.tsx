@@ -364,7 +364,7 @@ export default function EditCourse() {
     <div className="min-h-screen bg-gray-50">
       <DashboardHeader currentPage="Edit Course" />
 
-      <main className="w-full p-4 lg:p-6">
+      <main className="w-full p-4 lg:p-6 xl:px-12">
         {/* Header with Back Button */}
         <div className="flex justify-between items-center mb-8">
           <div>
@@ -388,7 +388,7 @@ export default function EditCourse() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
-                  <Star className="w-5 h-5 text-[#4f5077]" />
+                 
                   <span className="text-[#4f5077]">Course Information</span>
                 </CardTitle>
               </CardHeader>
@@ -536,7 +536,7 @@ export default function EditCourse() {
                   {/* Student Requirements */}
                   <div className="space-y-4">
                     <h3 className="text-lg font-semibold text-gray-900 flex items-center space-x-2">
-                      <Users className="w-5 h-5 text-[#4f5077]"/>
+                     
                       <span className="text-[#4f5077]">Student Requirements</span>
                     </h3>
 

@@ -437,7 +437,7 @@ export default function CourseDetailPage() {
     <div className="min-h-screen bg-gray-50">
       <DashboardHeader />
       
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="xl:px-12 mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center justify-between">
@@ -491,7 +491,7 @@ export default function CourseDetailPage() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center">
-                  <BookOpen className="w-5 h-5 mr-2 text-[#4f5077]" />
+                  
                   <span className="text-[#4f5077]">Course Information</span> 
                 </CardTitle>
               </CardHeader>
@@ -648,7 +648,7 @@ export default function CourseDetailPage() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center">
-                  <FileText className="w-5 h-5 mr-2 text-[#4f5077]" />
+                  
                  <span className="text-[#4f5077]">Course Curriculum ({courseModules.length} modules)</span> 
                 </CardTitle>
               </CardHeader>
@@ -723,7 +723,7 @@ export default function CourseDetailPage() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center">
-                  <Users className="w-5 h-5 mr-2 text-[#4f5077]" />
+                
                   <span className="text-[#4f5077]">Enrolled Students ({enrolledStudents.length})</span>
                 </CardTitle>
               </CardHeader>
@@ -793,7 +793,7 @@ export default function CourseDetailPage() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center">
-                  <Star className="w-5 h-5 mr-2 text-[#4f5077]" />
+                  
                   <span className="text-[#4f5077]"> Student Reviews ({courseReviews.length})</span>
                 </CardTitle>
               </CardHeader>
@@ -837,7 +837,6 @@ export default function CourseDetailPage() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center">
-                  <TrendingUp className="w-5 h-5 mr-2 text-[#4f5077]" />
                    <span className="text-[#4f5077]"> Course Statistics</span>
                 </CardTitle>
               </CardHeader>

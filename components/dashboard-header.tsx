@@ -143,7 +143,7 @@ export default function DashboardHeader({ currentPage = "Dashboard" }: Dashboard
   return (
     <header className="bg-white shadow-sm border border-gray-200/80 backdrop-blur-sm mx-4 xl:mx-12 mt-6 rounded-lg">
       <div className="w-full px-4 lg:px-6 py-2">
-        <div className="flex justify-between items-center h-auto">
+        <div className="flex justify-between items-center h-auto roboto">
           {/* Logo and Navigation */}
           <div className="flex items-center space-x-2 min-w-0">
             <div className="  flex-shrink-0">
@@ -180,7 +180,7 @@ export default function DashboardHeader({ currentPage = "Dashboard" }: Dashboard
                     <div className="space-y-3">
                       <button
                         onClick={() => handleMobileNavigation("/dashboard")}
-                        className={`w-full text-left px-4 py-3 rounded-lg hover:bg-gray-100/80 text-sm font-medium transition-all duration-200 ${
+                        className={`w-full text-left px-4 py-3 rounded-lg hover:bg-gray-100/80 text-sm font-medium  transition-all duration-200 ${
                           isActivePath("/dashboard") && pathname === "/dashboard"
                             ? "bg-gradient-to-r from-yellow-50 to-yellow-100/50 text-yellow-800 border-l-3 border-yellow-400 shadow-sm"
                             : "text-gray-700 hover:text-gray-900"
