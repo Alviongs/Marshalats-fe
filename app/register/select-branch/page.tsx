@@ -165,7 +165,7 @@ export default function SelectBranchPage() {
       {/* Left Side - Illustration */}
       <div className="hidden lg:flex lg:w-1/2 bg-gray-200 items-center justify-center relative overflow-hidden">
         <div
-          className="w-full h-full bg-cover bg-center bg-no-repeat"
+          className="w-[300px] h-[550px] bg-cover bg-center bg-no-repeat"
           style={{
             backgroundImage: "url('/images/select-branch-left.png')",
           }}
@@ -173,7 +173,7 @@ export default function SelectBranchPage() {
       </div>
 
       {/* Right Side - Branch Selection Form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 bg-white">
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 bg-white mt-[100px]">
         <div className="w-full max-w-md space-y-6">
           {/* Header */}
           <div className="text-center space-y-3">
@@ -189,21 +189,16 @@ export default function SelectBranchPage() {
           )}
 
           {/* Branch Selection Form */}
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-4">
             {/* Select Location */}
             <div className="relative">
-              <div className="absolute left-4 top-1/2 transform -translate-y-1/2 z-10 pointer-events-none">
-                <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-              </div>
+             
               <Select
                 value={selectedLocation}
                 onValueChange={(value) => setSelectedLocation(value)}
                 disabled={isLoadingLocations}
               >
-                <SelectTrigger className="!w-full !h-14 !pl-12 !pr-4 !py-4 !text-base !bg-gray-50 !border-gray-200 !rounded-xl focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent !min-h-14">
+                <SelectTrigger className="!w-full !h-14 !pl-6 !pr-10 !py-4 !text-[14px] bg-[#F9F8FF] !border-0 !rounded-xl data-[placeholder]:text-black focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent !min-h-14">
                   <SelectValue placeholder={isLoadingLocations ? "Loading locations..." : "Select Location"} className="text-gray-500" />
                 </SelectTrigger>
                 <SelectContent className="rounded-xl border border-gray-200 bg-white shadow-lg max-h-60">
@@ -218,17 +213,13 @@ export default function SelectBranchPage() {
 
             {/* Select Branch */}
             <div className="relative">
-              <div className="absolute left-4 top-1/2 transform -translate-y-1/2 z-10 pointer-events-none">
-                <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                </svg>
-              </div>
+              
               <Select
                 value={branch_id}
                 onValueChange={(value) => setBranchId(value)}
                 disabled={!selectedLocation || isLoadingBranches}
               >
-                <SelectTrigger className="!w-full !h-14 !pl-12 !pr-4 !py-4 !text-base !bg-gray-50 !border-gray-200 !rounded-xl focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent !min-h-14">
+                <SelectTrigger className="!w-full !h-14 !pl-6 !pr-10 !py-4 !text-[14px] bg-[#F9F8FF] !border-0 !rounded-xl data-[placeholder]:text-black focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent !min-h-14">
                   <SelectValue placeholder={
                     !selectedLocation
                       ? "Select location first"
@@ -270,7 +261,7 @@ export default function SelectBranchPage() {
             {/* Next Step Button */}
             <Button
               type="submit"
-              className="w-full bg-yellow-400 hover:bg-yellow-500 text-black font-bold py-4 px-6 rounded-xl text-lg h-14 transition-all duration-200 transform hover:scale-[1.02] shadow-lg hover:shadow-xl mt-8"
+              className="w-full bg-yellow-400 hover:bg-yellow-500 text-[#ffffff] font-bold py-4 px-6 rounded-xl text-[12px] h-14 transition-all duration-200 transform hover:scale-[1.02] shadow-lg hover:shadow-xl mt-8"
             >
               NEXT STEP
             </Button>

@@ -147,7 +147,7 @@ export default function PaymentPage() {
       {/* Left Side - Illustration */}
       <div className="hidden lg:flex lg:w-1/2 bg-gray-200 items-center justify-center relative overflow-hidden">
         <div
-          className="w-full h-full bg-cover bg-center bg-no-repeat"
+          className="w-[512px] h-[748px] bg-cover bg-center bg-no-repeat"
           style={{
             backgroundImage: "url('/images/payment-left.png')",
           }}
@@ -155,7 +155,7 @@ export default function PaymentPage() {
       </div>
 
       {/* Right Side - Payment Details */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 bg-white">
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 bg-white mt-[100px]">
         <div className="w-full max-w-md space-y-6">
           {/* Header */}
           <div className="text-center space-y-3">
@@ -319,7 +319,7 @@ export default function PaymentPage() {
           <form onSubmit={handleProceedToPay}>
             <Button
               type="submit"
-              className="w-full bg-yellow-400 hover:bg-yellow-500 text-black font-bold py-4 px-6 rounded-xl text-lg h-14 transition-all duration-200 transform hover:scale-[1.02] shadow-lg hover:shadow-xl mt-6"
+              className="w-full bg-yellow-400 hover:bg-yellow-500 text-white font-bold py-4 px-6 rounded-xl text-sm h-14 transition-all duration-200 transform hover:scale-[1.02] shadow-lg hover:shadow-xl mt-6"
             >
               <div className="flex items-center justify-center space-x-2">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

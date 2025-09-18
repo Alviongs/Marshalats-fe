@@ -296,9 +296,9 @@ This is an automated security message. Please do not reply to this email.
   return (
     <div className="min-h-screen flex">
       {/* Left Side - Illustration */}
-      <div className="hidden lg:flex lg:w-1/2 bg-gray-200 items-center justify-center relative overflow-hidden">
+      <div className="hidden lg:flex lg:w-1/2 bg-[#E0E0E0] items-center justify-center relative overflow-hidden">
         <div
-          className="w-full h-full bg-cover bg-center bg-no-repeat"
+          className="w-[550px] h-[550px] bg-cover bg-center bg-no-repeat"
           style={{
             backgroundImage: "url('/images/forgot-password-left.png')",
           }}
@@ -307,20 +307,21 @@ This is an automated security message. Please do not reply to this email.
 
       {/* Right Side - Forgot Password Form */}
       <div className="w-full lg:w-1/2 flex items-center justify-center p-8 bg-white relative">
-        {/* Back to login link */}
-        <div className="absolute top-8 right-8">
-          <Link href="/login" className="text-sm text-gray-400 hover:text-gray-600 flex items-center space-x-1">
+        
+
+        <div className="w-full max-w-md space-y-6">
+          {/* Header */}
+          <div className="text-center space-y-2">
+            {/* Back to login link */}
+         
+          <Link href="/login" className="text-sm text-[#000] mb-[20px] hover:text-gray-600 flex items-center justify-center space-x-1">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
             <span>Back to login</span>
           </Link>
-        </div>
-
-        <div className="w-full max-w-md space-y-6">
-          {/* Header */}
-          <div className="text-center space-y-2">
-            <h1 className="text-3xl font-bold text-black">FORGOT PASSWORD</h1>
+        
+            <h1 className="text-2xl font-bold text-black">FORGOT PASSWORD</h1>
             <p className="text-gray-500 text-sm">
               {success
                 ? "Check your email for reset instructions"
@@ -377,7 +378,7 @@ This is an automated security message. Please do not reply to this email.
                     setEmail(e.target.value)
                     setError("")
                   }}
-                  className={`py-3 bg-gray-50 border-gray-200 rounded-lg text-gray-600 placeholder:text-gray-400 ${
+                  className={`pl-5 py-4 text-[8px] bg-[#F9F8FF] border-0 rounded-xl h-14 data-[placeholder]:text-black ${
                     error ? 'border-red-300 focus:border-red-500' : ''
                   }`}
                   disabled={loading}
@@ -391,7 +392,7 @@ This is an automated security message. Please do not reply to this email.
               <Button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-yellow-400 hover:bg-yellow-500 text-black font-bold py-3 rounded-lg text-lg disabled:opacity-50 disabled:cursor-not-allowed"
+               className="w-full bg-yellow-400 hover:bg-yellow-500 text-[#ffffff] font-bold py-4 px-6 rounded-xl text-[12px] h-14 transition-all duration-200 transform hover:scale-[1.02] shadow-lg hover:shadow-xl"
               >
                 {loading ? (
                   <div className="flex items-center space-x-2">

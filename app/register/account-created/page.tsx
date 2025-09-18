@@ -102,7 +102,7 @@ export default function AccountCreatedPage() {
         <div className="flex justify-center">
           <Button
             onClick={handleLetsStart}
-            className="px-12 py-4 bg-yellow-400 hover:bg-yellow-500 text-black font-bold rounded-xl text-lg h-16 transition-all duration-200 transform hover:scale-[1.02] shadow-lg hover:shadow-xl"
+            className="px-12 py-4 bg-yellow-400 hover:bg-yellow-500 text-[#fff] font-bold rounded-xl text-sm h-16 transition-all duration-200 transform hover:scale-[1.02] shadow-lg hover:shadow-xl"
           >
             <div className="flex items-center justify-center space-x-3">
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">

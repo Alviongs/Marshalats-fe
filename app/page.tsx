@@ -1,5 +1,9 @@
 import Link from "next/link"
+import Image from "next/image"
 import { Button } from "@/components/ui/button"
+import footer_logo from "../public/footer_logo.png"
+import landing_left from "../public/landing_left.gif";
+import landing_right from "../public/landing_right.gif";
 
 export default function HomePage() {
   return (
@@ -12,44 +16,47 @@ export default function HomePage() {
         }}
       />
 
-      {/* Content Overlay */}
-      <div className="relative z-10 min-h-screen flex flex-col items-center justify-center px-4">
-        {/* Logo */}
-        <div className="mb-8">
-          <div className="w-48 h-48 rounded-full bg-yellow-400 border-4 border-yellow-500 flex items-center justify-center relative">
-            <div className="w-40 h-40 rounded-full bg-black flex items-center justify-center">
-              <div className="text-center">
-                <div className="text-yellow-400 font-bold text-2xl mb-1">ROCK</div>
-                <div className="text-yellow-400 text-xs font-semibold">MARTIAL ARTS ACADEMY</div>
-                <div className="text-yellow-400 text-xs font-semibold mt-1">FITNESS & DANCE</div>
-              </div>
-            </div>
-          </div>
+      {/* Content Overlay - centered */}
+      <div className="relative z-20 min-h-screen flex flex-col items-center justify-center xl:justify-start xl:mt-[60px] px-4 text-center">
+        <div className="mb-[15px]">
+          <Image src={footer_logo} alt="Logo" height={200} width={200} className="w-[100px] h-[100px] md:w-[200px] md:h-[200px]" />
         </div>
 
-        {/* Main Heading */}
-        <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-black text-center mb-4 max-w-4xl leading-tight">
+        <h1 className="text-sm md:text-5xl lg:text-3xl font-light text-black mb-1 max-w-4xl leading-tight">
           {"TRAIN LIKE A WARRIOR, CONQUER LIKE A CHAMPION."}
         </h1>
 
-        {/* Subheading */}
-        <p className="text-lg md:text-xl font-semibold text-black text-center mb-12 max-w-3xl">
+        <p className="text-[14px] md:text-xl font-semibold text-black mb-5 max-w-3xl">
           {"STRENGTH OF THE BODY, DISCIPLINE OF THE MIND, SPIRIT OF A WARRIOR."}
         </p>
 
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-4">
           <Link href="/login">
-            <Button className="bg-yellow-400 hover:bg-yellow-500 text-black font-bold text-lg px-12 py-6 rounded-lg min-w-[160px]">
+            <Button className="bg-yellow-400 hover:bg-yellow-500 text-black font-normal text-lg px-12 py-6 rounded-lg  min-w-[160px]">
               SIGN IN
             </Button>
           </Link>
           <Link href="/register">
-            <Button className="bg-gray-800 hover:bg-gray-900 text-white font-bold text-lg px-12 py-6 rounded-lg min-w-[160px]">
+            <Button className="bg-gray-800 hover:bg-gray-900 text-white font-normal text-lg px-12 py-6 rounded-lg min-w-[160px]">
               REGISTER
             </Button>
           </Link>
         </div>
+      </div>
+
+      {/* GIFs as bottom overlay */}
+      <div className="absolute bottom-30  md:bottom-0 left-0 right-0 flex justify-between items-end z-10 pointer-events-none mt-[100px]">
+        <Image
+          src={landing_left}
+          alt="left"
+          className="w-[50%] h-auto object-contain transform scale-x-[-1]"
+        />
+        <Image
+          src={landing_right}
+          alt="right"
+          className="w-[50%] h-auto object-contain"
+        />
       </div>
     </div>
   )

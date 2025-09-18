@@ -7,161 +7,42 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import CoachDashboardHeader from "@/components/coach-dashboard-header"
+import { checkCoachAuth, CoachData } from "@/lib/coachAuth"
 
 export default function CoachDashboard() {
   const router = useRouter()
-  const [coachData, setCoachData] = useState<any>(null)
+  const [coachData, setCoachData] = useState<CoachData | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Check if user is logged in - look for access_token (used by coach login)
-    const token = localStorage.getItem("access_token") || localStorage.getItem("token")
-    const coachData = localStorage.getItem("coach")
-    const user = localStorage.getItem("user")
-    const tokenExpiration = localStorage.getItem("token_expiration")
-    
-    console.log("Coach dashboard - Access Token:", token ? "Present" : "Missing"); // Debug log
-    console.log("Coach dashboard - Coach data:", coachData ? "Present" : "Missing"); // Debug log
-    console.log("Coach dashboard - User data:", user ? "Present" : "Missing"); // Debug log
-    console.log("Coach dashboard - Token expiration:", tokenExpiration); // Debug log
-    
-    if (!token) {
-      console.log("No token found, redirecting to coach login"); // Debug log
+    // Use the robust coach authentication check
+    const authResult = checkCoachAuth()
+
+    console.log("Coach dashboard authentication check:", {
+      isAuthenticated: authResult.isAuthenticated,
+      hasCoach: !!authResult.coach,
+      hasToken: !!authResult.token,
+      error: authResult.error
+    })
+
+    if (!authResult.isAuthenticated) {
+      console.log("Coach not authenticated:", authResult.error)
       router.push("/coach/login")
       return
     }
 
-    // Check token expiration
-    if (tokenExpiration) {
-      const expirationTime = parseInt(tokenExpiration)
-      if (Date.now() >= expirationTime) {
-        console.log("Token expired, clearing session and redirecting"); // Debug log
-        localStorage.removeItem("access_token")
-        localStorage.removeItem("token_type")
-        localStorage.removeItem("expires_in")
-        localStorage.removeItem("token_expiration")
-        localStorage.removeItem("coach")
-        localStorage.removeItem("user")
-        router.push("/coach/login")
-        return
-      }
+    if (authResult.coach) {
+      setCoachData(authResult.coach)
+      console.log("Coach authenticated successfully:", authResult.coach.full_name)
+    } else {
+      console.log("No coach data available, redirecting to login")
+      router.push("/coach/login")
+      return
     }
 
-    // Try to get coach and user data from localStorage
-    if (coachData || user) {
-      try {
-        // Prefer coach data over user data
-        const userData = coachData ? JSON.parse(coachData) : (user ? JSON.parse(user) : null)
-        console.log("Parsed coach/user data:", userData); // Debug log
-        
-        if (!userData) {
-          console.log("No valid user data found"); // Debug log
-          setCoachData({
-            name: "Coach",
-            email: "coach@example.com",
-            specialization: "Martial Arts",
-            experience: "5 years",
-            totalStudents: 25,
-            todayClasses: 3,
-            thisWeekClasses: 12,
-            avgAttendance: "78%",
-            upcomingClass: "Karate - Advanced (2:00 PM)",
-            recentAchievements: [
-              "Student John Doe achieved Yellow Belt",
-              "Class attendance improved by 15%",
-              "New beginner batch started"
-            ]
-          })
-          setLoading(false)
-          return
-        }
-        
-        // Check if user is actually a coach
-        if (userData.role !== "coach") {
-          console.log("User is not a coach, redirecting to appropriate dashboard"); // Debug log
-          if (userData.role === "student") {
-            router.push("/student-dashboard")
-          } else if (userData.role === "superadmin") {
-            router.push("/dashboard")
-          } else {
-            router.push("/login")
-          }
-          return
-        }
-        
-        setCoachData({
-          name: userData.full_name || `${userData.first_name} ${userData.last_name}` || userData.name || "Coach",
-          email: userData.email || "coach@example.com",
-          specialization: userData.professional_info?.specialization || userData.specialization || "Martial Arts",
-          experience: userData.professional_info?.years_of_experience || userData.experience || "5 years",
-          totalStudents: 25, // This would come from students API
-          todayClasses: 3, // This would come from schedule API
-          thisWeekClasses: 12, // This would come from schedule API
-          avgAttendance: "78%", // This would come from attendance API
-          upcomingClass: "Karate - Advanced (2:00 PM)",
-          recentAchievements: [
-            "Student John Doe achieved Yellow Belt",
-            "Class attendance improved by 15%",
-            "New beginner batch started"
-          ]
-        })
-      } catch (error) {
-        console.error("Error parsing user data:", error)
-        // Fallback to default data
-        setCoachData({
-          name: "Coach",
-          email: "coach@example.com",
-          specialization: "Martial Arts",
-          experience: "5 years",
-          totalStudents: 25,
-          todayClasses: 3,
-          thisWeekClasses: 12,
-          avgAttendance: "78%",
-          upcomingClass: "Karate - Advanced (2:00 PM)",
-          recentAchievements: [
-            "Student John Doe achieved Yellow Belt",
-            "Class attendance improved by 15%",
-            "New beginner batch started"
-          ]
-        })
-      }
-    } else {
-      // Fallback data if no user info available
-      setCoachData({
-        name: "Coach",
-        email: "coach@example.com",
-        specialization: "Martial Arts",
-        experience: "5 years",
-        totalStudents: 25,
-        todayClasses: 3,
-        thisWeekClasses: 12,
-        avgAttendance: "78%",
-        upcomingClass: "Karate - Advanced (2:00 PM)",
-        recentAchievements: [
-          "Student John Doe achieved Yellow Belt",
-          "Class attendance improved by 15%",
-          "New beginner batch started"
-        ]
-      })
-    }
-    
     setLoading(false)
   }, [router])
-
-  const handleLogout = () => {
-    // Clear all authentication data including coach-specific tokens
-    localStorage.removeItem("access_token")
-    localStorage.removeItem("token_type")
-    localStorage.removeItem("expires_in")
-    localStorage.removeItem("token_expiration")
-    localStorage.removeItem("coach")
-    localStorage.removeItem("user")
-    // Also clear legacy token if exists
-    localStorage.removeItem("token")
-    
-    console.log("Coach logged out, redirecting to coach login"); // Debug log
-    router.push("/coach/login")
-  }
 
   if (loading) {
     return (
@@ -171,28 +52,23 @@ export default function CoachDashboard() {
     )
   }
 
+  if (!coachData) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-600 font-medium mb-2">No coach data available</p>
+          <p className="text-sm text-gray-600">Please try logging in again.</p>
+        </div>
+      </div>
+    )
+  }
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
-              <h1 className="text-2xl font-bold text-gray-900">Coach Dashboard</h1>
-            </div>
-            <div className="flex items-center space-x-4">
-              <span className="text-sm text-gray-500">Welcome, {coachData?.name}</span>
-              <Button 
-                onClick={handleLogout}
-                variant="outline"
-                className="text-red-600 border-red-600 hover:bg-red-50"
-              >
-                Logout
-              </Button>
-            </div>
-          </div>
-        </div>
-      </header>
+      <CoachDashboardHeader
+        currentPage="Dashboard"
+        coachName={coachData?.full_name}
+      />
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
@@ -208,7 +84,7 @@ export default function CoachDashboard() {
                 </svg>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-blue-600">{coachData?.totalStudents}</div>
+                <div className="text-2xl font-bold text-blue-600">25</div>
                 <p className="text-xs text-muted-foreground">Active students under your guidance</p>
               </CardContent>
             </Card>
@@ -222,7 +98,7 @@ export default function CoachDashboard() {
                 </svg>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-green-600">{coachData?.todayClasses}</div>
+                <div className="text-2xl font-bold text-green-600">3</div>
                 <p className="text-xs text-muted-foreground">Classes scheduled for today</p>
               </CardContent>
             </Card>
@@ -236,7 +112,7 @@ export default function CoachDashboard() {
                 </svg>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-purple-600">{coachData?.thisWeekClasses}</div>
+                <div className="text-2xl font-bold text-purple-600">12</div>
                 <p className="text-xs text-muted-foreground">Total classes this week</p>
               </CardContent>
             </Card>
@@ -250,7 +126,7 @@ export default function CoachDashboard() {
                 </svg>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-orange-600">{coachData?.avgAttendance}</div>
+                <div className="text-2xl font-bold text-orange-600">78%</div>
                 <p className="text-xs text-muted-foreground">Average class attendance</p>
               </CardContent>
             </Card>
@@ -275,20 +151,24 @@ export default function CoachDashboard() {
                     <Avatar className="h-16 w-16">
                       <AvatarImage src="/placeholder-user.jpg" alt="Coach" />
                       <AvatarFallback className="text-lg font-semibold bg-yellow-100 text-yellow-800">
-                        {coachData?.name?.charAt(0) || 'C'}
+                        {coachData?.full_name?.charAt(0) || 'C'}
                       </AvatarFallback>
                     </Avatar>
                     <div>
-                      <h3 className="font-semibold text-lg">{coachData?.name}</h3>
-                      <p className="text-sm text-gray-500">{coachData?.email}</p>
+                      <h3 className="font-semibold text-lg">{coachData?.full_name}</h3>
+                      <p className="text-sm text-gray-500">{coachData?.contact_info?.email || coachData?.email}</p>
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <p><strong>Specialization:</strong> 
-                      <Badge className="ml-2 bg-yellow-100 text-yellow-800">{coachData?.specialization}</Badge>
+                    <p><strong>Specialization:</strong>
+                      <Badge className="ml-2 bg-yellow-100 text-yellow-800">
+                        {coachData?.professional_info?.specialization || 'Martial Arts'}
+                      </Badge>
                     </p>
-                    <p><strong>Experience:</strong> 
-                      <Badge variant="outline" className="ml-2">{coachData?.experience}</Badge>
+                    <p><strong>Experience:</strong>
+                      <Badge variant="outline" className="ml-2">
+                        {coachData?.professional_info?.years_of_experience || '5 years'}
+                      </Badge>
                     </p>
                   </div>
                 </div>
@@ -307,7 +187,7 @@ export default function CoachDashboard() {
               </CardHeader>
               <CardContent>
                 <div className="text-center">
-                  <p className="text-lg font-semibold text-green-600 mb-2">{coachData?.upcomingClass}</p>
+                  <p className="text-lg font-semibold text-green-600 mb-2">Karate - Advanced (2:00 PM)</p>
                   <p className="text-sm text-gray-500">Make sure to prepare class materials</p>
                   <Button className="mt-4 w-full bg-yellow-400 hover:bg-yellow-500 text-black">
                     View Class Details
@@ -369,7 +249,11 @@ export default function CoachDashboard() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {coachData?.recentAchievements?.map((achievement: string, index: number) => (
+                  {[
+                    "Student John Doe achieved Yellow Belt",
+                    "Class attendance improved by 15%",
+                    "New beginner batch started"
+                  ].map((achievement: string, index: number) => (
                     <div key={index} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
                       <div className="flex-shrink-0">
                         <div className="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center">
