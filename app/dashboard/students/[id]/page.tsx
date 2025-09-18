@@ -335,7 +335,7 @@ export default function StudentDetailPage() {
       case 'cancelled':
         return <XCircle className="w-4 h-4 text-red-600" />
       default:
-        return <Clock className="w-4 h-4 text-gray-600" />
+        return <Clock className="w-4 h-4 " />
     }
   }
 
@@ -348,7 +348,7 @@ export default function StudentDetailPage() {
       case 'absent':
         return <XCircle className="w-4 h-4 text-red-600" />
       default:
-        return <Clock className="w-4 h-4 text-gray-600" />
+        return <Clock className="w-4 h-4 " />
     }
   }
 
@@ -399,8 +399,8 @@ export default function StudentDetailPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="text-center py-12">
             <User className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-            <h2 className="text-2xl font-semibold text-gray-900 mb-2">Student Not Found</h2>
-            <p className="text-gray-600 mb-6">{error}</p>
+            <h2 className="text-2xl font-semibold  mb-2">Student Not Found</h2>
+            <p className=" mb-6">{error}</p>
             <div className="space-x-4">
               <Button onClick={handleBack} variant="outline">
                 <ArrowLeft className="w-4 h-4 mr-2" />
@@ -424,27 +424,24 @@ export default function StudentDetailPage() {
     <div className="min-h-screen bg-gray-50">
       <DashboardHeader />
       
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="xl:px-12 px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center justify-between">
-            <div>
-              <div className="flex items-center space-x-4 mb-2">
+            <div className="flex flex-row gap-6 text-[#4F5077]">
+              <div className="flex items-center space-x-4 border-r border-gray-200 pr-4">
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={handleBack}
-                  className="text-gray-600 hover:text-gray-900"
+                  className=" hover:"
                 >
                   <ArrowLeft className="w-4 h-4 mr-2" />
                   Back to Students
                 </Button>
-                <div className="text-sm text-gray-500">
-                  Dashboard &gt; Students &gt; {student.full_name}
-                </div>
               </div>
-              <div className="flex items-center space-x-4">
-                <h1 className="text-3xl font-bold text-gray-900">
+              <div className="flex items-center space-x-4 ml-4">
+                <h1 className="text-3xl font-bold uppercase">
                   {student.full_name}
                 </h1>
                 <Badge 
@@ -461,7 +458,7 @@ export default function StudentDetailPage() {
               </div>
             </div>
             
-            <Button onClick={handleEdit} className="bg-yellow-400 hover:bg-yellow-500 text-black">
+            <Button onClick={handleEdit} className="bg-yellow-400 hover:bg-yellow-500 text-white">
               <Edit className="w-4 h-4 mr-2" />
               Edit Student
             </Button>
@@ -474,37 +471,36 @@ export default function StudentDetailPage() {
             {/* Personal Information */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center">
-                  <User className="w-5 h-5 mr-2" />
+                <CardTitle className="flex items-center text-[#4D5077] font-bold">
                   Personal Information
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-6">
+              <CardContent className="space-y-6 text-[#7F8592]">
                 {/* Basic Info */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <h3 className="text-sm font-medium text-gray-900 mb-2 flex items-center">
+                    <h3 className="text-sm font-medium  mb-2 flex items-center">
                       <Mail className="w-4 h-4 mr-2" />
                       Email
                     </h3>
-                    <p className="text-sm text-gray-600">{student.email}</p>
+                    <p className="text-sm ">{student.email}</p>
                   </div>
 
                   <div>
-                    <h3 className="text-sm font-medium text-gray-900 mb-2 flex items-center">
+                    <h3 className="text-sm font-medium  mb-2 flex items-center">
                       <Phone className="w-4 h-4 mr-2" />
                       Phone
                     </h3>
-                    <p className="text-sm text-gray-600">{student.phone || 'Not provided'}</p>
+                    <p className="text-sm ">{student.phone || 'Not provided'}</p>
                   </div>
 
                   {student.date_of_birth && (
                     <div>
-                      <h3 className="text-sm font-medium text-gray-900 mb-2 flex items-center">
+                      <h3 className="text-sm font-medium  mb-2 flex items-center">
                         <Calendar className="w-4 h-4 mr-2" />
                         Date of Birth
                       </h3>
-                      <p className="text-sm text-gray-600">
+                      <p className="text-sm ">
                         {new Date(student.date_of_birth).toLocaleDateString('en-US', {
                           year: 'numeric',
                           month: 'long',
@@ -521,8 +517,8 @@ export default function StudentDetailPage() {
 
                   {student.gender && (
                     <div>
-                      <h3 className="text-sm font-medium text-gray-900 mb-1">Gender</h3>
-                      <p className="text-sm text-gray-600 capitalize">{student.gender}</p>
+                      <h3 className="text-sm font-medium  mb-1">Gender</h3>
+                      <p className="text-sm  capitalize">{student.gender}</p>
                     </div>
                   )}
                 </div>
@@ -530,11 +526,11 @@ export default function StudentDetailPage() {
                 {/* Address */}
                 {student.address && (
                   <div>
-                    <h3 className="text-sm font-medium text-gray-900 mb-2 flex items-center">
+                    <h3 className="text-sm font-medium  mb-2 flex items-center">
                       <MapPin className="w-4 h-4 mr-2" />
                       Address
                     </h3>
-                    <div className="text-sm text-gray-600">
+                    <div className="text-sm ">
                       {student.address.street && <p>{student.address.street}</p>}
                       {(student.address.city || student.address.state || student.address.postal_code) && (
                         <p>
@@ -551,11 +547,11 @@ export default function StudentDetailPage() {
                 {/* Emergency Contact */}
                 {student.emergency_contact && (
                   <div>
-                    <h3 className="text-sm font-medium text-gray-900 mb-2 flex items-center">
+                    <h3 className="text-sm font-medium  mb-2 flex items-center">
                       <UserCheck className="w-4 h-4 mr-2" />
                       Emergency Contact
                     </h3>
-                    <div className="text-sm text-gray-600">
+                    <div className="text-sm ">
                       <p><strong>{student.emergency_contact.name}</strong></p>
                       {student.emergency_contact.phone && <p>Phone: {student.emergency_contact.phone}</p>}
                       {student.emergency_contact.relationship && (
@@ -568,8 +564,8 @@ export default function StudentDetailPage() {
                 {/* Timestamps */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t">
                   <div>
-                    <h3 className="text-sm font-medium text-gray-900 mb-1">Enrolled</h3>
-                    <p className="text-sm text-gray-600">
+                    <h3 className="text-sm font-medium  mb-1">Enrolled</h3>
+                    <p className="text-sm ">
                       {new Date(student.created_at).toLocaleDateString('en-US', {
                         year: 'numeric',
                         month: 'long',
@@ -579,8 +575,8 @@ export default function StudentDetailPage() {
                   </div>
 
                   <div>
-                    <h3 className="text-sm font-medium text-gray-900 mb-1">Last Updated</h3>
-                    <p className="text-sm text-gray-600">
+                    <h3 className="text-sm font-medium  mb-1">Last Updated</h3>
+                    <p className="text-sm ">
                       {new Date(student.updated_at).toLocaleDateString('en-US', {
                         year: 'numeric',
                         month: 'long',
@@ -595,12 +591,11 @@ export default function StudentDetailPage() {
             {/* Course Enrollment History */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center">
-                  <BookOpen className="w-5 h-5 mr-2" />
+                <CardTitle className="flex items-center font-bold text-[#4D5077]">
                   Course Enrollment History ({enrollmentsLoading ? '...' : enrollmentHistory.length})
                 </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="text-[#7F8592]">
                 {enrollmentsLoading ? (
                   <div className="space-y-4">
                     {[1, 2, 3].map((i) => (
@@ -627,8 +622,8 @@ export default function StudentDetailPage() {
                       <div key={enrollment.id} className="p-4 bg-gray-50 rounded-lg border-l-4 border-l-green-500">
                         <div className="flex items-center justify-between mb-3">
                           <div className="flex items-center space-x-2">
-                            <BookOpen className="w-5 h-5 text-green-600" />
-                            <h4 className="font-semibold text-gray-900">{enrollment.course_name}</h4>
+                            <BookOpen className="w-5 h-5 " />
+                            <h4 className="font-semibold ">{enrollment.course_name}</h4>
                           </div>
                           <div className="flex items-center space-x-2">
                             {getStatusIcon(enrollment.status)}
@@ -646,7 +641,7 @@ export default function StudentDetailPage() {
                           </div>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-600 mb-3">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm  mb-3">
                           <div className="flex items-center space-x-1">
                             <Calendar className="w-4 h-4" />
                             <span className="font-medium">Enrolled:</span>
@@ -679,7 +674,7 @@ export default function StudentDetailPage() {
                         {enrollment.progress >= 0 && (
                           <div className="mt-3">
                             <div className="flex items-center justify-between text-sm mb-2">
-                              <span className="text-gray-600 flex items-center">
+                              <span className=" flex items-center">
                                 <TrendingUp className="w-4 h-4 mr-1" />
                                 Course Progress
                               </span>
@@ -698,12 +693,12 @@ export default function StudentDetailPage() {
             {/* Recent Attendance */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center">
+                <CardTitle className="flex items-center font-bold text-[#4D5077]">
                   <Clock className="w-5 h-5 mr-2" />
                   Recent Attendance
                 </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="text-[#7F8592]">
                 {attendanceRecords.length === 0 ? (
                   <div className="text-center py-8 text-gray-500">
                     <Clock className="w-12 h-12 mx-auto mb-4 text-gray-300" />
@@ -716,9 +711,9 @@ export default function StudentDetailPage() {
                         <div>
                           <div className="flex items-center space-x-2 mb-1">
                             {getAttendanceIcon(record.status)}
-                            <span className="font-medium text-gray-900">{record.course_name}</span>
+                            <span className="font-medium ">{record.course_name}</span>
                           </div>
-                          <div className="text-sm text-gray-600">
+                          <div className="text-sm ">
                             {new Date(record.date).toLocaleDateString('en-US', {
                               month: 'short',
                               day: 'numeric',
@@ -748,28 +743,27 @@ export default function StudentDetailPage() {
           </div>
 
           {/* Sidebar */}
-          <div className="space-y-6">
+          <div className="space-y-4">
             {/* Quick Stats */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center">
-                  <TrendingUp className="w-5 h-5 mr-2" />
+                <CardTitle className="flex items-center text-[#4D5077] font-bold">
                   Quick Stats
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-4 text-[#7F8592]">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center">
-                    <BookOpen className="w-4 h-4 mr-2 text-blue-600" />
-                    <span className="text-sm text-gray-600">Total Courses</span>
+                    <BookOpen className="w-4 h-4 mr-2" />
+                    <span className="text-sm ">Total Courses</span>
                   </div>
                   <span className="font-semibold">{student.total_courses || student.courses?.length || 0}</span>
                 </div>
 
                 <div className="flex items-center justify-between">
                   <div className="flex items-center">
-                    <Award className="w-4 h-4 mr-2 text-green-600" />
-                    <span className="text-sm text-gray-600">Completed</span>
+                    <Award className="w-4 h-4 mr-2" />
+                    <span className="text-sm ">Completed</span>
                   </div>
                   <span className="font-semibold">
                     {student.completed_courses || student.courses?.filter(c => c.status === 'completed').length || 0}
@@ -778,8 +772,8 @@ export default function StudentDetailPage() {
 
                 <div className="flex items-center justify-between">
                   <div className="flex items-center">
-                    <Clock className="w-4 h-4 mr-2 text-purple-600" />
-                    <span className="text-sm text-gray-600">Attendance Rate</span>
+                    <Clock className="w-4 h-4 mr-2" />
+                    <span className="text-sm ">Attendance Rate</span>
                   </div>
                   <span className="font-semibold">
                     {student.attendance_percentage ||
@@ -792,7 +786,7 @@ export default function StudentDetailPage() {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center">
                       <CreditCard className="w-4 h-4 mr-2 text-red-600" />
-                      <span className="text-sm text-gray-600">Outstanding</span>
+                      <span className="text-sm ">Outstanding</span>
                     </div>
                     <span className={`font-semibold ${student.outstanding_balance > 0 ? 'text-red-600' : 'text-green-600'}`}>
                       ₹{student.outstanding_balance.toLocaleString()}
@@ -805,12 +799,11 @@ export default function StudentDetailPage() {
             {/* Payment History */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center">
-                  <CreditCard className="w-5 h-5 mr-2" />
+                <CardTitle className="flex items-center font-bold text-[#4D5077]">
                   Payment History ({paymentsLoading ? '...' : paymentHistory.length})
                 </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="text-[#7F8592]">
                 {paymentsLoading ? (
                   <div className="space-y-3">
                     {[1, 2, 3].map((i) => (
@@ -839,7 +832,7 @@ export default function StudentDetailPage() {
                         <div className="flex items-center justify-between mb-2">
                           <div className="flex items-center space-x-2">
                             <CreditCard className="w-4 h-4 text-blue-600" />
-                            <span className="font-semibold text-gray-900">₹{payment.amount.toLocaleString()}</span>
+                            <span className="font-semibold ">₹{payment.amount.toLocaleString()}</span>
                           </div>
                           <Badge
                             variant="secondary"
@@ -852,8 +845,8 @@ export default function StudentDetailPage() {
                             {payment.status}
                           </Badge>
                         </div>
-                        <div className="text-sm text-gray-600 space-y-1">
-                          <p className="font-medium text-gray-800">{payment.description}</p>
+                        <div className="text-sm  space-y-1">
+                          <p className="font-medium">{payment.description}</p>
                           <div className="flex items-center justify-between">
                             <span>
                               📅 {new Date(payment.payment_date).toLocaleDateString('en-US', {
@@ -890,12 +883,12 @@ export default function StudentDetailPage() {
             {/* Student Status */}
             <Card>
               <CardHeader>
-                <CardTitle>Student Status</CardTitle>
+                <CardTitle className="flex items-center font-bold text-[#4D5077]">Student Status</CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="text-[#7F8592]">
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Status</span>
+                    <span className="text-sm ">Status</span>
                     <Badge
                       variant={student.is_active ? "default" : "secondary"}
                       className={student.is_active ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}
@@ -905,14 +898,14 @@ export default function StudentDetailPage() {
                   </div>
 
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Student ID</span>
-                    <span className="text-sm font-mono text-gray-900">
+                    <span className="text-sm ">Student ID</span>
+                    <span className="text-sm font-mono ">
                       {student.student_id || student.id}
                     </span>
                   </div>
 
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Role</span>
+                    <span className="text-sm ">Role</span>
                     <Badge variant="outline" className="text-xs">
                       {student.role}
                     </Badge>
@@ -924,9 +917,9 @@ export default function StudentDetailPage() {
             {/* Quick Actions */}
             <Card>
               <CardHeader>
-                <CardTitle>Quick Actions</CardTitle>
+                <CardTitle className="flex items-center font-bold text-[#4D5077]">Quick Actions</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3">
+              <CardContent className="space-y-3 text-[#7F8592]">
                 <Button
                   variant="outline"
                   className="w-full justify-start"

@@ -452,16 +452,16 @@ export default function EditStudent() {
     <div className="min-h-screen bg-gray-50">
       <DashboardHeader currentPage="Edit Student" />
 
-      <main className="w-full max-w-6xl mx-auto p-4 sm:p-6 lg:p-8">
-        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-8">
+      <main className="w-full xl:px-12 mx-auto p-4 sm:p-6 lg:p-8">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-8 text-[#4F5077]">
           <div className="mb-4 sm:mb-0">
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Edit Student</h1>
-            <p className="text-gray-600 text-sm sm:text-base">Update the details for the student.</p>
+            <h1 className="text-2xl sm:text-3xl font-bold mb-2">Edit Student</h1>
+            <p className="text-[#7D8592] text-sm sm:text-base">Update the details for the student.</p>
           </div>
           <Button
             variant="outline"
             onClick={() => router.push("/dashboard/students")}
-            className="flex items-center space-x-2 px-4 py-2 text-gray-700 border-gray-300 hover:bg-gray-50"
+            className="flex items-center space-x-2 px-4 py-2 border-gray-300 hover:bg-gray-50"
           >
             <span>← Back to Students</span>
           </Button>
@@ -474,10 +474,6 @@ export default function EditStudent() {
           </div>
         ) : (
           <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-            <div className="bg-gradient-to-r from-yellow-50 to-orange-50 px-6 sm:px-8 py-6 border-b border-gray-200">
-              <h2 className="text-xl font-semibold text-gray-900 mb-1">Student Information</h2>
-              <p className="text-gray-600 text-sm">Please update the required fields marked with *</p>
-            </div>
 
             <form onSubmit={handleSubmit} className="p-6 sm:p-8 space-y-8">
               {errors.submit && (
@@ -488,11 +484,11 @@ export default function EditStudent() {
 
               <div className="space-y-8">
                 <div className="space-y-4">
-                  <h3 className="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2">Personal Information</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                  <h3 className="text-lg font-semibold text-[#4D5077] border-b border-gray-200 pb-2">Personal Information</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 text-[#7F8592]">
                     
                     <div>
-                      <Label className="block text-sm font-medium text-gray-700 mb-2">First Name <span className="text-red-500">*</span></Label>
+                      <Label className="block text-sm font-medium mb-2">First Name <span className="text-red-500">*</span></Label>
                       <div className="relative">
                         <UserIcon className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
                         <Input
@@ -506,7 +502,7 @@ export default function EditStudent() {
                     </div>
 
                     <div>
-                      <Label className="block text-sm font-medium text-gray-700 mb-2">Last Name <span className="text-red-500">*</span></Label>
+                      <Label className="block text-sm font-medium mb-2">Last Name <span className="text-red-500">*</span></Label>
                       <div className="relative">
                         <UserIcon className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
                         <Input
@@ -520,7 +516,7 @@ export default function EditStudent() {
                     </div>
 
                     <div>
-                      <Label className="block text-sm font-medium text-gray-700 mb-2">Email Address <span className="text-red-500">*</span></Label>
+                      <Label className="block text-sm font-medium mb-2">Email Address <span className="text-red-500">*</span></Label>
                       <div className="relative">
                         <MailIcon className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
                         <Input
@@ -535,7 +531,7 @@ export default function EditStudent() {
                     </div>
 
                     <div>
-                      <Label className="block text-sm font-medium text-gray-700 mb-2">Mobile Number <span className="text-red-500">*</span></Label>
+                      <Label className="block text-sm font-medium mb-2">Mobile Number <span className="text-red-500">*</span></Label>
                       <div className="relative">
                         <PhoneIcon className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
                         <Input
@@ -549,7 +545,7 @@ export default function EditStudent() {
                     </div>
 
                     <div>
-                      <Label className="block text-sm font-medium text-gray-700 mb-2">Gender <span className="text-red-500">*</span></Label>
+                      <Label className="block text-sm font-medium mb-2">Gender <span className="text-red-500">*</span></Label>
                       <div className="relative">
                         <div className="absolute left-4 top-1/2 transform -translate-y-1/2 z-10 pointer-events-none">
                           <UserIcon className="w-5 h-5 text-gray-400" />
@@ -569,12 +565,12 @@ export default function EditStudent() {
                     </div>
 
                     <div>
-                      <Label className="block text-sm font-medium text-gray-700 mb-2">Date of Birth <span className="text-red-500">*</span></Label>
+                      <Label className="block text-sm font-medium mb-2">Date of Birth <span className="text-red-500">*</span></Label>
                       <Popover>
                         <PopoverTrigger asChild>
                           <Button
                             variant="outline"
-                            className={cn("w-full h-14 justify-start text-left font-normal pl-12 text-base bg-gray-50 border-gray-200 rounded-xl", !selectedDate && "text-gray-500", errors.dob && "border-red-500 bg-red-50")}
+                            className={cn("w-full relative h-14 justify-start text-left font-normal pl-12 text-base bg-gray]-50 border-gray-200 rounded-xl", !selectedDate && "text-gray-500", errors.dob && "border-red-500 bg-red-50")}
                           >
                             <CalendarIcon className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
                             {selectedDate ? format(selectedDate, "MMM dd, yyyy") : "Select date of birth"}
@@ -594,7 +590,7 @@ export default function EditStudent() {
                     </div>
 
                     <div>
-                      <Label className="block text-sm font-medium text-gray-700 mb-2">New Password</Label>
+                      <Label className="block text-sm font-medium mb-2">New Password</Label>
                       <div className="relative">
                         <UserIcon className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
                         <Input
@@ -609,7 +605,7 @@ export default function EditStudent() {
                     </div>
 
                     <div>
-                      <Label className="block text-sm font-medium text-gray-700 mb-2">Biometric ID</Label>
+                      <Label className="block text-sm font-medium mb-2">Biometric ID</Label>
                       <div className="relative">
                         <UserIcon className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
                         <Input
@@ -624,10 +620,10 @@ export default function EditStudent() {
                 </div>
 
                 <div className="space-y-4">
-                  <h3 className="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2">Course Information</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                  <h3 className="text-lg font-semibold text-[#4D5077] border-t border-gray-200 pt-2">Course Information</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 text-[#7F8592]">
                     <div>
-                      <Label className="block text-sm font-medium text-gray-700 mb-2">Category</Label>
+                      <Label className="block text-sm font-medium mb-2">Category</Label>
                       <Select value={formData.category} onValueChange={(value) => handleInputChange("category", value)}>
                         <SelectTrigger className="!w-full !h-14 !pl-12 !text-base !bg-gray-50 !border-gray-200 !rounded-xl">
                           <div className="absolute left-4 top-1/2 transform -translate-y-1/2 z-10 pointer-events-none">
@@ -642,7 +638,7 @@ export default function EditStudent() {
                     </div>
 
                     <div>
-                      <Label className="block text-sm font-medium text-gray-700 mb-2">Course <span className="text-red-500">*</span></Label>
+                      <Label className="block text-sm font-medium mb-2">Course <span className="text-red-500">*</span></Label>
                       <Select value={formData.course} onValueChange={(value) => handleInputChange("course", value)}>
                         <SelectTrigger className={cn("!w-full !h-14 !pl-12 !text-base !bg-gray-50 !border-gray-200 !rounded-xl", errors.course && "!border-red-500 !bg-red-50")}>
                           <div className="absolute left-4 top-1/2 transform -translate-y-1/2 z-10 pointer-events-none">
@@ -658,7 +654,7 @@ export default function EditStudent() {
                     </div>
 
                     <div>
-                      <Label className="block text-sm font-medium text-gray-700 mb-2">Duration</Label>
+                      <Label className="block text-sm font-medium mb-2">Duration</Label>
                       <Select value={formData.duration} onValueChange={(value) => handleInputChange("duration", value)}>
                         <SelectTrigger className="!w-full !h-14 !pl-12 !text-base !bg-gray-50 !border-gray-200 !rounded-xl">
                           <div className="absolute left-4 top-1/2 transform -translate-y-1/2 z-10 pointer-events-none">
@@ -675,10 +671,10 @@ export default function EditStudent() {
                 </div>
 
                 <div className="space-y-4">
-                  <h3 className="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2">Location Information</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <h3 className="text-lg font-semibold text-[#4D5077] border-b border-gray-200 pb-2">Location Information</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-[#7F8592]">
                     <div>
-                      <Label className="block text-sm font-medium text-gray-700 mb-2">Location <span className="text-red-500">*</span></Label>
+                      <Label className="block text-sm font-medium mb-2">Location <span className="text-red-500">*</span></Label>
                       <Select
                         value={formData.location}
                         onValueChange={(value) => handleInputChange("location", value)}
@@ -711,7 +707,7 @@ export default function EditStudent() {
                     </div>
 
                     <div>
-                      <Label className="block text-sm font-medium text-gray-700 mb-2">Branch <span className="text-red-500">*</span></Label>
+                      <Label className="block text-sm font-medium mb-2">Branch <span className="text-red-500">*</span></Label>
                       <Select
                         value={formData.branch}
                         onValueChange={(value) => handleInputChange("branch", value)}
@@ -770,7 +766,7 @@ export default function EditStudent() {
                   <Button 
                     type="submit" 
                     disabled={isSubmitting}
-                    className="w-full sm:w-auto h-12 bg-yellow-400 hover:bg-yellow-500 text-black font-semibold px-8 rounded-xl"
+                    className="w-full sm:w-auto h-12 bg-yellow-400 hover:bg-yellow-500 text-white font-semibold px-8 rounded-xl"
                   >
                     {isSubmitting ? (
                       <div className="flex items-center">
