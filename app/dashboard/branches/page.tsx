@@ -75,6 +75,9 @@ export default function BranchesList() {
   const [loadingCoaches, setLoadingCoaches] = useState(false)
   const [assignmentLoading, setAssignmentLoading] = useState(false)
   const [assignmentError, setAssignmentError] = useState<string | null>(null)
+  // Add state for pagination
+const [currentPage, setCurrentPage] = useState(1)
+const itemsPerPage = 5
 
   // Fetch branches from API
   useEffect(() => {
@@ -359,18 +362,25 @@ export default function BranchesList() {
       branch.branch?.phone?.toLowerCase().includes(searchLower)
     )
   })
+  // Calculate paginated data
+const totalPages = Math.ceil(filteredBranches.length / itemsPerPage)
+const paginatedBranches = filteredBranches.slice(
+  (currentPage - 1) * itemsPerPage,
+  currentPage * itemsPerPage
+)
+
 
   return (
     <div className="min-h-screen bg-gray-50 overflow-x-hidden">
       <DashboardHeader currentPage="Branches" />
 
-      <main className="w-full p-4 lg:p-6 overflow-x-hidden">
+      <main className="w-full p-4 xl:px-19 lg:p-6 overflow-x-hidden">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">Branches list</h1>
+          <h1 className="text-2xl font-bold text-[#4F5077]">Branches list</h1>
           <div className="flex space-x-3">
             <Button
               onClick={() => router.push("/dashboard/create-branch")}
-              className="bg-yellow-400 hover:bg-yellow-500 text-black px-6 py-2 rounded-lg font-medium"
+              className="bg-yellow-400 hover:bg-yellow-500 text-white px-6 py-2 rounded-lg font-medium"
             >
               + Add Branch
             </Button>
@@ -385,7 +395,7 @@ export default function BranchesList() {
 
         <div className="mb-6">
           <div className="relative max-w-md">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black w-4 h-4" />
             <Input
               placeholder="Search by name, ID, Location"
               value={searchTerm}
@@ -398,47 +408,47 @@ export default function BranchesList() {
         <div className="bg-white rounded-lg shadow overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gray-50 border-b">
-              <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <tr className="text-[#6B7A99]">
+                <th className="px-2 py-3 text-left text-xs font-medium text-gray-500  ">
                   Branch ID
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-2 py-3 text-left text-xs font-medium text-gray-500  ">
                   Branch Name
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-2 py-3 text-left text-xs font-medium text-gray-500  ">
                   Branch Location
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-2 py-3 text-left text-xs font-medium text-gray-500  ">
                   <div className="flex items-center">
                     <span>Active Students</span>
                     <div className="w-2 h-2 bg-blue-500 rounded-full ml-2"></div>
                   </div>
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-2 py-3 text-left text-xs font-medium text-gray-500  ">
                   <div className="flex items-center">
                     <span>Courses Offered</span>
                     <div className="w-2 h-2 bg-green-500 rounded-full ml-2"></div>
                   </div>
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Branch Manager
+                <th className="px-2 py-3 text-left text-xs font-medium text-gray-500  ">
+                  Branch Admin
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-2 py-3 text-left text-xs font-medium text-gray-500  ">
                   <div className="flex items-center">
                     <span>Assigned Coaches</span>
                     <div className="w-2 h-2 bg-purple-500 rounded-full ml-2"></div>
                   </div>
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-2 py-3 text-left text-xs font-medium text-gray-500  ">
                   Accessories Available
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-2 py-3 text-left text-xs font-medium text-gray-500  ">
                   Branch Email Id
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-2 py-3 text-left text-xs font-medium text-gray-500  ">
                   Contact number
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-2 py-3 text-left text-xs font-medium text-gray-500  ">
                   Action
                 </th>
               </tr>
@@ -463,69 +473,69 @@ export default function BranchesList() {
                   </td>
                 </tr>
               ) : (
-                filteredBranches.map((branch) => (
+                paginatedBranches.map((branch) => (
                   <tr key={branch.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{branch.id}</td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{branch.branch?.name || 'N/A'}</td>
-                    <td className="px-4 py-4 text-sm text-gray-900 max-w-xs">
+                    <td className="px-2 py-4 whitespace-nowrap text-xs text-[#6B7A99]">{branch.id}</td>
+                    <td className="px-2 py-4 whitespace-nowrap text-xs text-[#6B7A99]">{branch.branch?.name || 'N/A'}</td>
+                    <td className="px-2 py-4 text-xs text-[#6B7A99] max-w-xs">
                       {branch.branch?.address ?
                         `${branch.branch.address.line1}, ${branch.branch.address.city}, ${branch.branch.address.state}` :
                         'Address not available'
                       }
                     </td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <td className="px-2 py-4 whitespace-nowrap text-xs text-[#6B7A99]">
                       <div className="flex items-center">
                         {loadingStats && !branch.statistics ? (
                           <div className="animate-pulse bg-gray-200 rounded-full px-2.5 py-0.5 text-xs">
                             Loading...
                           </div>
                         ) : (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                            {branch.statistics?.student_count ?? 0} Students
+                          <span className="inline-flex items-center text-xs text-[#6B7A99]">
+                            {branch.statistics?.student_count ?? 0} 
                           </span>
                         )}
                       </div>
                     </td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <td className="px-2 py-4 whitespace-nowrap text-xs text-[#6B7A99]">
                       <div className="flex items-center">
                         {loadingStats && !branch.statistics ? (
                           <div className="animate-pulse bg-gray-200 rounded-full px-2.5 py-0.5 text-xs">
                             Loading...
                           </div>
                         ) : (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                            {branch.statistics?.course_count ?? branch.operational_details?.courses_offered?.length ?? 0} Courses
+                          <span className="inline-flex items-center text-xstext-[#6B7A99]">
+                            {branch.statistics?.course_count ?? branch.operational_details?.courses_offered?.length ?? 0} 
                           </span>
                         )}
                       </div>
                     </td>
-                    <td className="px-4 py-4 whitespace-nowrap">
+                    <td className="px-2 py-4 whitespace-nowrap">
                       <div className="flex flex-col">
-                        <span className="text-sm text-gray-900">{branch.manager_id || 'Not Assigned'}</span>
-                        <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800 mt-1 w-fit">
-                          Manager
+                        <span className="text-xs text-[#6B7A99]">{branch.manager_id || 'Not Assigned'}</span>
+                        <span className="inline-flex px-2 py-1 text-xs font-medium rounded bg-[#FFC403] text-[#FFFFFF] mt-1 w-fit">
+                          Change
                         </span>
                       </div>
                     </td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <td className="px-2 py-4 whitespace-nowrap text-xs text-[#6B7A99]">
                       <div className="flex items-center">
                         {loadingStats && !branch.statistics ? (
                           <div className="animate-pulse bg-gray-200 rounded-full px-2.5 py-0.5 text-xs">
                             Loading...
                           </div>
                         ) : (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
-                            {branch.statistics?.coach_count ?? 0} Coaches
+                          <span className="text-xs text-[#6B7A99]">
+                            {branch.statistics?.coach_count ?? 0} 
                           </span>
                         )}
                       </div>
                     </td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <td className="px-2 py-4 whitespace-nowrap text-xs text-[#6B7A99]">
                       {branch.assignments?.accessories_available ? 'Yes' : 'No'}
                     </td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{branch.branch?.email || 'N/A'}</td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{branch.branch?.phone || 'N/A'}</td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td className="px-2 py-4 whitespace-nowrap text-xs text-[#6B7A99]">{branch.branch?.email || 'N/A'}</td>
+                    <td className="px-2 py-4 whitespace-nowrap text-xs text-[#6B7A99]">{branch.branch?.phone || 'N/A'}</td>
+                    <td className="px-2 py-4 whitespace-nowrap text-xs text-[#6B7A99]">
                       <div className="flex items-center space-x-2">
                         <button
                           className="text-blue-400 hover:text-blue-600"
@@ -584,22 +594,41 @@ export default function BranchesList() {
           </table>
         </div>
 
-        <div className="flex items-center justify-center space-x-2 mt-6">
-          <Button variant="outline" className="px-3 py-2 bg-transparent">
-            Previous
-          </Button>
-          <Button className="bg-yellow-400 hover:bg-yellow-500 text-black px-3 py-2">1</Button>
-          <Button variant="outline" className="px-3 py-2 bg-transparent">
-            2
-          </Button>
-          <Button variant="outline" className="px-3 py-2 bg-transparent">
-            3
-          </Button>
-          <Button variant="outline" className="px-3 py-2 bg-transparent">
-            4
-          </Button>
-          <Button className="bg-yellow-400 hover:bg-yellow-500 text-black px-3 py-2">Next</Button>
-        </div>
+       <div className="flex items-center justify-center space-x-2 mt-6">
+  <Button
+    variant="outline"
+    className="px-3 py-2 bg-transparent"
+    disabled={currentPage === 1}
+    onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+  >
+    Previous
+  </Button>
+
+  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+    <Button
+      key={page}
+      onClick={() => setCurrentPage(page)}
+      className={`px-3 py-2 ${
+        currentPage === page
+          ? "bg-yellow-400 hover:bg-yellow-500 text-black"
+          : "bg-transparent"
+      }`}
+      variant={currentPage === page ? "default" : "outline"}
+    >
+      {page}
+    </Button>
+  ))}
+
+  <Button
+    variant="outline"
+    className="px-3 py-2 bg-transparent"
+    disabled={currentPage === totalPages}
+    onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+  >
+    Next
+  </Button>
+</div>
+
       </main>
 
       {showAssignPopup && (

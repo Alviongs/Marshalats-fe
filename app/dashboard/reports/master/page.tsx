@@ -264,8 +264,7 @@ export default function MasterReportPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-4">
-              {/* Search */}
+              <div className="flex items-start pb-4">            {/* Search */}
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                 <Input
@@ -275,6 +274,8 @@ export default function MasterReportPage() {
                   onChange={(e) => handleSearchChange(e.target.value)}
                 />
               </div>
+              </div>
+            <div className="flex flex-wrap justify-between">
 
               {/* Branch Filter */}
               <Select
@@ -332,10 +333,8 @@ export default function MasterReportPage() {
                   ))}
                 </SelectContent>
               </Select>
-            </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
-              {/* Professional Experience Filter */}
+                            {/* Professional Experience Filter */}
               <Select
                 value={filters.professional_experience || "all"}
                 onValueChange={(value) => handleFilterChange('professional_experience', value)}
@@ -386,13 +385,18 @@ export default function MasterReportPage() {
                   <SelectItem value="false">Include Inactive</SelectItem>
                 </SelectContent>
               </Select>
-            </div>
-
-            <div className="flex justify-end">
+                <div className="flex justify-end">
               <Button variant="outline" onClick={clearFilters}>
                 Clear All Filters
               </Button>
             </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+
+            </div>
+
+          
           </CardContent>
         </Card>
 

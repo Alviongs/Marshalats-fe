@@ -1,5 +1,16 @@
 "use client"
-
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+    RadialBarChart,
+  RadialBar,
+  PolarAngleAxis,
+  ResponsiveContainer,
+} from "recharts"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -12,11 +23,46 @@ import { useRouter } from "next/navigation"
 import { useState } from "react"
 import DashboardHeader from "@/components/dashboard-header"
 
+const students = {
+  male: 6,
+  female: 4,
+}
+
+const total = students.male + students.female
+
+// ✅ Normalize values to percentages
+const genderData = [
+  {
+    name: "Male",
+    value: (students.male / total) * 100,
+    fill: "#3B82F6", // blue
+  },
+  {
+    name: "Female",
+    value: (students.female / total) * 100,
+    fill: "#A855F7", // purple
+  },
+]
+
 export default function StudentAttendancePage() {
   const router = useRouter()
   const [selectedFilter, setSelectedFilter] = useState("filter")
   const [selectedMonth, setSelectedMonth] = useState("april")
   const [activeTab, setActiveTab] = useState("day")
+
+  const attendanceData = [
+  { week: "Jan week-1", Present: 40, Absent: 20 },
+  { week: "Jan week-2", Present: 30, Absent: 35 },
+  { week: "Jan week-3", Present: 35, Absent: 15 },
+  { week: "Jan week-4", Present: 25, Absent: 30 },
+  { week: "Feb week-1", Present: 45, Absent: 25 },
+
+]
+
+const genderData = [
+  { name: "Male", value: 311, fill: "#3B82F6" },   // Blue
+  { name: "Female", value: 333, fill: "#A855F7" }, // Purple
+]
 
   const dailyAttendanceData = [
     {
@@ -336,7 +382,7 @@ Rock Martial Arts Academy - Attendance Management System
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b">
+            <tr className="border-b text-[#6B7A99]">
               <th className="text-left py-3">Student Name</th>
               <th className="text-left py-3">Course</th>
               <th className="text-left py-3">Branch</th>
@@ -349,10 +395,10 @@ Rock Martial Arts Academy - Attendance Management System
           </thead>
           <tbody>
             {data.map((student, index) => (
-              <tr key={index} className="border-b">
-                <td className="py-3">{student.name}</td>
-                <td className="py-3">{student.course}</td>
-                <td className="py-3">{student.branch}</td>
+              <tr key={index} className="border-b text-[#6B7A99]">
+                <td className="py-3 font-semibold">{student.name}</td>
+                <td className="py-3 font-semibold">{student.course}</td>
+                <td className="py-3 font-semibold">{student.branch}</td>
                 <td className="py-3">{student.present}</td>
                 <td className="py-3">{student.absent}</td>
                 <td className="py-3">{student.leave}</td>
@@ -393,52 +439,52 @@ Rock Martial Arts Academy - Attendance Management System
     <div className="min-h-screen bg-gray-50 overflow-x-hidden">
       <DashboardHeader currentPage="Student Attendance" />
 
-      <main className="w-full p-4 lg:p-6 overflow-x-hidden">
+      <main className="w-full p-4 lg:p-6 overflow-x-hidden xl:px-12">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">Attendance Tracker</h1>
+          <h1 className="text-2xl font-bold text-[#0A1629]">Attendance Tracker</h1>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Main Content */}
           <div className="lg:col-span-3 space-y-6">
             {/* Statistics Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <Card>
-                <CardContent className="p-4">
-                  <div className="text-center">
-                    <p className="text-sm text-gray-600 mb-1">Total No. students</p>
-                    <p className="text-2xl font-bold">347</p>
-                    <p className="text-xs text-gray-500">In last 24 hours</p>
+            <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-5 gap-4">
+              <Card className="shaddow-md">
+                <CardContent className="px-6 py-4 h-full">
+                  <div className="text-start">
+                    <p className="text-sm text-[#9593A8] mb-3">Total No. students</p>
+                    <p className="text-2xl text-[#403C6B] font-bold">347</p>
+                    <p className="text-xs text-[#9593A8]">In last 24 hours</p>
                   </div>
                 </CardContent>
               </Card>
 
-              <Card>
-                <CardContent className="p-4">
-                  <div className="text-center">
-                    <p className="text-sm text-gray-600 mb-1">Absent today</p>
-                    <p className="text-2xl font-bold">43</p>
-                    <p className="text-xs text-gray-500">In last 24 hours</p>
+              <Card className="shaddow-md">
+                <CardContent className="px-6 py-4 h-full">
+                  <div className="text-start">
+                    <p className="text-sm text-[#9593A8] mb-3">Absent today</p>
+                    <p className="text-2xl text-[#403C6B] font-bold">43</p>
+                    <p className="text-xs text-[#9593A8]">In last 24 hours</p>
                   </div>
                 </CardContent>
               </Card>
 
-              <Card>
-                <CardContent className="p-4">
-                  <div className="text-center">
-                    <p className="text-sm text-gray-600 mb-1">Present Today</p>
-                    <p className="text-2xl font-bold">344</p>
-                    <p className="text-xs text-gray-500">In last 24 hours</p>
+              <Card className="shaddow-md">
+                <CardContent className="px-6 py-4 h-full">
+                  <div className="text-start">
+                    <p className="text-sm text-[#9593A8] mb-3">Present Today</p>
+                    <p className="text-2xl text-[#403C6B] font-bold">344</p>
+                    <p className="text-xs text-[#9593A8]">In last 24 hours</p>
                   </div>
                 </CardContent>
               </Card>
 
-              <Card>
-                <CardContent className="p-4">
-                  <div className="text-center">
-                    <p className="text-sm text-gray-600 mb-1">Leave request</p>
-                    <p className="text-2xl font-bold">9</p>
-                    <p className="text-xs text-gray-500">In last 24 hours</p>
+              <Card className="shaddow-md">
+                <CardContent className="px-6 py-4 h-full">
+                  <div className="text-start">
+                    <p className="text-sm text-[#9593A8] mb-3">Leave request</p>
+                    <p className="text-2xl text-[#403C6B] font-bold">9</p>
+                    <p className="text-xs text-[#9593A8]">In last 24 hours</p>
                   </div>
                 </CardContent>
               </Card>
@@ -446,79 +492,105 @@ Rock Martial Arts Academy - Attendance Management System
 
             {/* Attendance Status Chart */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <Card>
+              <Card className="shadow-md">
                 <CardHeader>
-                  <div className="flex justify-between items-center">
+                  <div className="flex justify-between items-center text-[#0A1629]">
                     <CardTitle>Attendance Status - April-2025</CardTitle>
-                    <Button variant="link" className="text-blue-600" onClick={handleViewReport}>
+                    <Button variant="link" className="text-blue-600 border border-gray-200" onClick={handleViewReport}>
                       View Report
                     </Button>
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="h-48 flex items-center justify-center bg-gray-50 rounded mb-4">
-                    <p className="text-gray-500">Attendance Chart Placeholder</p>
-                  </div>
-                  <div className="flex justify-center space-x-4">
-                    <div className="flex items-center space-x-2">
-                      <div className="w-3 h-3 bg-blue-500 rounded"></div>
-                      <span className="text-sm">Present</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <div className="w-3 h-3 bg-red-500 rounded"></div>
-                      <span className="text-sm">Absent</span>
-                    </div>
-                  </div>
+        
+                     {/* ✅ Recharts Bar Chart */}
+    <div className="h-64 w-full">
+      <ResponsiveContainer width="100%" height="100%">
+        <BarChart data={attendanceData} barSize={18}>
+          <CartesianGrid strokeDasharray="3 3" vertical={false} />
+          <XAxis dataKey="week" />
+          <Tooltip />
+          <Legend />
+          <Bar dataKey="Present" fill="#3B82F6" radius={[4, 4, 0, 0]} />
+          <Bar dataKey="Absent" fill="#EF4444" radius={[4, 4, 0, 0]} />
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
                 </CardContent>
               </Card>
 
-              <Card>
-                <CardHeader>
-                  <CardTitle>Students</CardTitle>
-                  <p className="text-sm text-gray-600">Total Student Gender Distribution</p>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-center justify-center mb-4">
-                    <div className="relative w-32 h-32">
-                      <div className="w-full h-full bg-gray-200 rounded-full flex items-center justify-center">
-                        <div className="text-center">
-                          <div className="flex items-center justify-center space-x-2 mb-2">
-                            <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
-                              <span className="text-white text-xs">♂</span>
-                            </div>
-                            <div className="w-6 h-6 bg-pink-500 rounded-full flex items-center justify-center">
-                              <span className="text-white text-xs">♀</span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4 text-center">
-                    <div>
-                      <p className="text-2xl font-bold">311</p>
-                      <p className="text-sm text-gray-600">Male</p>
-                    </div>
-                    <div>
-                      <p className="text-2xl font-bold">333</p>
-                      <p className="text-sm text-gray-600">Female</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+ <Card>
+      <CardHeader>
+        <CardTitle>Students</CardTitle>
+        <p className="text-sm text-[#7D8592]">
+          Total Student Gender Distribution
+        </p>
+      </CardHeader>
+      <CardContent>
+        {/* Circular Gender Chart */}
+        <div className="flex items-center justify-center mb-4">
+          <div className="relative w-40 h-40">
+            <ResponsiveContainer width="100%" height="100%">
+              <RadialBarChart
+                cx="50%"
+                cy="50%"
+                innerRadius="70%"
+                outerRadius="100%"
+                barSize={12}
+                data={genderData}
+                startAngle={90}
+                endAngle={-270}
+              >
+                <PolarAngleAxis
+                  type="number"
+                  domain={[0, 100]} // ✅ 100% total
+                  angleAxisId={0}
+                  tick={false}
+                />
+                <RadialBar
+                  dataKey="value"
+                  cornerRadius={5}
+                  background={{ fill: "#E5E7EB" }}
+                />
+              </RadialBarChart>
+            </ResponsiveContainer>
+
+            {/* Center icons */}
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="flex space-x-2">
+                <span className="text-2xl text-blue-500">♂</span>
+                <span className="text-2xl text-purple-500">♀</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Counts */}
+        <div className="grid grid-cols-2 gap-4 text-center">
+          <div>
+            <p className="text-2xl font-bold text-blue-500">{students.male}</p>
+            <p className="text-sm text-gray-600">Male</p>
+          </div>
+          <div>
+            <p className="text-2xl font-bold text-purple-500">{students.female}</p>
+            <p className="text-sm text-gray-600">Female</p>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
             </div>
 
             {/* Student Wise Attendance */}
             <Card>
               <CardHeader>
                 <div className="flex justify-between items-center">
-                  <CardTitle>student wise attendance</CardTitle>
+                  <CardTitle className="text-[#0A1629] text-lg">student wise attendance</CardTitle>
                   <div className="flex items-center space-x-2">
-                    <Button variant="link" className="text-blue-600" onClick={handleViewReport}>
+                    <Button variant="link" className="text-blue-600 border border-gray-200" onClick={handleViewReport}>
                       View Report
                     </Button>
                     <Select value={selectedFilter} onValueChange={setSelectedFilter}>
-                      <SelectTrigger className="w-24">
+                        <SelectTrigger className="w-24 bg-[#F1F1F1] text-[#9593A8]">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -528,7 +600,7 @@ Rock Martial Arts Academy - Attendance Management System
                       </SelectContent>
                     </Select>
                     <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-                      <SelectTrigger className="w-32">
+                      <SelectTrigger className="w-32 bg-[#F1F1F1] text-[#9593A8]">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -600,7 +672,7 @@ Rock Martial Arts Academy - Attendance Management System
           <div className="lg:col-span-1">
             <Card>
               <CardHeader>
-                <CardTitle>Recent Activity</CardTitle>
+                <CardTitle className="text-[#0A1629]">Recent Activity</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
@@ -636,14 +708,14 @@ Rock Martial Arts Academy - Attendance Management System
                   ].map((activity, index) => (
                     <div key={index} className="border-b pb-3 last:border-b-0">
                       <div className="flex items-start space-x-2">
-                        <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
+                        {/* <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div> */}
                         <div className="flex-1">
-                          <p className="text-sm font-medium text-blue-600">{activity.type}</p>
-                          <p className="text-xs text-gray-600 mt-1">
+                          <p className="text-sm font-medium text-[#1B83FE]">{activity.type}</p>
+                          <p className="text-xs text-black mt-1">
                             {activity.action}{" "}
                             {activity.id && <span className="font-medium">Confirm {activity.id}</span>}
                           </p>
-                          <p className="text-xs text-gray-400 mt-1">{activity.time}</p>
+                          <p className="text-xs text-[#9593A8] mt-1">{activity.time}</p>
                         </div>
                       </div>
                     </div>

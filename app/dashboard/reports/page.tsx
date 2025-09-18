@@ -316,7 +316,7 @@ function ReportsPageContent() {
     <div className="min-h-screen bg-gray-50">
       <DashboardHeader currentPage="Reports" />
 
-      <main className="w-full p-4 lg:p-6 max-w-7xl mx-auto">
+      <main className="w-full p-4 lg:p-6 xl:px-12 mx-auto">
         {/* Page Header - Enhanced with loading states */}
         <div className="flex justify-between items-center mb-6">
           <div>
@@ -337,7 +337,7 @@ function ReportsPageContent() {
               <span>Filter</span>
             </Button>
             <Button
-              className="bg-yellow-400 hover:bg-yellow-500 text-black flex items-center space-x-2"
+              className="bg-yellow-400 hover:bg-yellow-500 text-white flex items-center space-x-2"
               onClick={handleDownloadReport}
               disabled={loading || categoryLoading !== null}
             >
@@ -353,7 +353,7 @@ function ReportsPageContent() {
             <label htmlFor="category-search" className="sr-only">
               Search report categories
             </label>
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black w-4 h-4 pointer-events-none" />
             <Input
               id="category-search"
               type="text"
@@ -438,7 +438,7 @@ function ReportsPageContent() {
                         handleCategoryClick(category.id)
                       }}
                       disabled={categoryLoading === category.id}
-                      className="min-w-[100px]" // Prevent button size changes
+                      className="min-w-[100px] text-[#5A6ACF]" // Prevent button size changes
                     >
                       {categoryLoading === category.id ? 'Opening...' : 'View Reports'}
                     </Button>

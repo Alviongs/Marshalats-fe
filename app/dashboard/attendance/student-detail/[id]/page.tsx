@@ -1,5 +1,5 @@
 "use client"
-
+import DashboardHeader from "@/components/dashboard-header"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -68,116 +68,33 @@ export default function StudentAttendanceDetailPage() {
   return (
     <div className="min-h-screen bg-gray-50 overflow-x-hidden">
       {/* Header Navigation */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="w-full px-4 lg:px-6">
-          <div className="flex justify-between items-center h-16">
-            {/* Logo and Navigation */}
-            <div className="flex items-center space-x-4 lg:space-x-8 min-w-0">
-              <div className="flex items-center flex-shrink-0">
-                <div className="w-12 h-12 bg-yellow-400 rounded-full flex items-center justify-center">
-                  <span className="text-black font-bold text-lg">ROCK</span>
-                </div>
-              </div>
-
-              <nav className="hidden md:flex space-x-3 lg:space-x-6 overflow-x-auto">
-                <a href="/dashboard" className="text-gray-600 hover:text-gray-900 pb-4 text-sm whitespace-nowrap">
-                  Dashboard
-                </a>
-                <a href="#" className="text-gray-600 hover:text-gray-900 pb-4 text-sm whitespace-nowrap">
-                  Branches
-                </a>
-                <a href="#" className="text-gray-600 hover:text-gray-900 pb-4 text-sm whitespace-nowrap">
-                  Masters
-                </a>
-                <a href="#" className="text-gray-600 hover:text-gray-900 pb-4 text-sm whitespace-nowrap">
-                  Students
-                </a>
-                <a href="#" className="text-gray-600 hover:text-gray-900 pb-4 text-sm whitespace-nowrap">
-                  Member ship
-                </a>
-                <a href="#" className="text-gray-600 hover:text-gray-900 pb-4 text-sm whitespace-nowrap">
-                  Revenue
-                </a>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <button className="text-yellow-500 font-medium border-b-2 border-yellow-500 pb-4 text-sm whitespace-nowrap flex items-center space-x-1">
-                      <span>Attendance</span>
-                      <ChevronDown className="w-3 h-3" />
-                    </button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent>
-                    <DropdownMenuItem onClick={() => router.push("/dashboard")}>Dashboard</DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => router.push("/dashboard/attendance/coaches")}>
-                      Attendance data
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-                <a href="#" className="text-gray-600 hover:text-gray-900 pb-4 text-sm whitespace-nowrap">
-                  Reports
-                </a>
-                <MoreHorizontal className="w-5 h-5 text-gray-400 flex-shrink-0" />
-              </nav>
-            </div>
-
-            {/* Search and User Controls */}
-            <div className="flex items-center space-x-2 lg:space-x-4 flex-shrink-0">
-              <div className="relative hidden lg:block">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <Input
-                  placeholder="Try searching: User Name, Course Name, User ID"
-                  className="pl-10 w-64 xl:w-80 bg-gray-50"
-                />
-              </div>
-
-              <div className="relative">
-                <Bell className="w-5 h-5 text-gray-600" />
-                <div className="absolute -top-1 -right-1 w-3 h-3 bg-yellow-400 rounded-full"></div>
-              </div>
-
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="flex items-center space-x-2">
-                    <Avatar className="w-8 h-8">
-                      <AvatarImage src="/placeholder.svg" />
-                      <AvatarFallback>SA</AvatarFallback>
-                    </Avatar>
-                    <span className="text-sm font-medium hidden lg:inline">Super admin</span>
-                    <ChevronDown className="w-4 h-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent>
-                  <DropdownMenuItem>Profile</DropdownMenuItem>
-                  <DropdownMenuItem>Settings</DropdownMenuItem>
-                  <DropdownMenuItem>Logout</DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <main className="w-full p-4 lg:p-6 overflow-x-hidden">
+            <DashboardHeader currentPage="Student Attendance" />
+      <main className="w-full p-4 lg:p-6 overflow-x-hidden xl:px-12">
         {/* Page Header */}
-        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4">
-          <h1 className="text-2xl font-bold text-gray-900">Attendance</h1>
-          <div className="flex flex-wrap gap-2 lg:gap-3">
-            <Button className="bg-yellow-400 hover:bg-yellow-500 text-black text-sm">Send Alerts</Button>
-            <Button variant="outline" className="text-sm bg-transparent">
-              View Report
-            </Button>
-            <Button variant="outline" className="text-sm flex items-center space-x-2 bg-transparent">
-              <span>📥</span>
-              <span>Download attendance sheet</span>
-            </Button>
-          </div>
-        </div>
+                <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4">
+                  <h1 className="text-2xl font-bold text-[#0A1629]">Student Attendance</h1>
+                  <div className="flex flex-wrap gap-2 lg:gap-3">
+                    <Button className="bg-yellow-400 hover:bg-yellow-500 text-white text-sm">Send Alerts</Button>
+                    <Button variant="outline" className="text-sm bg-transparent text-[#5A6ACF]">
+                      View Report
+                    </Button>
+                    <Button variant="outline" className="text-sm flex items-center space-x-2 bg-transparent text-[#5A6ACF]">
+                      <span>📥</span>
+                      <span>Download attendance sheet</span>
+                    </Button>
+                  </div>
+                </div>
 
-        {/* Attendance Overview */}
-        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4">
-          <h2 className="text-xl font-semibold text-gray-900">Attendance Overview</h2>
+
+        <div className="flex flex-col gap-6 mb-6">
+          {/* Student Profile Card */} {/* Attendance Overview Card */}
+          <Card className="">
+            <CardContent className="">
+         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4">
+          <h2 className="text-xl font-semibold text-[#0A1629]">Attendance Overview</h2>
           <div className="flex gap-2">
             <Select defaultValue="2023-2024">
-              <SelectTrigger className="w-32">
+              <SelectTrigger className="w-32 bg-[#F5F4F9] text-[#777777]">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -186,7 +103,7 @@ export default function StudentAttendanceDetailPage() {
               </SelectContent>
             </Select>
             <Select defaultValue="annual">
-              <SelectTrigger className="w-24">
+              <SelectTrigger className="w-24 bg-[#F5F4F9] text-[#777777]">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -195,86 +112,76 @@ export default function StudentAttendanceDetailPage() {
               </SelectContent>
             </Select>
           </div>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-          {/* Student Profile Card */}
-          <Card className="lg:col-span-1">
-            <CardContent className="p-6">
-              <div className="relative">
+        </div>           
+       
+          <div className="flex flex-row gap-8 justify-center">
+              <div className="relative w-full">
                 <img
                   src="/young-martial-arts-student-practicing.jpg"
                   alt="Student"
-                  className="w-full h-48 object-cover rounded-lg mb-4"
+                  className="w-full h-76 object-cover rounded-lg"
                 />
-                <div className="absolute bottom-2 left-2">
+                <div className="absolute bottom-5 left-16">
                   <Badge className="bg-yellow-400 text-black font-semibold px-3 py-1">{studentData.name}</Badge>
                 </div>
               </div>
 
-              <div className="space-y-4">
-                <div>
-                  <h3 className="font-semibold text-gray-700 mb-2">Personal Details:</h3>
-                  <div className="space-y-2 text-sm">
+                <div className="w-full">
+                  <h3 className="font-semibold text-[#6B7A99] mb-4">Personal Details:</h3>
+                  <div className="flex flex-col gap-4 text-sm text-[#333333]">
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Student Name</span>
+                      <span className="">Student Name</span>
                       <span>{studentData.studentName}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Age:</span>
+                      <span className="">Age:</span>
                       <span>{studentData.age}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Gender</span>
+                      <span className="">Gender</span>
                       <span>{studentData.gender}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Course Name</span>
+                      <span className="">Course Name</span>
                       <span>{studentData.courseName}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Course duration</span>
+                      <span className="">Course duration</span>
                       <span>{studentData.courseDuration}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Coach:</span>
+                      <span className="">Coach:</span>
                       <span>{studentData.coach}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Branch Location:</span>
+                      <span className="">Branch Location:</span>
                       <span>{studentData.branchLocation}</span>
                     </div>
                   </div>
                 </div>
 
-                <div>
-                  <h3 className="font-semibold text-gray-700 mb-2">Registration Details</h3>
-                  <div className="space-y-2 text-sm">
+                <div className="w-full">
+                  <h3 className="font-semibold text-[#6B7A99] mb-4">Registration Details</h3>
+                  <div className="flex flex-col gap-4 text-sm text-[#333333]">
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Subscription:</span>
+                      <span className="">Subscription:</span>
                       <span>{studentData.subscription}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Contact numbers</span>
+                      <span className="">Contact numbers</span>
                       <span>{studentData.contactNumbers}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Date of joining</span>
+                      <span className="">Date of joining</span>
                       <span>{studentData.dateOfJoining}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Due Date:</span>
-                      <span className="text-red-500">{studentData.dueDate}</span>
+                      <span className="">Due Date:</span>
+                      <span className="text-[#FF0000]">{studentData.dueDate}</span>
                     </div>
                   </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Statistics Cards */}
-          <div className="lg:col-span-2 space-y-6">
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                 <div className="grid grid-cols-2 lg:grid-cols-2 gap-4 w-full">
               <Card>
                 <CardContent className="p-4 text-center">
                   <div className="text-2xl font-bold text-blue-600">{studentData.totalDays}</div>
@@ -300,10 +207,21 @@ export default function StudentAttendanceDetailPage() {
                 </CardContent>
               </Card>
             </div>
+          </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Attendance Table */}
+        <Card>
+          <CardContent className="py-6">
+             {/* Statistics Cards */}
+          <div className="lg:col-span-2 space-y-6">
+           
 
             {/* Monthly Navigation */}
-            <div className="flex justify-between items-center">
-              <div className="flex items-center space-x-4">
+            <div className="flex justify-between items-center border-b border-gray-200 pb-4">
+              <div className="flex items-center space-x-4 border-r border-gray-200 w-full">
                 <Button variant="ghost" size="sm" onClick={() => setCurrentMonth("April - 2025")}>
                   <ChevronLeft className="w-4 h-4" />
                 </Button>
@@ -312,14 +230,14 @@ export default function StudentAttendanceDetailPage() {
                   <ChevronRight className="w-4 h-4" />
                 </Button>
               </div>
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm">
+              <div className="flex w-full justify-end gap-8"> 
+                <Button variant="outline" size="sm" className="text-[#5A6ACF]">
                   View Report
                 </Button>
-                <div className="flex gap-2">
-                  <span className="text-sm text-gray-600">Filter by:</span>
+                <div className="flex gap-8 items-center">
+                  <span className="text-sm">Filter by:</span>
                   <Select defaultValue="jan-2025">
-                    <SelectTrigger className="w-24 h-8">
+                      <SelectTrigger className="w-24 h-8 bg-[#F1F1F1] text-[#9593A8]">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -328,7 +246,7 @@ export default function StudentAttendanceDetailPage() {
                     </SelectContent>
                   </Select>
                   <Select defaultValue="june-2025">
-                    <SelectTrigger className="w-24 h-8">
+                    <SelectTrigger className="w-24 h-8 bg-[#F1F1F1] text-[#9593A8]">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -341,7 +259,7 @@ export default function StudentAttendanceDetailPage() {
             </div>
 
             {/* Monthly Statistics */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 border-b border-gray-200 pb-4">
               <Card>
                 <CardContent className="p-4 text-center">
                   <div className="text-2xl font-bold text-blue-600">{studentData.monthlyTotalDays}</div>
@@ -368,27 +286,22 @@ export default function StudentAttendanceDetailPage() {
               </Card>
             </div>
           </div>
-        </div>
-
-        {/* Attendance Table */}
-        <Card>
-          <CardContent className="p-6">
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b bg-gray-50">
-                    <th className="text-left py-3 px-2 font-medium text-gray-600">Date</th>
-                    <th className="text-left py-3 px-2 font-medium text-gray-600">Status</th>
-                    <th className="text-left py-3 px-2 font-medium text-gray-600">Scheduled</th>
-                    <th className="text-left py-3 px-2 font-medium text-gray-600">Check in</th>
-                    <th className="text-left py-3 px-2 font-medium text-gray-600">Check out</th>
-                    <th className="text-left py-3 px-2 font-medium text-gray-600">Worked hours</th>
-                    <th className="text-left py-3 px-2 font-medium text-gray-600">Difference</th>
+                    <th className="text-left py-3 px-2 font-medium">Date</th>
+                    <th className="text-left py-3 px-2 font-medium">Status</th>
+                    <th className="text-left py-3 px-2 font-medium">Scheduled</th>
+                    <th className="text-left py-3 px-2 font-medium">Check in</th>
+                    <th className="text-left py-3 px-2 font-medium">Check out</th>
+                    <th className="text-left py-3 px-2 font-medium">Worked hours</th>
+                    <th className="text-left py-3 px-2 font-medium">Difference</th>
                   </tr>
                 </thead>
                 <tbody>
                   {attendanceData.map((record, index) => (
-                    <tr key={index} className="border-b hover:bg-gray-50">
+                    <tr key={index} className="border-b hover:bg-gray-50 text-[#8D8D8D]">
                       <td className="py-3 px-2">{record.date}</td>
                       <td className="py-3 px-2">{record.status}</td>
                       <td className="py-3 px-2">
@@ -400,13 +313,13 @@ export default function StudentAttendanceDetailPage() {
                       <td className="py-3 px-2">
                         <div className="flex items-center space-x-2">
                           <span>{record.checkIn}</span>
-                          {record.isLate && <Badge className="bg-red-100 text-red-800 text-xs">Late Coming</Badge>}
+                          {record.isLate && <Badge className="bg-[#FF0000] text-white rounded text-xs">Late Coming</Badge>}
                         </div>
                       </td>
                       <td className="py-3 px-2">
                         <div className="flex items-center space-x-2">
                           <span>{record.checkOut}</span>
-                          {record.isEarlyOut && <Badge className="bg-pink-100 text-pink-800 text-xs">Early Out</Badge>}
+                          {record.isEarlyOut && <Badge className="bg-[#FFB8C9] text-white rounded text-xs">Early Out</Badge>}
                         </div>
                       </td>
                       <td className="py-3 px-2">{record.workedHours}</td>

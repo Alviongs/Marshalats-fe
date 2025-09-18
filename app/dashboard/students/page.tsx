@@ -70,7 +70,9 @@ export default function StudentList() {
   const [assignmentLoading, setAssignmentLoading] = useState(false)
   const [assignmentError, setAssignmentError] = useState<string | null>(null)
   const [refreshing, setRefreshing] = useState(false)
-
+// Pagination state
+const [currentPage, setCurrentPage] = useState(1)
+const itemsPerPage = 5
   // Fetch students from API
   useEffect(() => {
     const fetchStudents = async () => {
@@ -454,15 +456,24 @@ export default function StudentList() {
 
   const availableCourses = ["Taekwondo", "Karate", "Kung Fu", "Mixed Martial Arts", "Zumba Dance", "Bharath Natyam"]
 
+  // Calculate total pages
+const totalPages = Math.ceil(filteredStudents.length / itemsPerPage)
+
+// Slice students for current page
+const paginatedStudents = filteredStudents.slice(
+  (currentPage - 1) * itemsPerPage,
+  currentPage * itemsPerPage
+)
+
   return (
     <div className="min-h-screen bg-gray-50">
       <DashboardHeader currentPage="Students" />
 
       {/* Main Content */}
-      <main className="w-full p-4 lg:p-6">
+      <main className="w-full p-4 lg:p-6 xl:px-12">
         <div className="flex justify-between items-center mb-6">
           <div className="flex items-center space-x-4">
-            <h1 className="text-2xl font-bold text-gray-900">Student list</h1>
+            <h1 className="text-2xl font-bold text-[#4F5077]">Student list</h1>
             <Button
               onClick={() => window.location.reload()}
               variant="outline"
@@ -470,14 +481,14 @@ export default function StudentList() {
               disabled={loading || refreshing}
               className="flex items-center space-x-2"
             >
-              <RefreshCw className={`w-4 h-4 ${loading || refreshing ? 'animate-spin' : ''}`} />
-              <span>Refresh</span>
+              <RefreshCw className={`w-4 h-4 text-[#4F5077] ${loading || refreshing ? 'animate-spin' : ''}`} />
+              <span className="text-[#4F5077]">Refresh</span>
             </Button>
           </div>
           <div className="flex space-x-3">
             <Button
               onClick={() => router.push("/dashboard/create-student")}
-              className="bg-yellow-400 hover:bg-yellow-500 text-black px-6 py-2 rounded-lg font-medium"
+              className="bg-yellow-400 hover:bg-yellow-500 text-white px-6 py-2 rounded-lg font-medium"
             >
               + Add Student
             </Button>
@@ -495,7 +506,7 @@ export default function StudentList() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
             <div className="bg-white p-4 rounded-lg shadow border">
               <div className="text-center">
-                <p className="text-sm text-gray-600 mb-1">
+                <p className="text-sm text-[#4F5077] mb-1">
                   {searchTerm ? `Filtered Students (${filteredStudents.length}/${students.length})` : 'Total Students'}
                 </p>
                 <p className="text-2xl font-bold text-blue-600">
@@ -505,7 +516,7 @@ export default function StudentList() {
             </div>
             <div className="bg-white p-4 rounded-lg shadow border">
               <div className="text-center">
-                <p className="text-sm text-gray-600 mb-1">Active Students</p>
+                <p className="text-sm text-[#4F5077] mb-1">Active Students</p>
                 <p className="text-2xl font-bold text-green-600">
                   {students.filter(s => s.is_active).length}
                 </p>
@@ -513,7 +524,7 @@ export default function StudentList() {
             </div>
             <div className="bg-white p-4 rounded-lg shadow border">
               <div className="text-center">
-                <p className="text-sm text-gray-600 mb-1">With Courses</p>
+                <p className="text-sm text-[#4F5077] mb-1">With Courses</p>
                 <p className="text-2xl font-bold text-purple-600">
                   {students.filter(s => (s.courses && s.courses.length > 0) || s.course_info).length}
                 </p>
@@ -521,7 +532,7 @@ export default function StudentList() {
             </div>
             <div className="bg-white p-4 rounded-lg shadow border">
               <div className="text-center">
-                <p className="text-sm text-gray-600 mb-1">Male/Female</p>
+                <p className="text-sm text-[#4F5077] mb-1">Male/Female</p>
                 <p className="text-2xl font-bold text-orange-600">
                   {students.filter(s => s.gender === 'male').length}/
                   {students.filter(s => s.gender === 'female').length}
@@ -534,10 +545,10 @@ export default function StudentList() {
         {/* Search */}
         <div className="mb-6">
           <div className="relative max-w-md">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black w-4 h-4" />
             <Input
               placeholder="Search by name, ID, location"
-              className="pl-10"
+              className="pl-10 text-[#6B7A99]"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -550,15 +561,15 @@ export default function StudentList() {
             <table className="w-full">
               <thead className="bg-gray-50 border-b">
                 <tr>
-                  <th className="text-left py-4 px-6 font-medium text-gray-600">Student Name</th>
-                  <th className="text-left py-4 px-6 font-medium text-gray-600">Gender</th>
-                  <th className="text-left py-4 px-6 font-medium text-gray-600">Age</th>
-                  <th className="text-left py-4 px-6 font-medium text-gray-600">Courses (Expertise)</th>
-                  <th className="text-left py-4 px-6 font-medium text-gray-600">Level</th>
-                  <th className="text-left py-4 px-6 font-medium text-gray-600">Duration</th>
-                  <th className="text-left py-4 px-6 font-medium text-gray-600">Email Id</th>
-                  <th className="text-left py-4 px-6 font-medium text-gray-600">Phone Number</th>
-                  <th className="text-left py-4 px-6 font-medium text-gray-600">Action</th>
+                  <th className="text-left py-4 px-4 text-sm font-medium text-[#6B7A99]">Student Name</th>
+                  <th className="text-left py-4 px-4 text-sm font-medium text-[#6B7A99]">Gender</th>
+                  <th className="text-left py-4 px-4 text-sm font-medium text-[#6B7A99]">Age</th>
+                  <th className="text-left py-4 px-4 text-sm font-medium text-[#6B7A99]">Courses (Expertise)</th>
+                  <th className="text-left py-4 px-4 text-sm font-medium text-[#6B7A99]">Level</th>
+                  <th className="text-left py-4 px-4 text-sm font-medium text-[#6B7A99]">Duration</th>
+                  <th className="text-left py-4 px-4 text-sm font-medium text-[#6B7A99]">Email Id</th>
+                  <th className="text-left py-4 px-4 text-sm font-medium text-[#6B7A99]">Phone Number</th>
+                  <th className="text-left py-4 px-4 text-sm font-medium text-[#6B7A99]">Action</th>
                 </tr>
               </thead>
               <tbody>
@@ -606,8 +617,8 @@ export default function StudentList() {
                     </td>
                   </tr>
                 ) : (
-                  filteredStudents.map((student) => (
-                    <tr key={student.id} className="border-b hover:bg-gray-50">
+                  paginatedStudents.map((student) => (
+                    <tr key={student.id} className="border-b hover:bg-gray-50 text-[#6B7A99] text-sm">
                       <td className="py-4 px-6">{student.full_name || student.student_name || 'N/A'}</td>
                       <td className="py-4 px-6 capitalize">{student.gender || 'N/A'}</td>
                       <td className="py-4 px-6">
@@ -634,7 +645,7 @@ export default function StudentList() {
                         {student.courses && student.courses.length > 0 ? (
                           <div className="flex flex-wrap gap-1">
                             {student.courses.map((course, index) => (
-                              <Badge key={index} variant="secondary" className="bg-blue-100 text-blue-700 text-xs">
+                              <Badge key={index} variant="secondary" className="bg-[#D9D9D9] text-[#7D8592] rounded text-xs">
                                 {course.course_name || course.course_id}
                               </Badge>
                             ))}
@@ -706,27 +717,46 @@ export default function StudentList() {
             </table>
           </div>
 
-          {/* Pagination */}
-          <div className="flex justify-center items-center space-x-2 py-4 border-t">
-            <Button variant="outline" size="sm">
-              Previous
-            </Button>
-            <Button variant="outline" size="sm">
-              1
-            </Button>
-            <Button className="bg-yellow-400 hover:bg-yellow-500 text-black" size="sm">
-              2
-            </Button>
-            <Button variant="outline" size="sm">
-              3
-            </Button>
-            <Button variant="outline" size="sm">
-              4
-            </Button>
-            <Button className="bg-yellow-400 hover:bg-yellow-500 text-black" size="sm">
-              Next
-            </Button>
-          </div>
+         {/* Pagination */}
+<div className="flex justify-center items-center space-x-2 py-4 border-t">
+  {/* Previous Button */}
+  <Button
+    variant="outline"
+    size="sm"
+    disabled={currentPage === 1}
+    onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+  >
+    Previous
+  </Button>
+
+  {/* Page Numbers */}
+  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+    <Button
+      key={page}
+      onClick={() => setCurrentPage(page)}
+      className={`${
+        currentPage === page
+          ? "bg-yellow-400 hover:bg-yellow-500 text-black"
+          : "bg-transparent"
+      }`}
+      variant={currentPage === page ? "default" : "outline"}
+      size="sm"
+    >
+      {page}
+    </Button>
+  ))}
+
+  {/* Next Button */}
+  <Button
+    variant="outline"
+    size="sm"
+    disabled={currentPage === totalPages}
+    onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+  >
+    Next
+  </Button>
+</div>
+
         </div>
       </main>
 

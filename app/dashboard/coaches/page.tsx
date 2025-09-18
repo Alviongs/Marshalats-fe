@@ -55,6 +55,9 @@ export default function CoachesListPage() {
   const [error, setError] = useState<string | null>(null)
   const [assignmentLoading, setAssignmentLoading] = useState(false)
   const [assignmentError, setAssignmentError] = useState<string | null>(null)
+// Pagination state
+const [currentPage, setCurrentPage] = useState(1)
+const itemsPerPage = 5
 
   // Fetch coaches from API
   useEffect(() => {
@@ -316,20 +319,26 @@ export default function CoachesListPage() {
     )
   })
 
-
+    // Calculate total pages
+const totalPages = Math.ceil(filteredCoaches.length / itemsPerPage)
+  // Slice coaches for current page
+const paginatedCoaches = filteredCoaches.slice(
+  (currentPage - 1) * itemsPerPage,
+  currentPage * itemsPerPage
+)
 
   return (
     <div className="min-h-screen bg-gray-50">
       <DashboardHeader currentPage="Coaches" />
 
-      <main className="w-full p-4 lg:p-6">
+      <main className="w-full p-4 xl:px-12 lg:py-6">
         {/* Page Header */}
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">Coach list</h1>
+          <h1 className="text-2xl font-bold text-[#4F5077]">Coach list</h1>
           <div className="flex space-x-3">
             <Button
               onClick={() => router.push("/dashboard/add-coach")}
-              className="bg-yellow-400 hover:bg-yellow-500 text-black px-6 py-2 rounded-lg font-medium"
+              className="bg-yellow-400 hover:bg-yellow-500 text-white px-6 py-2 rounded-lg font-medium"
             >
               + Add Coach
             </Button>
@@ -344,12 +353,15 @@ export default function CoachesListPage() {
 
         {/* Search Bar */}
         <div className="mb-6">
+          <div className="relative max-w-md">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black w-4 h-4" />
           <Input
             placeholder="Search by name, ID, location"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="max-w-sm"
+            className="pl-10"
           />
+          </div>
         </div>
 
         {/* Coaches Table */}
@@ -359,15 +371,15 @@ export default function CoachesListPage() {
               <table className="w-full">
                 <thead className="bg-gray-50 border-b">
                   <tr>
-                    <th className="text-left py-4 px-6 font-medium text-gray-600">Coach Name</th>
-                    <th className="text-left py-4 px-6 font-medium text-gray-600">Gender</th>
-                    <th className="text-left py-4 px-6 font-medium text-gray-600">Age</th>
-                    <th className="text-left py-4 px-6 font-medium text-gray-600">Designation</th>
-                    <th className="text-left py-4 px-6 font-medium text-gray-600">Experience</th>
-                    <th className="text-left py-4 px-6 font-medium text-gray-600">Expertise</th>
-                    <th className="text-left py-4 px-6 font-medium text-gray-600">Email Id</th>
-                    <th className="text-left py-4 px-6 font-medium text-gray-600">Phone Number</th>
-                    <th className="text-left py-4 px-6 font-medium text-gray-600">Action</th>
+                    <th className="text-left py-4 px-4 font-medium text-[#6B7A99] text-sm">Coach Name</th>
+                    <th className="text-left py-4 px-4 font-medium text-[#6B7A99] text-sm">Gender</th>
+                    <th className="text-left py-4 px-4 font-medium text-[#6B7A99] text-sm">Age</th>
+                    <th className="text-left py-4 px-4 font-medium text-[#6B7A99] text-sm">Designation</th>
+                    <th className="text-left py-4 px-4 font-medium text-[#6B7A99] text-sm">Experience</th>
+                    <th className="text-left py-4 px-4 font-medium text-[#6B7A99] text-sm">Expertise</th>
+                    <th className="text-left py-4 px-4 font-medium text-[#6B7A99] text-sm">Email Id</th>
+                    <th className="text-left py-4 px-4 font-medium text-[#6B7A99] text-sm">Phone Number</th>
+                    <th className="text-left py-4 px-4 font-medium text-[#6B7A99] text-sm">Action</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -390,9 +402,9 @@ export default function CoachesListPage() {
                       </td>
                     </tr>
                   ) : (
-                    filteredCoaches.map((coach) => (
-                      <tr key={coach.id} className="border-b hover:bg-gray-50">
-                        <td className="py-4 px-6 text-blue-600">{coach.full_name}</td>
+                    paginatedCoaches.map((coach) => (
+                      <tr key={coach.id} className="border-b hover:bg-gray-50 text-[#6B7A99] text-xs">
+                        <td className="py-4 px-6 ">{coach.full_name}</td>
                         <td className="py-4 px-6 capitalize">{coach.personal_info.gender}</td>
                         <td className="py-4 px-6">
                           {coach.personal_info.date_of_birth ?
@@ -405,13 +417,13 @@ export default function CoachesListPage() {
                         <td className="py-4 px-6">
                           <div className="flex flex-wrap gap-1">
                             {coach.areas_of_expertise.map((skill, skillIndex) => (
-                              <Badge key={skillIndex} variant="secondary" className="bg-gray-100 text-gray-700 text-xs">
+                              <Badge key={skillIndex} variant="secondary" className="bg-[#D9D9D9] text-[#7D8592] text-xs rounded">
                                 {skill}
                               </Badge>
                             ))}
                           </div>
                         </td>
-                        <td className="py-4 px-6 text-blue-600">{coach.contact_info.email}</td>
+                        <td className="py-4 px-6">{coach.contact_info.email}</td>
                         <td className="py-4 px-6">{coach.contact_info.phone}</td>
                         <td className="py-4 px-6">
                           <div className="flex items-center space-x-2">
@@ -472,27 +484,45 @@ export default function CoachesListPage() {
               </table>
             </div>
 
-            {/* Pagination */}
-            <div className="flex justify-center items-center space-x-2 py-4 border-t">
-              <Button variant="outline" size="sm" className="bg-gray-200">
-                Previous
-              </Button>
-              <Button className="bg-yellow-400 hover:bg-yellow-500 text-black" size="sm">
-                1
-              </Button>
-              <Button variant="outline" size="sm">
-                2
-              </Button>
-              <Button variant="outline" size="sm">
-                3
-              </Button>
-              <Button variant="outline" size="sm">
-                4
-              </Button>
-              <Button className="bg-yellow-400 hover:bg-yellow-500 text-black" size="sm">
-                Next
-              </Button>
-            </div>
+           {/* Pagination */}
+<div className="flex justify-center items-center space-x-2 py-4 border-t">
+  <Button
+    variant="outline"
+    size="sm"
+    className="bg-gray-200"
+    disabled={currentPage === 1}
+    onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+  >
+    Previous
+  </Button>
+
+  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+    <Button
+      key={page}
+      onClick={() => setCurrentPage(page)}
+      className={`${
+        currentPage === page
+          ? "bg-yellow-400 hover:bg-yellow-500 text-black"
+          : "bg-transparent"
+      }`}
+      variant={currentPage === page ? "default" : "outline"}
+      size="sm"
+    >
+      {page}
+    </Button>
+  ))}
+
+  <Button
+    variant="outline"
+    size="sm"
+    className="bg-gray-200"
+    disabled={currentPage === totalPages}
+    onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+  >
+    Next
+  </Button>
+</div>
+
           </CardContent>
         </Card>
       </main>

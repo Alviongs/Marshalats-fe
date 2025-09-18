@@ -112,16 +112,16 @@ export default function CoachAttendancePage() {
     <div className="min-h-screen bg-gray-50 overflow-x-hidden">
       <DashboardHeader currentPage="Coach Attendance" />
 
-      <main className="w-full p-4 lg:p-6 overflow-x-hidden">
+      <main className="w-full p-4 lg:p-6 overflow-x-hidden xl:px-12">
         {/* Page Header */}
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4">
-          <h1 className="text-2xl font-bold text-gray-900">Attendance</h1>
+          <h1 className="text-2xl font-bold text-[#0A1629]">Attendance</h1>
           <div className="flex flex-wrap gap-2 lg:gap-3">
-            <Button className="bg-yellow-400 hover:bg-yellow-500 text-black text-sm">Send Alerts</Button>
-            <Button variant="outline" className="text-sm bg-transparent">
+            <Button className="bg-yellow-400 hover:bg-yellow-500 text-white text-sm">Send Alerts</Button>
+            <Button variant="outline" className="text-sm bg-transparent text-[#5A6ACF]">
               View Report
             </Button>
-            <Button variant="outline" className="text-sm flex items-center space-x-2 bg-transparent">
+            <Button variant="outline" className="text-sm flex items-center space-x-2 bg-transparent text-[#5A6ACF]">
               <span>📥</span>
               <span>Download attendance sheet</span>
             </Button>
@@ -135,8 +135,8 @@ export default function CoachAttendancePage() {
               onClick={() => setActiveTab("student")}
               className={
                 activeTab === "student"
-                  ? "bg-yellow-400 hover:bg-yellow-500 text-black"
-                  : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                  ? "bg-yellow-400 hover:bg-yellow-500 text-white"
+                  : "bg-[#D8E0F0] text-black hover:bg-gray-300"
               }
             >
               Student Attendance
@@ -145,8 +145,8 @@ export default function CoachAttendancePage() {
               onClick={() => setActiveTab("master")}
               className={
                 activeTab === "master"
-                  ? "bg-yellow-400 hover:bg-yellow-500 text-black"
-                  : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                  ? "bg-yellow-400 hover:bg-yellow-500 text-white"
+                  : "bg-[#D8E0F0] text-black hover:bg-gray-300"
               }
             >
               Master Attendance
@@ -158,14 +158,14 @@ export default function CoachAttendancePage() {
           <CardContent className="p-6">
             {/* Section Header with Filters */}
             <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4">
-              <h2 className="text-lg font-semibold">
+              <h2 className="text-lg font-semibold text-[#4F5077]">
                 {activeTab === "student" ? "Student Attendance" : "Master Attendance"}
               </h2>
               <div className="flex flex-wrap gap-2 lg:gap-4 items-center">
                 <div className="flex items-center space-x-2">
-                  <span className="text-sm text-gray-600">Branch:</span>
+                  <span className="text-sm text-black">Branch:</span>
                   <Select defaultValue="select-branch">
-                    <SelectTrigger className="w-32">
+                    <SelectTrigger className="w-32 bg-[#F1F1F1] text-[#9593A8]">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -176,9 +176,9 @@ export default function CoachAttendancePage() {
                   </Select>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <span className="text-sm text-gray-600">Select Month:</span>
+                  <span className="text-sm text-[#6B7A99]">Select Month:</span>
                   <Select defaultValue="april">
-                    <SelectTrigger className="w-24">
+                    <SelectTrigger className="w-24 bg-[#F1F1F1] text-[#9593A8]">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -191,7 +191,7 @@ export default function CoachAttendancePage() {
                 <div className="flex items-center space-x-2">
                   <span className="text-sm text-gray-600">Sort By:</span>
                   <Select defaultValue="today">
-                    <SelectTrigger className="w-20">
+                    <SelectTrigger className="w-20 bg-[#F1F1F1] text-[#9593A8]">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -209,18 +209,18 @@ export default function CoachAttendancePage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b bg-gray-50">
-                    <th className="text-left py-3 px-2 font-medium text-gray-600">Name</th>
-                    <th className="text-left py-3 px-2 font-medium text-gray-600">
+                    <th className="text-left py-3 px-2 font-semibold text-[#6B7A99]">Name</th>
+                    <th className="text-left py-3 px-2 font-semibold text-[#6B7A99]">
                       {activeTab === "student" ? "Student Name" : "Coach Name"}
                     </th>
-                    <th className="text-left py-3 px-2 font-medium text-gray-600">Gender</th>
-                    <th className="text-left py-3 px-2 font-medium text-gray-600">Expertise</th>
-                    <th className="text-left py-3 px-2 font-medium text-gray-600">Email Id</th>
-                    <th className="text-left py-3 px-2 font-medium text-gray-600">Date of join</th>
-                    <th className="text-left py-3 px-2 font-medium text-gray-600">Check in</th>
-                    <th className="text-left py-3 px-2 font-medium text-gray-600">Check out</th>
-                    <th className="text-left py-3 px-2 font-medium text-gray-600">Attendance</th>
-                    <th className="text-left py-3 px-2 font-medium text-gray-600">
+                    <th className="text-left py-3 px-2 font-semibold text-[#6B7A99]">Gender</th>
+                    <th className="text-left py-3 px-2 font-semibold text-[#6B7A99]">Expertise</th>
+                    <th className="text-left py-3 px-2 font-semibold text-[#6B7A99]">Email Id</th>
+                    <th className="text-left py-3 px-2 font-semibold text-[#6B7A99]">Date of join</th>
+                    <th className="text-left py-3 px-2 font-semibold text-[#6B7A99]">Check in</th>
+                    <th className="text-left py-3 px-2 font-semibold text-[#6B7A99]">Check out</th>
+                    <th className="text-left py-3 px-2 font-semibold text-[#6B7A99]">Attendance</th>
+                    <th className="text-left py-3 px-2 font-semibold text-[#6B7A99]">
                       {activeTab === "student" ? "Notes" : "Alerts"}
                     </th>
                   </tr>

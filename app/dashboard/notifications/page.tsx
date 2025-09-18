@@ -167,7 +167,7 @@ export default function NotificationsPage() {
     <div className="min-h-screen bg-gray-50">
       <DashboardHeader currentPage="Notifications" />
 
-      <main className="w-full p-4 lg:p-6">
+      <main className="w-full p-4 lg:p-6 xl:px-12">
         {/* Header */}
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4">
           <div>
@@ -181,7 +181,7 @@ export default function NotificationsPage() {
               <Button 
                 onClick={markAllAsRead}
                 variant="outline"
-                className="flex items-center space-x-2"
+                className="flex items-center space-x-2 text-[#5A6ACF]"
               >
                 <Check className="w-4 h-4" />
                 <span>Mark All as Read</span>
@@ -190,7 +190,7 @@ export default function NotificationsPage() {
             <Button 
               onClick={() => fetchNotifications(currentPage)}
               variant="outline"
-              className="flex items-center space-x-2"
+              className="flex items-center space-x-2 text-[#5A6ACF]"
             >
               <Bell className="w-4 h-4" />
               <span>Refresh</span>
@@ -215,7 +215,7 @@ export default function NotificationsPage() {
               </div>
               <div className="flex gap-2">
                 <Select value={filterType} onValueChange={setFilterType}>
-                  <SelectTrigger className="w-40">
+                  <SelectTrigger className="w-40 bg-[#F1F1F1] text-[#9593A8]">
                     <SelectValue placeholder="Filter by type" />
                   </SelectTrigger>
                   <SelectContent>
@@ -225,7 +225,7 @@ export default function NotificationsPage() {
                   </SelectContent>
                 </Select>
                 <Select value={filterStatus} onValueChange={setFilterStatus}>
-                  <SelectTrigger className="w-32">
+                  <SelectTrigger className="w-32 bg-[#F1F1F1] text-[#9593A8]">
                     <SelectValue placeholder="Status" />
                   </SelectTrigger>
                   <SelectContent>

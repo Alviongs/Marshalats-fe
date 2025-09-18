@@ -1209,7 +1209,7 @@ function CategoryReportsPageContent() {
     <div className="min-h-screen bg-gray-50">
       <DashboardHeader currentPage="Reports" />
 
-      <main className="w-full p-4 lg:p-6 max-w-7xl mx-auto">
+      <main className="w-full p-4 lg:p-6 xl:px-12 mx-auto">
 
 
         {/* Page Header - Same as main reports page */}
@@ -1230,7 +1230,7 @@ function CategoryReportsPageContent() {
               <span>Filter</span>
             </Button>
             <Button
-              className="bg-yellow-400 hover:bg-yellow-500 text-black flex items-center space-x-2"
+              className="bg-yellow-400 hover:bg-yellow-500 text-white flex items-center space-x-2"
               onClick={handleDownloadReport}
             >
               <Download className="w-4 h-4" />
@@ -1300,7 +1300,7 @@ function CategoryReportsPageContent() {
                         handleCategoryClick(category.id)
                       }}
                       disabled={categoryLoading === category.id}
-                      className="min-w-[100px]" // Prevent button size changes
+                      className="min-w-[100px] text-[#5A6ACF]" // Prevent button size changes
                     >
                       {categoryLoading === category.id ? 'Opening...' : 'View Reports'}
                     </Button>

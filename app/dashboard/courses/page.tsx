@@ -204,12 +204,12 @@ export default function CourseListPage() {
     <div className="min-h-screen bg-gray-50">
       <DashboardHeader currentPage="Courses" />
 
-      <main className="w-full p-4 lg:p-6">
+      <main className="w-full p-4 lg:p-6 xl:px-12">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">Course list</h1>
+          <h1 className="text-2xl font-bold text-[#4F5077]">Course list</h1>
           <Button
             onClick={() => router.push("/dashboard/create-course")}
-            className="bg-yellow-400 hover:bg-yellow-500 text-black px-6 py-2 rounded-lg font-medium"
+            className="bg-yellow-400 hover:bg-yellow-500 text-white px-6 py-2 rounded-lg font-medium"
           >
             + Add Course
           </Button>
@@ -217,7 +217,7 @@ export default function CourseListPage() {
 
         <div className="mb-6">
           <div className="relative max-w-md">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black w-4 h-4" />
             <Input
               placeholder="Search by name, ID, Location"
               value={searchTerm}
@@ -233,11 +233,11 @@ export default function CourseListPage() {
               <table className="w-full">
                 <thead>
                   <tr className="border-b bg-gray-50">
-                    <th className="text-left py-4 px-6 font-medium text-gray-700">Course Name:</th>
-                    <th className="text-left py-4 px-6 font-medium text-gray-700">Course Available in branches</th>
-                    <th className="text-left py-4 px-6 font-medium text-gray-700">No of masters assigned</th>
-                    <th className="text-left py-4 px-6 font-medium text-gray-700">No. of Student choose</th>
-                    <th className="text-left py-4 px-6 font-medium text-gray-700">Action</th>
+                    <th className="text-left py-4 px-6 font-semibold text-[#6B7A99] text-base">Course Name:</th>
+                    <th className="text-left py-4 px-6 font-semibold text-[#6B7A99] text-base">Course Available in branches</th>
+                    <th className="text-left py-4 px-6 font-semibold text-[#6B7A99] text-base">No of masters assigned</th>
+                    <th className="text-left py-4 px-6 font-semibold text-[#6B7A99] text-base">No. of Student choose</th>
+                    <th className="text-left py-4 px-6 font-semibold text-[#6B7A99] text-base">Action</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -248,12 +248,12 @@ export default function CourseListPage() {
                           <div className="w-12 h-12 bg-yellow-400 rounded-full flex items-center justify-center">
                             <span className="text-xl">{course.icon || '📚'}</span>
                           </div>
-                          <span className="font-medium text-gray-900">{course.name || course.title}</span>
+                          <span className="font-bold text-lg text-black">{course.name || course.title}</span>
                         </div>
                       </td>
                       <td className="py-4 px-6">
                         <div className="relative">
-                          <span className="text-gray-700">{course.branches || 0} Branches</span>
+                          <span className="text-[#6B7A99]">{course.branches || 0} Branches</span>
                           {index === 1 && showBranchDropdown === course.id && course.branchLocations && (
                             <div className="absolute top-8 left-0 bg-white border rounded-lg shadow-lg p-2 z-10 min-w-[150px]">
                               {course.branchLocations.map((location, idx) => (
@@ -276,10 +276,10 @@ export default function CourseListPage() {
                         </div>
                       </td>
                       <td className="py-4 px-6">
-                        <span className="text-gray-700">{course.masters || 0} masters</span>
+                        <span className="text-[#6B7A99]">{course.masters || 0} masters</span>
                       </td>
                       <td className="py-4 px-6">
-                        <span className="text-gray-700">{course.students || 0} students</span>
+                        <span className="text-[#6B7A99]">{course.students || 0} students</span>
                       </td>
                       <td className="py-4 px-6">
                         <div className="flex items-center space-x-2">
@@ -348,8 +348,8 @@ export default function CourseListPage() {
             <Button variant="outline" onClick={() => setShowDeletePopup(false)}>
               Cancel
             </Button>
-            <Button variant="destructive" onClick={handleDeleteConfirm}>
-              Delete
+            <Button variant="destructive" onClick={handleDeleteConfirm} className="text-white">
+             yes Delete
             </Button>
           </div>
         </DialogContent>

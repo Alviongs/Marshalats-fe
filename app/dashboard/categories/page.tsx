@@ -344,8 +344,8 @@ export default function CategoriesManagementPage() {
     <div className="min-h-screen bg-gray-50">
       <DashboardHeader currentPage="Categories" />
 
-      <main className="w-full p-4 lg:p-6">
-        <div className="max-w-7xl mx-auto space-y-6">
+      <main className="w-full p-4 lg:p-6 xl:px-12">
+        <div className="mx-auto space-y-6">
           {/* Header */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
@@ -357,7 +357,7 @@ export default function CategoriesManagementPage() {
               <DialogTrigger asChild>
                 <Button
                   onClick={handleNewCategory}
-                  className="bg-yellow-400 hover:bg-yellow-500 text-black"
+                  className="bg-yellow-400 hover:bg-yellow-500 text-white"
                 >
                   <Plus className="w-4 h-4 mr-2" />
                   Add Category
