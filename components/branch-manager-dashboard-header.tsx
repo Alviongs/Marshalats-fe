@@ -122,7 +122,7 @@ export default function BranchManagerDashboardHeader({ currentPage = "Dashboard"
   }, []);
 
   // Get current branch manager
-  const currentUser = BranchManagerAuth.getUser();
+  const currentUser = BranchManagerAuth.getCurrentUser();
 
   // Handle logout
   const handleLogout = () => {

@@ -95,7 +95,7 @@ export default function BranchManagerBranchInfo() {
         setLoading(true)
         setError(null)
 
-        const currentUser = BranchManagerAuth.getUser()
+        const currentUser = BranchManagerAuth.getCurrentUser()
         if (!currentUser) {
           throw new Error("User data not found")
         }

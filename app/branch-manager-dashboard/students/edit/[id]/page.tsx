@@ -133,7 +133,7 @@ export default function BranchManagerEditStudentPage() {
 
   const loadDynamicData = async () => {
     try {
-      const currentUser = BranchManagerAuth.getUser()
+      const currentUser = BranchManagerAuth.getCurrentUser()
       const mockBranches = [
         { 
           id: "branch_001", 

@@ -147,7 +147,7 @@ export default function BranchManagerEditCoachPage() {
         "Meditation", "Pilates", "Aerobics", "Weight Training"
       ]
 
-      const currentUser = BranchManagerAuth.getUser()
+      const currentUser = BranchManagerAuth.getCurrentUser()
       const mockBranches = [
         { 
           id: "branch_001", 

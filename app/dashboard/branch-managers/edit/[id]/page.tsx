@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
-import { ArrowLeft, User, MapPin, Phone, Building, Loader2 } from "lucide-react"
+import { ArrowLeft, Loader2 } from "lucide-react"
 import { useRouter, useParams } from "next/navigation"
 import DashboardHeader from "@/components/dashboard-header"
 import { TokenManager } from "@/lib/tokenManager"
@@ -367,37 +367,32 @@ export default function EditBranchManagerPage() {
     <div className="min-h-screen bg-gray-50">
       <DashboardHeader currentPage="Edit Branch Manager" />
       
-      <main className="w-full p-4 lg:py-4 px-19">
-        <div className="max-w-4xl mx-auto">
-          {/* Header */}
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center space-x-4">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => router.push(`/dashboard/branch-managers/${managerId}`)}
-                className="flex items-center space-x-2"
-              >
-                <ArrowLeft className="w-4 h-4" />
-                <span>Back to Manager Details</span>
-              </Button>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">Edit Branch Manager</h1>
-                <p className="text-sm text-gray-500">Update branch manager information and settings</p>
-              </div>
-            </div>
+      <main className="w-full py-4 px-19 lg:py-6">
+        {/* Header with Back Button */}
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center space-x-4">
+            <Button
+              variant="ghost"
+              onClick={() => router.push(`/dashboard/branch-managers/${managerId}`)}
+              className="flex items-center space-x-2 hover:bg-gray-100"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span className="text-[#4F5077]">Back to Manager Details</span>
+            </Button>
+            <div className="w-px h-6 bg-gray-300"></div>
+            <h1 className="text-2xl font-bold text-[#4F5077]">Edit Branch Manager</h1>
           </div>
+        </div>
 
-          <form onSubmit={handleSubmit} className="space-y-8">
-            {/* Personal Information */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <User className="w-5 h-5 text-yellow-600" />
-                  <span>Personal Information</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Personal Information */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <span className="text-[#4F5077]">Personal Information</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4 text-[#7D8592]">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="firstName">First Name *</Label>
@@ -495,15 +490,14 @@ export default function EditBranchManagerPage() {
               </CardContent>
             </Card>
 
-            {/* Address Information */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <MapPin className="w-5 h-5 text-yellow-600" />
-                  <span>Address Information</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
+          {/* Address Information */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <span className="text-[#4F5077]">Address Information</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4 text-[#7D8592]">
                 <div className="space-y-2">
                   <Label htmlFor="address">Address</Label>
                   <Input
@@ -558,15 +552,14 @@ export default function EditBranchManagerPage() {
               </CardContent>
             </Card>
 
-            {/* Professional Information */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <Building className="w-5 h-5 text-yellow-600" />
-                  <span>Professional Information</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
+          {/* Professional Information */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <span className="text-[#4F5077]">Professional Information</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4 text-[#7D8592]">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="designation">Designation</Label>
@@ -638,15 +631,14 @@ export default function EditBranchManagerPage() {
               </CardContent>
             </Card>
 
-            {/* Emergency Contact */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <Phone className="w-5 h-5 text-yellow-600" />
-                  <span>Emergency Contact</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
+          {/* Emergency Contact */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <span className="text-[#4F5077]">Emergency Contact</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4 text-[#7D8592]">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="emergencyContactName">Contact Name</Label>
@@ -681,12 +673,12 @@ export default function EditBranchManagerPage() {
               </CardContent>
             </Card>
 
-            {/* Additional Information */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Additional Information</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
+          {/* Additional Information */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-[#4F5077]">Additional Information</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4 text-[#7D8592]">
                 <div className="space-y-2">
                   <Label htmlFor="notes">Notes</Label>
                   <Textarea
@@ -700,75 +692,74 @@ export default function EditBranchManagerPage() {
               </CardContent>
             </Card>
 
-            {/* Submit Buttons */}
-            <div className="flex justify-between">
+          {/* Submit Buttons */}
+          <div className="flex justify-between">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleSendCredentials}
+              disabled={isSendingEmail}
+              className="bg-green-50 border-green-200 text-green-700 hover:bg-green-100"
+            >
+              {isSendingEmail ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Sending...
+                </>
+              ) : (
+                'Send Credentials via Email'
+              )}
+            </Button>
+
+            <div className="flex space-x-4">
               <Button
                 type="button"
                 variant="outline"
-                onClick={handleSendCredentials}
-                disabled={isSendingEmail}
-                className="bg-green-50 border-green-200 text-green-700 hover:bg-green-100"
+                onClick={() => router.push(`/dashboard/branch-managers/${managerId}`)}
+                disabled={isSubmitting}
               >
-                {isSendingEmail ? (
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={isSubmitting}
+                className="bg-yellow-400 hover:bg-yellow-500 text-black"
+              >
+                {isSubmitting ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Sending...
+                    Updating...
                   </>
                 ) : (
-                  'Send Credentials via Email'
+                  'Update Branch Manager'
                 )}
               </Button>
+            </div>
+          </div>
+        </form>
 
-              <div className="flex space-x-4">
+        {/* Success Popup */}
+        {showSuccessPopup && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 w-full max-w-md">
+              <div className="text-center">
+                <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Branch Manager Updated Successfully!</h3>
+                <p className="text-gray-600 mb-4">The branch manager information has been updated successfully.</p>
                 <Button
-                  type="button"
-                  variant="outline"
                   onClick={() => router.push(`/dashboard/branch-managers/${managerId}`)}
-                  disabled={isSubmitting}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="submit"
-                  disabled={isSubmitting}
                   className="bg-yellow-400 hover:bg-yellow-500 text-black"
                 >
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Updating...
-                    </>
-                  ) : (
-                    'Update Branch Manager'
-                  )}
+                  View Manager Details
                 </Button>
               </div>
             </div>
-          </form>
-
-          {/* Success Popup */}
-          {showSuccessPopup && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-              <div className="bg-white rounded-lg p-6 w-full max-w-md">
-                <div className="text-center">
-                  <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                  </div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Branch Manager Updated Successfully!</h3>
-                  <p className="text-gray-600 mb-4">The branch manager information has been updated successfully.</p>
-                  <Button
-                    onClick={() => router.push(`/dashboard/branch-managers/${managerId}`)}
-                    className="bg-yellow-400 hover:bg-yellow-500 text-black"
-                  >
-                    View Manager Details
-                  </Button>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
+          </div>
+        )}
       </main>
     </div>
   )

@@ -91,36 +91,14 @@ function BranchManagerLoginFormContent() {
         return;
       }
 
-      // Prepare branch manager data for storage
-      const branchManagerData = {
-        id: data.branch_manager.id,
-        full_name: data.branch_manager.full_name,
-        email: data.branch_manager.email,
-        phone: data.branch_manager.phone,
-        role: "branch_manager",
-        branch_id: data.branch_manager.branch_assignment?.branch_id || null,
-        branch_name: data.branch_manager.branch_assignment?.branch_name || null,
-        personal_info: data.branch_manager.personal_info,
-        professional_info: data.branch_manager.professional_info,
-        is_active: data.branch_manager.is_active
-      };
-
-      // Store authentication data using the BranchManagerAuth utility
-      const expirationTime = Date.now() + (data.expires_in * 1000);
-
-      localStorage.setItem("access_token", data.access_token);
-      localStorage.setItem("token", data.access_token); // Backward compatibility
-      localStorage.setItem("token_type", data.token_type);
-      localStorage.setItem("expires_in", data.expires_in.toString());
-      localStorage.setItem("token_expiration", expirationTime.toString());
-      localStorage.setItem("branch_manager", JSON.stringify(branchManagerData));
-      localStorage.setItem("user", JSON.stringify(branchManagerData)); // For compatibility
+      // Store authentication data using the new BranchManagerAuth utility
+      const userData = BranchManagerAuth.storeLoginData(data);
 
       console.log("Branch Manager login successful:", {
-        manager_id: branchManagerData.id,
-        full_name: branchManagerData.full_name,
-        email: branchManagerData.email,
-        branch_id: branchManagerData.branch_id,
+        manager_id: userData.id,
+        full_name: userData.full_name,
+        email: userData.email,
+        branch_id: userData.branch_id,
         role: "branch_manager",
         access_token: data.access_token.substring(0, 20) + "...",
         expires_in: data.expires_in

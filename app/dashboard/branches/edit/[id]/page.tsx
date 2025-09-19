@@ -147,8 +147,8 @@ export default function EditBranch() {
               'Content-Type': 'application/json'
             }
           }),
-          // Fetch managers (coaches with manager designation)
-          fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/coaches?active_only=true&limit=100`, {
+          // Fetch branch managers from branch-managers collection
+          fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/branch-managers?active_only=true&limit=100`, {
             headers: {
               'Authorization': `Bearer ${token}`,
               'Content-Type': 'application/json'
@@ -216,12 +216,13 @@ export default function EditBranch() {
           throw new Error("Failed to fetch branch data")
         }
 
-        // Handle managers data
+        // Handle branch managers data
         if (managersResponse.status === 'fulfilled' && managersResponse.value.ok) {
           const managersData = await managersResponse.value.json()
-          const managers = (managersData.coaches || []).map((coach: any) => ({
-            id: coach.id,
-            name: coach.full_name || `${coach.personal_info?.first_name || ''} ${coach.personal_info?.last_name || ''}`.trim()
+          const managers = (managersData.branch_managers || []).map((manager: any) => ({
+            id: manager.id,
+            name: manager.full_name || `${manager.personal_info?.first_name || ''} ${manager.personal_info?.last_name || ''}`.trim(),
+            email: manager.email || manager.contact_info?.email || ''
           }))
           setAvailableManagers(managers)
         }
@@ -745,7 +746,7 @@ export default function EditBranch() {
                         disabled={isLoadingManagers}
                       >
                         <SelectTrigger>
-                          <SelectValue placeholder={isLoadingManagers ? "Loading managers..." : "Select a manager"} />
+                          <SelectValue placeholder={isLoadingManagers ? "Loading branch managers..." : "Select a branch manager"} />
                         </SelectTrigger>
                         <SelectContent>
                           {availableManagers.length > 0 ? (
@@ -756,7 +757,7 @@ export default function EditBranch() {
                             ))
                           ) : (
                             <div className="p-4 text-center text-gray-500">
-                              <p className="text-sm">No managers available</p>
+                              <p className="text-sm">No branch managers available</p>
                             </div>
                           )}
                         </SelectContent>

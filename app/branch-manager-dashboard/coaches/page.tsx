@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Search, Edit, Trash2, RefreshCw, Eye, Star } from "lucide-react"
+import { Search, Edit, Trash2, RefreshCw, Eye, Star, User, AlertCircle } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Switch } from "@/components/ui/switch"
 import { useRouter } from "next/navigation"
@@ -52,83 +52,83 @@ export default function BranchManagerCoachesList() {
     }
   }, [router])
 
-  // Load mock data for branch manager
+  // Load coaches data for branch manager from API
   useEffect(() => {
     const loadCoachesData = async () => {
       try {
         setLoading(true)
         setError(null)
-        
-        // Mock coaches data for branch manager
-        const mockCoaches: Coach[] = [
-          {
-            id: "coach_001",
-            full_name: "John Smith",
-            email: "john@branch.com",
-            phone: "+1234567890",
-            specialization: "Martial Arts",
-            experience_years: 5,
-            is_active: true,
-            branch_id: "branch_001",
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-            assigned_courses: [
-              {
-                course_id: "course_001",
-                course_name: "Martial Arts Beginner",
-                level: "Beginner"
-              },
-              {
-                course_id: "course_002",
-                course_name: "Martial Arts Intermediate",
-                level: "Intermediate"
-              }
-            ]
-          },
-          {
-            id: "coach_002",
-            full_name: "Sarah Johnson",
-            email: "sarah@branch.com",
-            phone: "+1234567891",
-            specialization: "Yoga",
-            experience_years: 3,
-            is_active: true,
-            branch_id: "branch_001",
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-            assigned_courses: [
-              {
-                course_id: "course_003",
-                course_name: "Yoga Beginner",
-                level: "Beginner"
-              }
-            ]
-          },
-          {
-            id: "coach_003",
-            full_name: "Mike Davis",
-            email: "mike@branch.com",
-            phone: "+1234567892",
-            specialization: "Dance",
-            experience_years: 7,
-            is_active: false,
-            branch_id: "branch_001",
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-            assigned_courses: [
-              {
-                course_id: "course_004",
-                course_name: "Dance Advanced",
-                level: "Advanced"
-              }
-            ]
+
+        const authHeaders = BranchManagerAuth.getAuthHeaders()
+        if (!authHeaders.Authorization) {
+          setError("Authentication token not found. Please login again.")
+          return
+        }
+
+        console.log('Loading coaches data for branch manager...')
+
+        // Fetch coaches directly - the backend already filters by branch for branch managers
+        const coachesResponse = await fetch(`http://localhost:8003/api/coaches?active_only=true&limit=100`, {
+          method: 'GET',
+          headers: authHeaders
+        })
+
+        if (!coachesResponse.ok) {
+          const errorText = await coachesResponse.text()
+          console.error('Coaches API error:', coachesResponse.status, errorText)
+          throw new Error(`Failed to fetch coaches: ${coachesResponse.status} - ${errorText}`)
+        }
+
+        const coachesData = await coachesResponse.json()
+        console.log('Coaches API response:', coachesData)
+
+        // Handle different response structures
+        let allCoaches = []
+        if (Array.isArray(coachesData)) {
+          allCoaches = coachesData
+        } else if (coachesData.coaches && Array.isArray(coachesData.coaches)) {
+          allCoaches = coachesData.coaches
+        } else if (coachesData.data && Array.isArray(coachesData.data)) {
+          allCoaches = coachesData.data
+        } else {
+          console.warn('Unexpected coaches API response structure:', coachesData)
+          allCoaches = []
+        }
+
+        console.log('Processing coaches:', allCoaches.length)
+
+        // Transform the API data to match our Coach interface
+        const transformedCoaches: Coach[] = allCoaches.map((coach: any) => {
+          // Handle different API response structures
+          const personalInfo = coach.personal_info || {}
+          const contactInfo = coach.contact_info || {}
+          const professionalInfo = coach.professional_info || {}
+
+          return {
+            id: coach.id || coach._id,
+            full_name: coach.full_name ||
+                      `${personalInfo.first_name || coach.first_name || ''} ${personalInfo.last_name || coach.last_name || ''}`.trim() ||
+                      'Unknown Coach',
+            email: coach.email || contactInfo.email || "",
+            phone: coach.phone || contactInfo.phone || "",
+            specialization: (coach.areas_of_expertise && coach.areas_of_expertise[0]) ||
+                           professionalInfo.specialization ||
+                           coach.specialization ||
+                           "General",
+            experience_years: professionalInfo.experience_years || coach.experience_years || 0,
+            is_active: coach.is_active ?? true,
+            branch_id: coach.branch_id || "",
+            created_at: coach.created_at || new Date().toISOString(),
+            updated_at: coach.updated_at || new Date().toISOString(),
+            assigned_courses: coach.assigned_courses || []
           }
-        ]
-        
-        setCoaches(mockCoaches)
-      } catch (err) {
+        })
+
+        console.log('Transformed coaches:', transformedCoaches)
+        setCoaches(transformedCoaches)
+      } catch (err: any) {
         console.error('Error loading coaches data:', err)
-        setError('Failed to load coaches data')
+        setError(err.message || 'Failed to load coaches data')
       } finally {
         setLoading(false)
       }
@@ -155,10 +155,73 @@ export default function BranchManagerCoachesList() {
 
   const handleRefresh = async () => {
     setRefreshing(true)
-    // Simulate refresh delay
-    setTimeout(() => {
+    try {
+      const token = BranchManagerAuth.getToken()
+      if (!token) {
+        setError("Authentication token not found. Please login again.")
+        return
+      }
+
+      // Get branch manager profile
+      const profileResponse = await fetch(`http://localhost:8003/api/branch-managers/me`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      })
+
+      if (!profileResponse.ok) {
+        throw new Error(`Failed to fetch branch manager profile: ${profileResponse.status}`)
+      }
+
+      const profileData = await profileResponse.json()
+      const branchId = profileData.branch_manager?.branch_assignment?.branch_id
+
+      if (!branchId) {
+        setError("No branch assigned to this manager")
+        return
+      }
+
+      // Fetch fresh coaches data
+      const coachesResponse = await fetch(`http://localhost:8003/api/coaches`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      })
+
+      if (!coachesResponse.ok) {
+        throw new Error(`Failed to fetch coaches: ${coachesResponse.status}`)
+      }
+
+      const coachesData = await coachesResponse.json()
+      const allCoaches = coachesData.coaches || []
+      const branchCoaches = allCoaches.filter((coach: any) => coach.branch_id === branchId)
+
+      const transformedCoaches: Coach[] = branchCoaches.map((coach: any) => ({
+        id: coach.id,
+        full_name: coach.full_name || `${coach.first_name || ''} ${coach.last_name || ''}`.trim(),
+        email: coach.email || coach.contact_info?.email || "",
+        phone: coach.phone || coach.contact_info?.phone || "",
+        specialization: coach.areas_of_expertise?.[0] || coach.specialization || "General",
+        experience_years: coach.experience_years || 0,
+        is_active: coach.is_active ?? true,
+        branch_id: coach.branch_id || branchId,
+        created_at: coach.created_at || new Date().toISOString(),
+        updated_at: coach.updated_at || new Date().toISOString(),
+        assigned_courses: coach.assigned_courses || []
+      }))
+
+      setCoaches(transformedCoaches)
+      setError(null)
+    } catch (err: any) {
+      console.error('Error refreshing coaches data:', err)
+      setError(err.message || 'Failed to refresh coaches data')
+    } finally {
       setRefreshing(false)
-    }, 1000)
+    }
   }
 
   const handleViewCoach = (coachId: string) => {
@@ -174,11 +237,36 @@ export default function BranchManagerCoachesList() {
     setShowDeletePopup(true)
   }
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (coachToDelete) {
-      setCoaches(coaches.filter(c => c.id !== coachToDelete))
-      setCoachToDelete(null)
-      setShowDeletePopup(false)
+      try {
+        const authHeaders = BranchManagerAuth.getAuthHeaders()
+        if (!authHeaders.Authorization) {
+          throw new Error("Authentication token not found. Please login again.")
+        }
+
+        const response = await fetch(`http://localhost:8003/api/coaches/${coachToDelete}`, {
+          method: 'DELETE',
+          headers: authHeaders
+        })
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}))
+          throw new Error(errorData.detail || errorData.message || `Failed to delete coach (${response.status})`)
+        }
+
+        // Remove coach from local state
+        setCoaches(coaches.filter(c => c.id !== coachToDelete))
+        setCoachToDelete(null)
+        setShowDeletePopup(false)
+
+        // Show success message
+        alert('Coach deleted successfully')
+
+      } catch (error) {
+        console.error("Error deleting coach:", error)
+        alert(`Error deleting coach: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      }
     }
   }
 
@@ -262,11 +350,59 @@ export default function BranchManagerCoachesList() {
               </div>
             ) : error ? (
               <div className="text-center py-8">
-                <p className="text-red-600">{error}</p>
+                <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md mx-auto">
+                  <div className="flex items-center justify-center mb-4">
+                    <AlertCircle className="w-8 h-8 text-red-500" />
+                  </div>
+                  <h3 className="text-lg font-medium text-red-900 mb-2">Error Loading Coaches</h3>
+                  <p className="text-red-700 mb-4">{error}</p>
+                  <div className="flex justify-center space-x-3">
+                    <Button
+                      variant="outline"
+                      onClick={() => window.location.reload()}
+                      className="text-red-600 border-red-300 hover:bg-red-50"
+                    >
+                      <RefreshCw className="w-4 h-4 mr-1" />
+                      Retry
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => router.push("/branch-manager-dashboard")}
+                      className="text-gray-600 border-gray-300 hover:bg-gray-50"
+                    >
+                      Go to Dashboard
+                    </Button>
+                  </div>
+                </div>
               </div>
             ) : currentCoaches.length === 0 ? (
-              <div className="text-center py-8">
-                <p className="text-gray-500">No coaches found</p>
+              <div className="text-center py-12">
+                <div className="max-w-md mx-auto">
+                  <User className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No coaches found</h3>
+                  <p className="text-gray-500 mb-6">
+                    {searchTerm
+                      ? `No coaches match your search "${searchTerm}"`
+                      : "There are no coaches assigned to your branch yet."
+                    }
+                  </p>
+                  <div className="flex justify-center space-x-3">
+                    {searchTerm && (
+                      <Button
+                        variant="outline"
+                        onClick={() => setSearchTerm("")}
+                      >
+                        Clear Search
+                      </Button>
+                    )}
+                    <Button
+                      onClick={() => router.push("/branch-manager-dashboard/add-coach")}
+                      className="bg-blue-600 hover:bg-blue-700 text-white"
+                    >
+                      Add First Coach
+                    </Button>
+                  </div>
+                </div>
               </div>
             ) : (
               <div className="space-y-4">

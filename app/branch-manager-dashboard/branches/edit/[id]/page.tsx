@@ -133,7 +133,7 @@ export default function BranchManagerEditBranch() {
     try {
       setIsLoading(true)
       
-      const currentUser = BranchManagerAuth.getUser()
+      const currentUser = BranchManagerAuth.getCurrentUser()
       if (!currentUser) {
         throw new Error("User data not found")
       }
@@ -211,7 +211,7 @@ export default function BranchManagerEditBranch() {
         { id: "course_004", title: "Fitness Bootcamp", category: "Fitness" }
       ]
 
-      const currentUser = BranchManagerAuth.getUser()
+      const currentUser = BranchManagerAuth.getCurrentUser()
       const mockManagers = [
         { 
           id: currentUser?.id || "manager_001", 

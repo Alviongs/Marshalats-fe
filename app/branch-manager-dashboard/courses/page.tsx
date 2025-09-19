@@ -51,101 +51,82 @@ export default function BranchManagerCoursesList() {
     }
   }, [router])
 
-  // Load mock data for branch manager
+  // Load courses data for branch manager from API
   useEffect(() => {
     const loadCoursesData = async () => {
       try {
         setLoading(true)
         setError(null)
-        
-        // Mock courses data for branch manager
-        const mockCourses: Course[] = [
-          {
-            id: "course_001",
-            course_name: "Martial Arts Beginner",
-            category: "Martial Arts",
-            level: "Beginner",
-            duration: "3 months",
-            price: 2500,
-            is_active: true,
-            description: "Introduction to martial arts fundamentals",
-            enrolled_students: 15,
-            assigned_coaches: [
-              {
-                coach_id: "coach_001",
-                coach_name: "John Smith"
-              }
-            ],
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          },
-          {
-            id: "course_002",
-            course_name: "Yoga Intermediate",
-            category: "Yoga",
-            level: "Intermediate",
-            duration: "6 months",
-            price: 3000,
-            is_active: true,
-            description: "Advanced yoga techniques and poses",
-            enrolled_students: 12,
-            assigned_coaches: [
-              {
-                coach_id: "coach_002",
-                coach_name: "Sarah Johnson"
-              }
-            ],
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          },
-          {
-            id: "course_003",
-            course_name: "Dance Advanced",
-            category: "Dance",
-            level: "Advanced",
-            duration: "12 months",
-            price: 5000,
-            is_active: false,
-            description: "Professional dance training program",
-            enrolled_students: 8,
-            assigned_coaches: [
-              {
-                coach_id: "coach_003",
-                coach_name: "Mike Davis"
-              }
-            ],
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          },
-          {
-            id: "course_004",
-            course_name: "Fitness Bootcamp",
-            category: "Fitness",
-            level: "All Levels",
-            duration: "1 month",
-            price: 1500,
-            is_active: true,
-            description: "High-intensity fitness training",
-            enrolled_students: 20,
-            assigned_coaches: [
-              {
-                coach_id: "coach_001",
-                coach_name: "John Smith"
-              },
-              {
-                coach_id: "coach_002",
-                coach_name: "Sarah Johnson"
-              }
-            ],
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
+
+        const token = BranchManagerAuth.getToken()
+        if (!token) {
+          setError("Authentication token not found. Please login again.")
+          return
+        }
+
+        // First, get the current branch manager's profile to get their managed branches
+        const profileResponse = await fetch(`http://localhost:8003/api/branch-managers/me`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
           }
-        ]
-        
-        setCourses(mockCourses)
-      } catch (err) {
+        })
+
+        if (!profileResponse.ok) {
+          throw new Error(`Failed to fetch branch manager profile: ${profileResponse.status}`)
+        }
+
+        const profileData = await profileResponse.json()
+        const branchManager = profileData.branch_manager
+
+        // Get the branch ID from the branch manager's assignment
+        const branchId = branchManager?.branch_assignment?.branch_id
+
+        if (!branchId) {
+          setError("No branch assigned to this manager")
+          return
+        }
+
+        // Fetch courses for the specific branch
+        const coursesResponse = await fetch(`http://localhost:8003/api/courses/by-branch/${branchId}`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        })
+
+        if (!coursesResponse.ok) {
+          throw new Error(`Failed to fetch courses: ${coursesResponse.status}`)
+        }
+
+        const coursesData = await coursesResponse.json()
+        const branchCourses = coursesData.courses || []
+
+        // Transform the API data to match our Course interface
+        const transformedCourses: Course[] = branchCourses.map((course: any) => ({
+          id: course.id,
+          course_name: course.name || course.course_name || course.title,
+          category: course.category_name || course.category || "General",
+          level: course.difficulty_level || course.level || "Beginner",
+          duration: course.duration || "3 months",
+          price: course.pricing?.amount || course.price || 0,
+          is_active: course.settings?.active ?? course.is_active ?? true,
+          description: course.description || "",
+          enrolled_students: course.student_count || course.enrolled_students || 0,
+          assigned_coaches: course.instructors?.map((instructor: any) => ({
+            coach_id: instructor.id || instructor.coach_id,
+            coach_name: instructor.full_name || instructor.coach_name || instructor.name
+          })) || [],
+          created_at: course.created_at || new Date().toISOString(),
+          updated_at: course.updated_at || new Date().toISOString()
+        }))
+
+        setCourses(transformedCourses)
+      } catch (err: any) {
         console.error('Error loading courses data:', err)
-        setError('Failed to load courses data')
+        setError(err.message || 'Failed to load courses data')
       } finally {
         setLoading(false)
       }
@@ -172,10 +153,76 @@ export default function BranchManagerCoursesList() {
 
   const handleRefresh = async () => {
     setRefreshing(true)
-    // Simulate refresh delay
-    setTimeout(() => {
+    try {
+      const token = BranchManagerAuth.getToken()
+      if (!token) {
+        setError("Authentication token not found. Please login again.")
+        return
+      }
+
+      // Get branch manager profile
+      const profileResponse = await fetch(`http://localhost:8003/api/branch-managers/me`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      })
+
+      if (!profileResponse.ok) {
+        throw new Error(`Failed to fetch branch manager profile: ${profileResponse.status}`)
+      }
+
+      const profileData = await profileResponse.json()
+      const branchId = profileData.branch_manager?.branch_assignment?.branch_id
+
+      if (!branchId) {
+        setError("No branch assigned to this manager")
+        return
+      }
+
+      // Fetch fresh courses data
+      const coursesResponse = await fetch(`http://localhost:8003/api/courses/by-branch/${branchId}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      })
+
+      if (!coursesResponse.ok) {
+        throw new Error(`Failed to fetch courses: ${coursesResponse.status}`)
+      }
+
+      const coursesData = await coursesResponse.json()
+      const branchCourses = coursesData.courses || []
+
+      const transformedCourses: Course[] = branchCourses.map((course: any) => ({
+        id: course.id,
+        course_name: course.name || course.course_name || course.title,
+        category: course.category_name || course.category || "General",
+        level: course.difficulty_level || course.level || "Beginner",
+        duration: course.duration || "3 months",
+        price: course.pricing?.amount || course.price || 0,
+        is_active: course.settings?.active ?? course.is_active ?? true,
+        description: course.description || "",
+        enrolled_students: course.student_count || course.enrolled_students || 0,
+        assigned_coaches: course.instructors?.map((instructor: any) => ({
+          coach_id: instructor.id || instructor.coach_id,
+          coach_name: instructor.full_name || instructor.coach_name || instructor.name
+        })) || [],
+        created_at: course.created_at || new Date().toISOString(),
+        updated_at: course.updated_at || new Date().toISOString()
+      }))
+
+      setCourses(transformedCourses)
+      setError(null)
+    } catch (err: any) {
+      console.error('Error refreshing courses data:', err)
+      setError(err.message || 'Failed to refresh courses data')
+    } finally {
       setRefreshing(false)
-    }, 1000)
+    }
   }
 
   const handleViewCourse = (courseId: string) => {

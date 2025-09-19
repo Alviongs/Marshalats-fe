@@ -83,114 +83,102 @@ export default function BranchManagerStudentList() {
     }
   }, [router])
 
-  // Load mock data for branch manager
+  // Load students data for branch manager from API
   useEffect(() => {
     const loadStudentsData = async () => {
       try {
         setLoading(true)
         setError(null)
-        
-        // Mock students data for branch manager
-        const mockStudents: Student[] = [
-          {
-            id: "student_001",
-            student_id: "STU001",
-            full_name: "Alice Johnson",
-            email: "alice@example.com",
-            phone: "+1234567890",
-            role: "student",
-            branch_id: "branch_001",
-            date_of_birth: "1995-05-15",
-            is_active: true,
-            created_at: new Date().toISOString(),
-            gender: "Female",
-            age: 28,
-            courses: [
-              {
-                course_id: "course_001",
-                course_name: "Martial Arts Beginner",
-                level: "Beginner",
-                duration: "3 months",
-                branch_name: "Main Branch"
-              }
-            ],
-            address: {
-              line1: "123 Main St",
-              area: "Downtown",
-              city: "City",
-              state: "State",
-              pincode: "12345",
-              country: "Country"
-            }
-          },
-          {
-            id: "student_002",
-            student_id: "STU002",
-            full_name: "Bob Smith",
-            email: "bob@example.com",
-            phone: "+1234567891",
-            role: "student",
-            branch_id: "branch_001",
-            date_of_birth: "1992-08-22",
-            is_active: true,
-            created_at: new Date().toISOString(),
-            gender: "Male",
-            age: 31,
-            courses: [
-              {
-                course_id: "course_002",
-                course_name: "Yoga Intermediate",
-                level: "Intermediate",
-                duration: "6 months",
-                branch_name: "Main Branch"
-              }
-            ],
-            address: {
-              line1: "456 Oak Ave",
-              area: "Uptown",
-              city: "City",
-              state: "State",
-              pincode: "12346",
-              country: "Country"
-            }
-          },
-          {
-            id: "student_003",
-            student_id: "STU003",
-            full_name: "Carol Davis",
-            email: "carol@example.com",
-            phone: "+1234567892",
-            role: "student",
-            branch_id: "branch_001",
-            date_of_birth: "1998-12-10",
-            is_active: false,
-            created_at: new Date().toISOString(),
-            gender: "Female",
-            age: 25,
-            courses: [
-              {
-                course_id: "course_003",
-                course_name: "Dance Advanced",
-                level: "Advanced",
-                duration: "12 months",
-                branch_name: "Main Branch"
-              }
-            ],
-            address: {
-              line1: "789 Pine Rd",
-              area: "Midtown",
-              city: "City",
-              state: "State",
-              pincode: "12347",
-              country: "Country"
-            }
+
+        const token = BranchManagerAuth.getToken()
+        if (!token) {
+          setError("Authentication token not found. Please login again.")
+          return
+        }
+
+        // First, get the current branch manager's profile to get their managed branches
+        const profileResponse = await fetch(`http://localhost:8003/api/branch-managers/me`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
           }
-        ]
-        
-        setStudents(mockStudents)
-      } catch (err) {
+        })
+
+        if (!profileResponse.ok) {
+          throw new Error(`Failed to fetch branch manager profile: ${profileResponse.status}`)
+        }
+
+        const profileData = await profileResponse.json()
+        const branchManager = profileData.branch_manager
+
+        // Get the branch ID from the branch manager's assignment
+        const branchId = branchManager?.branch_assignment?.branch_id
+
+        if (!branchId) {
+          setError("No branch assigned to this manager")
+          return
+        }
+
+        // Fetch student details with course enrollment data
+        const studentsResponse = await fetch(`http://localhost:8003/api/users/students/details`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        })
+
+        if (!studentsResponse.ok) {
+          throw new Error(`Failed to fetch students: ${studentsResponse.status}`)
+        }
+
+        const studentsData = await studentsResponse.json()
+        const allStudents = studentsData.students || []
+
+        // Filter students by the branch manager's branch (based on their course enrollments)
+        const branchStudents = allStudents.filter((student: any) => {
+          // Check if student has any enrollments in courses from this branch
+          return student.enrollments?.some((enrollment: any) =>
+            enrollment.branch_id === branchId
+          ) || student.branch_id === branchId
+        })
+
+        // Transform the API data to match our Student interface
+        const transformedStudents: Student[] = branchStudents.map((student: any) => ({
+          id: student.id,
+          student_id: student.student_id || student.id,
+          full_name: student.full_name || `${student.first_name || ''} ${student.last_name || ''}`.trim(),
+          email: student.email || "",
+          phone: student.phone || "",
+          role: student.role || "student",
+          branch_id: branchId,
+          date_of_birth: student.date_of_birth,
+          is_active: student.is_active ?? true,
+          created_at: student.created_at || new Date().toISOString(),
+          gender: student.gender,
+          age: student.age,
+          courses: student.enrollments?.map((enrollment: any) => ({
+            course_id: enrollment.course_id,
+            course_name: enrollment.course_name || enrollment.course?.name || "Unknown Course",
+            level: enrollment.course?.difficulty_level || "Beginner",
+            duration: enrollment.course?.duration || "3 months",
+            branch_name: branchManager?.branch_assignment?.branch_name || "Branch"
+          })) || [],
+          address: student.address || {
+            line1: "",
+            area: "",
+            city: "",
+            state: "",
+            pincode: "",
+            country: ""
+          }
+        }))
+
+        setStudents(transformedStudents)
+      } catch (err: any) {
         console.error('Error loading students data:', err)
-        setError('Failed to load students data')
+        setError(err.message || 'Failed to load students data')
       } finally {
         setLoading(false)
       }
@@ -217,10 +205,95 @@ export default function BranchManagerStudentList() {
 
   const handleRefresh = async () => {
     setRefreshing(true)
-    // Simulate refresh delay
-    setTimeout(() => {
+    try {
+      const token = BranchManagerAuth.getToken()
+      if (!token) {
+        setError("Authentication token not found. Please login again.")
+        return
+      }
+
+      // Get branch manager profile
+      const profileResponse = await fetch(`http://localhost:8003/api/branch-managers/me`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      })
+
+      if (!profileResponse.ok) {
+        throw new Error(`Failed to fetch branch manager profile: ${profileResponse.status}`)
+      }
+
+      const profileData = await profileResponse.json()
+      const branchManager = profileData.branch_manager
+      const branchId = branchManager?.branch_assignment?.branch_id
+
+      if (!branchId) {
+        setError("No branch assigned to this manager")
+        return
+      }
+
+      // Fetch fresh students data
+      const studentsResponse = await fetch(`http://localhost:8003/api/users/students/details`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      })
+
+      if (!studentsResponse.ok) {
+        throw new Error(`Failed to fetch students: ${studentsResponse.status}`)
+      }
+
+      const studentsData = await studentsResponse.json()
+      const allStudents = studentsData.students || []
+
+      const branchStudents = allStudents.filter((student: any) => {
+        return student.enrollments?.some((enrollment: any) =>
+          enrollment.branch_id === branchId
+        ) || student.branch_id === branchId
+      })
+
+      const transformedStudents: Student[] = branchStudents.map((student: any) => ({
+        id: student.id,
+        student_id: student.student_id || student.id,
+        full_name: student.full_name || `${student.first_name || ''} ${student.last_name || ''}`.trim(),
+        email: student.email || "",
+        phone: student.phone || "",
+        role: student.role || "student",
+        branch_id: branchId,
+        date_of_birth: student.date_of_birth,
+        is_active: student.is_active ?? true,
+        created_at: student.created_at || new Date().toISOString(),
+        gender: student.gender,
+        age: student.age,
+        courses: student.enrollments?.map((enrollment: any) => ({
+          course_id: enrollment.course_id,
+          course_name: enrollment.course_name || enrollment.course?.name || "Unknown Course",
+          level: enrollment.course?.difficulty_level || "Beginner",
+          duration: enrollment.course?.duration || "3 months",
+          branch_name: branchManager?.branch_assignment?.branch_name || "Branch"
+        })) || [],
+        address: student.address || {
+          line1: "",
+          area: "",
+          city: "",
+          state: "",
+          pincode: "",
+          country: ""
+        }
+      }))
+
+      setStudents(transformedStudents)
+      setError(null)
+    } catch (err: any) {
+      console.error('Error refreshing students data:', err)
+      setError(err.message || 'Failed to refresh students data')
+    } finally {
       setRefreshing(false)
-    }, 1000)
+    }
   }
 
   const handleViewStudent = (studentId: string) => {
@@ -236,11 +309,43 @@ export default function BranchManagerStudentList() {
     setShowDeletePopup(true)
   }
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (studentToDelete) {
-      setStudents(students.filter(s => s.id !== studentToDelete))
-      setStudentToDelete(null)
-      setShowDeletePopup(false)
+      try {
+        const authHeaders = BranchManagerAuth.getAuthHeaders()
+        if (!authHeaders.Authorization) {
+          throw new Error("Authentication token not found. Please login again.")
+        }
+
+        const response = await fetch(`http://localhost:8003/api/users/${studentToDelete}`, {
+          method: 'DELETE',
+          headers: authHeaders
+        })
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}))
+
+          if (response.status === 401) {
+            throw new Error("Invalid authentication credentials. Please login again.")
+          } else if (response.status === 403) {
+            throw new Error("Insufficient permissions to delete students.")
+          } else {
+            throw new Error(errorData.detail || errorData.message || `Failed to delete student (${response.status})`)
+          }
+        }
+
+        // Remove student from local state
+        setStudents(students.filter(s => s.id !== studentToDelete))
+        setStudentToDelete(null)
+        setShowDeletePopup(false)
+
+        // Show success message
+        alert('Student deleted successfully')
+
+      } catch (error) {
+        console.error("Error deleting student:", error)
+        alert(`Error deleting student: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      }
     }
   }
 

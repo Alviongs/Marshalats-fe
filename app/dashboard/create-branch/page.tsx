@@ -149,7 +149,7 @@ export default function CreateBranchPage() {
 
   // Load data from APIs
   useEffect(() => {
-    const loadCoaches = async () => {
+    const loadBranchManagers = async () => {
       try {
         setIsLoadingCoaches(true)
 
@@ -202,7 +202,7 @@ export default function CreateBranchPage() {
             console.error('Error getting superadmin token:', error)
             toast({
               title: "Authentication Error",
-              description: "Please login to access coach data.",
+              description: "Please login to access branch manager data.",
               variant: "destructive",
             })
             setIsLoadingCoaches(false)
@@ -210,8 +210,8 @@ export default function CreateBranchPage() {
           }
         }
 
-        // Call real backend API
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/coaches?active_only=true&limit=100`, {
+        // Call branch managers API instead of coaches API
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/branch-managers?active_only=true&limit=100`, {
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`
@@ -220,37 +220,38 @@ export default function CreateBranchPage() {
 
         if (response.ok) {
           const data = await response.json()
-          console.log('✅ Real backend coaches data:', data)
+          console.log('✅ Real backend branch managers data:', data)
 
-          // Transform coach data to the format needed for dropdowns
-          const coachOptions = (data.coaches || []).map((coach: any) => ({
-            id: coach.id,
-            name: coach.full_name || `${coach.personal_info?.first_name || ''} ${coach.personal_info?.last_name || ''}`.trim() || `${coach.first_name || ''} ${coach.last_name || ''}`.trim()
+          // Transform branch manager data to the format needed for dropdowns
+          const branchManagerOptions = (data.branch_managers || []).map((manager: any) => ({
+            id: manager.id,
+            name: manager.full_name || `${manager.personal_info?.first_name || ''} ${manager.personal_info?.last_name || ''}`.trim() || `${manager.first_name || ''} ${manager.last_name || ''}`.trim(),
+            email: manager.email || manager.contact_info?.email || ''
           }))
 
-          console.log('✅ Transformed coach options:', coachOptions)
-          setCoaches(coachOptions)
+          console.log('✅ Transformed branch manager options:', branchManagerOptions)
+          setCoaches(branchManagerOptions)
         } else {
-          console.error('Failed to load coaches:', response.status, response.statusText)
+          console.error('Failed to load branch managers:', response.status, response.statusText)
           if (response.status === 401) {
             toast({
               title: "Authentication Error",
-              description: "Please login again to access coach data.",
+              description: "Please login again to access branch manager data.",
               variant: "destructive",
             })
           } else {
             toast({
               title: "Error",
-              description: "Failed to load coaches. Please try again.",
+              description: "Failed to load branch managers. Please try again.",
               variant: "destructive",
             })
           }
         }
       } catch (error) {
-        console.error('Error loading coaches:', error)
+        console.error('Error loading branch managers:', error)
         toast({
           title: "Error",
-          description: "Failed to load coaches. Please check your connection.",
+          description: "Failed to load branch managers. Please check your connection.",
           variant: "destructive",
         })
       } finally {
@@ -287,8 +288,8 @@ export default function CreateBranchPage() {
         setIsLoadingCourses(false)
       }
 
-      // Load coaches
-      await loadCoaches()
+      // Load branch managers
+      await loadBranchManagers()
 
       // Load locations
       await loadLocations()
@@ -825,7 +826,7 @@ export default function CreateBranchPage() {
                     {isLoadingCoaches ? (
                       <div className="flex items-center justify-center py-2">
                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-yellow-600"></div>
-                        <span className="ml-2 text-sm text-gray-600">Loading coaches...</span>
+                        <span className="ml-2 text-sm text-gray-600">Loading branch managers...</span>
                       </div>
                     ) : (
                       <Select
@@ -833,17 +834,17 @@ export default function CreateBranchPage() {
                         onValueChange={(value) => setFormData({ ...formData, manager_id: value })}
                       >
                         <SelectTrigger>
-                          <SelectValue placeholder="Select a manager" />
+                          <SelectValue placeholder="Select a branch manager" />
                         </SelectTrigger>
                         <SelectContent>
                           {coaches.length === 0 ? (
                             <div className="p-4 text-center text-gray-500">
-                              <p>No coaches available</p>
+                              <p>No branch managers available</p>
                             </div>
                           ) : (
-                            coaches.map((coach) => (
-                              <SelectItem key={coach.id} value={coach.id}>
-                                {coach.name}
+                            coaches.map((manager) => (
+                              <SelectItem key={manager.id} value={manager.id}>
+                                {manager.name}
                               </SelectItem>
                             ))
                           )}

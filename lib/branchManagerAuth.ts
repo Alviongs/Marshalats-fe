@@ -5,26 +5,129 @@ export interface BranchManagerUser {
   email: string
   phone: string
   role: 'branch_manager'
-  branch_id: string
-  branch_name: string
+  branch_id?: string
+  branch_name?: string
 }
 
 export interface BranchManagerLoginResponse {
-  status: string
-  message: string
-  data: {
+  access_token: string
+  token_type: string
+  expires_in: number
+  branch_manager: {
     id: string
     full_name: string
     email: string
     phone: string
-    token: string
-    token_type: string
-    expires_in: number
-    branch_id: string
-    branch_name: string
+    branch_id?: string
+    branch_name?: string
   }
 }
 
+// Branch Manager Authentication Functions (mirroring SuperAdmin pattern)
+export const BranchManagerAuth = {
+  // Store login data in localStorage
+  storeLoginData: (loginResponse: any) => {
+    const { access_token, token_type, expires_in, branch_manager } = loginResponse
+
+    // Store token information
+    localStorage.setItem("access_token", access_token)
+    localStorage.setItem("token", access_token) // For compatibility
+    localStorage.setItem("token_type", token_type)
+    localStorage.setItem("expires_in", expires_in.toString())
+
+    // Calculate and store expiration time
+    const expirationTime = Date.now() + (expires_in * 1000)
+    localStorage.setItem("token_expiration", expirationTime.toString())
+
+    // Store user data - handle different API response structures
+    const userData: BranchManagerUser = {
+      id: branch_manager.id,
+      full_name: branch_manager.full_name,
+      email: branch_manager.email,
+      phone: branch_manager.phone,
+      role: "branch_manager",
+      branch_id: branch_manager.branch_assignment?.branch_id || branch_manager.branch_id,
+      branch_name: branch_manager.branch_assignment?.branch_name || branch_manager.branch_name
+    }
+    localStorage.setItem("branch_manager", JSON.stringify(userData))
+    localStorage.setItem("user", JSON.stringify(userData)) // For compatibility
+
+    return userData
+  },
+
+  // Get current user data
+  getCurrentUser: (): BranchManagerUser | null => {
+    try {
+      const userStr = localStorage.getItem("branch_manager") || localStorage.getItem("user")
+      if (!userStr) return null
+
+      const user = JSON.parse(userStr) as BranchManagerUser
+      return user.role === "branch_manager" ? user : null
+    } catch (error) {
+      console.error("Error parsing branch manager data:", error)
+      return null
+    }
+  },
+
+  // Get current token
+  getToken: (): string | null => {
+    return localStorage.getItem("access_token") || localStorage.getItem("token")
+  },
+
+  // Check if token is valid
+  isTokenValid: (): boolean => {
+    const token = localStorage.getItem("access_token") || localStorage.getItem("token")
+    const expirationStr = localStorage.getItem("token_expiration")
+
+    if (!token || !expirationStr) return false
+
+    const expirationTime = parseInt(expirationStr)
+    return Date.now() < expirationTime
+  },
+
+  // Get authorization headers for API requests
+  getAuthHeaders: (): Record<string, string> => {
+    const token = localStorage.getItem("access_token") || localStorage.getItem("token")
+    const tokenType = localStorage.getItem("token_type") || "Bearer"
+
+    if (!token) return { "Content-Type": "application/json" }
+
+    return {
+      "Content-Type": "application/json",
+      "Authorization": `${tokenType} ${token}`
+    }
+  },
+
+  // Clear all authentication data
+  clearAuthData: () => {
+    localStorage.removeItem("access_token")
+    localStorage.removeItem("token")
+    localStorage.removeItem("token_type")
+    localStorage.removeItem("expires_in")
+    localStorage.removeItem("token_expiration")
+    localStorage.removeItem("branch_manager")
+    localStorage.removeItem("user")
+  },
+
+  // Check if user is authenticated branch manager
+  isAuthenticated: (): boolean => {
+    const user = BranchManagerAuth.getCurrentUser()
+    const tokenValid = BranchManagerAuth.isTokenValid()
+
+    return !!(user && user.role === "branch_manager" && tokenValid)
+  },
+
+  // Logout function
+  logout: () => {
+    BranchManagerAuth.clearAuthData()
+    // Redirect to login page
+    if (typeof window !== "undefined") {
+      window.location.href = "/branch-manager/login"
+    }
+  }
+}
+
+// Legacy functions for backward compatibility
 export interface BranchManagerAuthResult {
   isAuthenticated: boolean
   user: BranchManagerUser | null
@@ -32,177 +135,52 @@ export interface BranchManagerAuthResult {
   tokenExpiration: number | null
 }
 
-/**
- * Check if branch manager is authenticated
- */
 export function checkBranchManagerAuth(): BranchManagerAuthResult {
-  if (typeof window === 'undefined') {
-    return {
-      isAuthenticated: false,
-      user: null,
-      token: null,
-      tokenExpiration: null
-    }
-  }
+  const user = BranchManagerAuth.getCurrentUser()
+  const token = BranchManagerAuth.getToken()
+  const isAuthenticated = BranchManagerAuth.isAuthenticated()
+  const expirationStr = localStorage.getItem("token_expiration")
+  const tokenExpiration = expirationStr ? parseInt(expirationStr) : null
 
-  try {
-    const token = localStorage.getItem('access_token')
-    const branchManagerData = localStorage.getItem('branch_manager')
-    const tokenExpiration = localStorage.getItem('token_expiration')
-
-    if (!token || !branchManagerData || !tokenExpiration) {
-      return {
-        isAuthenticated: false,
-        user: null,
-        token: null,
-        tokenExpiration: null
-      }
-    }
-
-    const expirationTime = parseInt(tokenExpiration)
-    const isExpired = Date.now() >= expirationTime
-
-    if (isExpired) {
-      clearBranchManagerSession()
-      return {
-        isAuthenticated: false,
-        user: null,
-        token: null,
-        tokenExpiration: null
-      }
-    }
-
-    const user: BranchManagerUser = JSON.parse(branchManagerData)
-    
-    // Verify this is actually a branch manager
-    if (user.role !== 'branch_manager') {
-      return {
-        isAuthenticated: false,
-        user: null,
-        token: null,
-        tokenExpiration: null
-      }
-    }
-
-    return {
-      isAuthenticated: true,
-      user,
-      token,
-      tokenExpiration: expirationTime
-    }
-  } catch (error) {
-    console.error('Error checking branch manager authentication:', error)
-    clearBranchManagerSession()
-    return {
-      isAuthenticated: false,
-      user: null,
-      token: null,
-      tokenExpiration: null
-    }
+  return {
+    isAuthenticated,
+    user,
+    token,
+    tokenExpiration
   }
 }
 
-/**
- * Store branch manager authentication data
- */
-export function storeBranchManagerAuth(authData: {
-  access_token: string
-  token_type: string
-  expires_in: number
-  branch_manager: BranchManagerUser
-}): void {
-  if (typeof window === 'undefined') return
 
-  const expirationTime = Date.now() + (authData.expires_in * 1000)
-
-  localStorage.setItem('access_token', authData.access_token)
-  localStorage.setItem('token', authData.access_token) // Backward compatibility
-  localStorage.setItem('token_type', authData.token_type)
-  localStorage.setItem('expires_in', authData.expires_in.toString())
-  localStorage.setItem('token_expiration', expirationTime.toString())
-  localStorage.setItem('branch_manager', JSON.stringify(authData.branch_manager))
-  localStorage.setItem('user', JSON.stringify(authData.branch_manager)) // For compatibility
-
-  console.log('🔐 Branch Manager authentication data stored successfully')
-}
-
-/**
- * Clear branch manager session
- */
+// Legacy functions for backward compatibility
 export function clearBranchManagerSession(): void {
-  if (typeof window === 'undefined') return
-
-  const keysToRemove = [
-    'access_token',
-    'token',
-    'token_type',
-    'expires_in',
-    'token_expiration',
-    'branch_manager',
-    'user'
-  ]
-
-  keysToRemove.forEach(key => {
-    localStorage.removeItem(key)
-  })
-
-  console.log('🔓 Branch Manager session cleared')
+  BranchManagerAuth.clearAuthData()
 }
 
-/**
- * Check if branch manager token is valid
- */
 export function isBranchManagerTokenValid(): boolean {
-  const authResult = checkBranchManagerAuth()
-  return authResult.isAuthenticated
+  return BranchManagerAuth.isTokenValid()
 }
 
-/**
- * Get branch manager authentication headers for API requests
- */
 export function getBranchManagerAuthHeaders(): Record<string, string> {
-  const authResult = checkBranchManagerAuth()
-  
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json'
-  }
-
-  if (authResult.isAuthenticated && authResult.token) {
-    headers['Authorization'] = `Bearer ${authResult.token}`
-  }
-
-  return headers
+  return BranchManagerAuth.getAuthHeaders()
 }
 
-/**
- * Get current branch manager user
- */
 export function getCurrentBranchManager(): BranchManagerUser | null {
-  const authResult = checkBranchManagerAuth()
-  return authResult.user
+  return BranchManagerAuth.getCurrentUser()
 }
 
-/**
- * Check if current user is a branch manager
- */
 export function isBranchManager(): boolean {
-  const authResult = checkBranchManagerAuth()
-  return authResult.isAuthenticated && authResult.user?.role === 'branch_manager'
+  const user = BranchManagerAuth.getCurrentUser()
+  return user?.role === 'branch_manager'
 }
 
-/**
- * Redirect to branch manager login if not authenticated
- */
 export function requireBranchManagerAuth(redirectPath: string = '/branch-manager/login'): boolean {
   if (typeof window === 'undefined') return false
 
-  const authResult = checkBranchManagerAuth()
-  
-  if (!authResult.isAuthenticated) {
+  if (!BranchManagerAuth.isAuthenticated()) {
     window.location.href = redirectPath
     return false
   }
-  
+
   return true
 }
 
@@ -218,39 +196,6 @@ export function useBranchManagerAuth() {
     getAuthHeaders: getBranchManagerAuthHeaders,
     requireAuth: requireBranchManagerAuth,
     isBranchManager: isBranchManager
-  }
-}
-
-/**
- * Branch Manager Auth object for compatibility with existing patterns
- */
-export const BranchManagerAuth = {
-  isAuthenticated: (): boolean => {
-    return checkBranchManagerAuth().isAuthenticated
-  },
-
-  getUser: (): BranchManagerUser | null => {
-    return getCurrentBranchManager()
-  },
-
-  getToken: (): string | null => {
-    return checkBranchManagerAuth().token
-  },
-
-  isTokenValid: (): boolean => {
-    return isBranchManagerTokenValid()
-  },
-
-  getAuthHeaders: (): Record<string, string> => {
-    return getBranchManagerAuthHeaders()
-  },
-
-  logout: (): void => {
-    clearBranchManagerSession()
-  },
-
-  requireAuth: (redirectPath?: string): boolean => {
-    return requireBranchManagerAuth(redirectPath)
   }
 }
 

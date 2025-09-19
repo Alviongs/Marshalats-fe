@@ -58,7 +58,7 @@ export default function BranchManagerProfilePage() {
         setLoading(true)
         
         // Get current user data from auth
-        const currentUser = BranchManagerAuth.getUser()
+        const currentUser = BranchManagerAuth.getCurrentUser()
         if (!currentUser) {
           throw new Error("User data not found")
         }
