@@ -313,7 +313,7 @@ export default function CreateBranchManagerPage() {
         professional_info: {
           education_qualification: formData.qualifications,
           professional_experience: formData.experience,
-          designation_id: formData.designation,
+          designation: formData.designation,
           certifications: formData.certifications ? formData.certifications.split(',').map(cert => cert.trim()) : []
         },
         branch_id: formData.branch || null,  // Include branch assignment

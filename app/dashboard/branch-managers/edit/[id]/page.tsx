@@ -220,7 +220,7 @@ export default function EditBranchManagerPage() {
         throw new Error("Authentication token not found. Please login again.")
       }
 
-      const payload = {
+      const payload: any = {
         personal_info: {
           first_name: formData.firstName,
           last_name: formData.lastName,
@@ -245,9 +245,7 @@ export default function EditBranchManagerPage() {
           professional_experience: formData.experience,
           certifications: formData.certifications ? formData.certifications.split(',').map(cert => cert.trim()) : []
         },
-        branch_assignment: {
-          branch_id: formData.branchId
-        },
+        branch_id: formData.branchId,
         emergency_contact: {
           name: formData.emergencyContactName,
           phone: formData.emergencyContactPhone,

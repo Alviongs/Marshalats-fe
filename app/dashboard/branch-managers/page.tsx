@@ -65,12 +65,30 @@ export default function BranchManagersListPage() {
         setLoading(true)
         setError(null)
 
+        console.log("🔄 Starting to fetch branch managers...")
+        console.log("🔗 API Base URL:", process.env.NEXT_PUBLIC_API_BASE_URL)
+
+        // First test server health
+        try {
+          const healthResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/health`)
+          console.log("🏥 Health check:", healthResponse.status, await healthResponse.json())
+        } catch (healthError) {
+          console.error("❌ Health check failed:", healthError)
+          throw new Error("Backend server is not responding. Please ensure the server is running on port 8003.")
+        }
+
         const token = TokenManager.getToken()
+        console.log("🔑 Token available:", !!token)
+        console.log("🔑 Token preview:", token ? token.substring(0, 20) + '...' : 'No token')
+
         if (!token) {
           throw new Error("Authentication token not found. Please login again.")
         }
 
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/branch-managers`, {
+        const apiUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/branch-managers`
+        console.log("📡 Making request to:", apiUrl)
+
+        const response = await fetch(apiUrl, {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -78,20 +96,25 @@ export default function BranchManagersListPage() {
           }
         })
 
+        console.log("📥 Response status:", response.status)
+        console.log("📥 Response ok:", response.ok)
+
         if (!response.ok) {
-          const errorData = await response.json()
+          const errorData = await response.json().catch(() => ({ detail: 'Unknown error' }))
+          console.error("❌ API Error:", errorData)
           throw new Error(errorData.detail || errorData.message || `Failed to fetch branch managers (${response.status})`)
         }
 
         const data = await response.json()
-        console.log("Branch managers fetched successfully:", data)
+        console.log("✅ Branch managers fetched successfully:", data)
 
         // Handle different response formats
         const managersData = data.branch_managers || data || []
+        console.log("📊 Managers data:", managersData)
         setBranchManagers(managersData)
 
       } catch (error) {
-        console.error("Error fetching branch managers:", error)
+        console.error("❌ Error fetching branch managers:", error)
         setError(error instanceof Error ? error.message : 'Failed to fetch branch managers')
       } finally {
         setLoading(false)
@@ -280,6 +303,35 @@ export default function BranchManagersListPage() {
                     </div>
                   </div>
                 ))}
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <DashboardHeader currentPage="Branch Managers" />
+        <main className="w-full p-4 lg:py-4 px-19">
+          <div className="max-w-7xl mx-auto">
+            <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+              <div className="flex items-center space-x-3">
+                <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
+                  <span className="text-red-600 font-bold">!</span>
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-red-800">Error Loading Branch Managers</h3>
+                  <p className="text-red-600 mt-1">{error}</p>
+                  <Button
+                    onClick={() => window.location.reload()}
+                    className="mt-4 bg-red-600 hover:bg-red-700 text-white"
+                  >
+                    Retry
+                  </Button>
+                </div>
               </div>
             </div>
           </div>

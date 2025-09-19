@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Building2, Lock, Mail } from "lucide-react"
 import { ReCaptchaWrapper, useReCaptcha, ReCaptchaComponent } from "@/components/recaptcha"
+import { BranchManagerAuth } from "@/lib/branchManagerAuth"
 
 // Create a separate component for the branch manager login form content
 function BranchManagerLoginFormContent() {
@@ -22,17 +23,8 @@ function BranchManagerLoginFormContent() {
 
   // Redirect to dashboard if already logged in as branch manager
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const token = localStorage.getItem("access_token");
-      const branchManagerData = localStorage.getItem("branch_manager");
-      const tokenExpiration = localStorage.getItem("token_expiration");
-
-      if (token && branchManagerData && tokenExpiration) {
-        const expirationTime = parseInt(tokenExpiration);
-        if (Date.now() < expirationTime) {
-          router.replace("/branch-manager-dashboard");
-        }
-      }
+    if (BranchManagerAuth.isAuthenticated()) {
+      router.replace("/branch-manager-dashboard");
     }
   }, [router]);
 
@@ -54,48 +46,91 @@ function BranchManagerLoginFormContent() {
         }
       }
 
-      // For now, use test credentials
-      // Test credentials: email: manager@branch.com, password: manager123
-      if (email === "manager@branch.com" && password === "manager123") {
-        // Simulate successful login with test data
-        const testBranchManagerData = {
-          id: "bm_001",
-          full_name: "Branch Manager",
-          email: "manager@branch.com",
-          phone: "+1234567890",
-          role: "branch_manager",
-          branch_id: "branch_001",
-          branch_name: "Main Branch"
-        };
+      // Prepare request body according to API specification
+      const requestBody: any = {
+        email,
+        password
+      };
 
-        const testToken = "test_branch_manager_token_" + Date.now();
-        const expirationTime = Date.now() + (24 * 60 * 60 * 1000); // 24 hours
-
-        // Store authentication data
-        localStorage.setItem("access_token", testToken);
-        localStorage.setItem("token", testToken); // Backward compatibility
-        localStorage.setItem("token_type", "bearer");
-        localStorage.setItem("expires_in", "86400");
-        localStorage.setItem("token_expiration", expirationTime.toString());
-        localStorage.setItem("branch_manager", JSON.stringify(testBranchManagerData));
-        localStorage.setItem("user", JSON.stringify(testBranchManagerData)); // For compatibility
-
-        console.log("Branch Manager login successful:", {
-          manager_id: testBranchManagerData.id,
-          full_name: testBranchManagerData.full_name,
-          email: testBranchManagerData.email,
-          branch_id: testBranchManagerData.branch_id,
-          role: "branch_manager"
-        });
-        
-        // Redirect to branch manager dashboard
-        router.push("/branch-manager-dashboard");
-      } else {
-        setError("Invalid credentials. Use test credentials: manager@branch.com / manager123");
+      // Add reCAPTCHA token if available
+      if (recaptchaToken) {
+        requestBody.recaptchaToken = recaptchaToken;
       }
+
+      console.log("Branch Manager login request:", {
+        url: `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/branch-managers/login`,
+        body: { ...requestBody, password: "***hidden***" }
+      });
+
+      // Call the branch manager login API endpoint
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/branch-managers/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(requestBody)
+      });
+
+      const data = await res.json();
+      console.log("Branch Manager login response:", data);
+
+      if (!res.ok) {
+        setError(data.detail || data.message || `Login failed (${res.status})`);
+        if (isEnabled) {
+          resetRecaptcha();
+        }
+        setLoading(false);
+        return;
+      }
+
+      // Validate response structure according to API specification
+      if (!data.access_token || !data.branch_manager) {
+        setError("Invalid response from server");
+        if (isEnabled) {
+          resetRecaptcha();
+        }
+        setLoading(false);
+        return;
+      }
+
+      // Prepare branch manager data for storage
+      const branchManagerData = {
+        id: data.branch_manager.id,
+        full_name: data.branch_manager.full_name,
+        email: data.branch_manager.email,
+        phone: data.branch_manager.phone,
+        role: "branch_manager",
+        branch_id: data.branch_manager.branch_assignment?.branch_id || null,
+        branch_name: data.branch_manager.branch_assignment?.branch_name || null,
+        personal_info: data.branch_manager.personal_info,
+        professional_info: data.branch_manager.professional_info,
+        is_active: data.branch_manager.is_active
+      };
+
+      // Store authentication data using the BranchManagerAuth utility
+      const expirationTime = Date.now() + (data.expires_in * 1000);
+
+      localStorage.setItem("access_token", data.access_token);
+      localStorage.setItem("token", data.access_token); // Backward compatibility
+      localStorage.setItem("token_type", data.token_type);
+      localStorage.setItem("expires_in", data.expires_in.toString());
+      localStorage.setItem("token_expiration", expirationTime.toString());
+      localStorage.setItem("branch_manager", JSON.stringify(branchManagerData));
+      localStorage.setItem("user", JSON.stringify(branchManagerData)); // For compatibility
+
+      console.log("Branch Manager login successful:", {
+        manager_id: branchManagerData.id,
+        full_name: branchManagerData.full_name,
+        email: branchManagerData.email,
+        branch_id: branchManagerData.branch_id,
+        role: "branch_manager",
+        access_token: data.access_token.substring(0, 20) + "...",
+        expires_in: data.expires_in
+      });
+
+      // Redirect to branch manager dashboard
+      router.push("/branch-manager-dashboard");
     } catch (err) {
       console.error("Branch Manager login error:", err);
-      setError("An error occurred during login. Please try again.");
+      setError("An error occurred during login. Please check your connection and try again.");
       if (isEnabled) {
         resetRecaptcha();
       }
@@ -138,12 +173,12 @@ function BranchManagerLoginFormContent() {
             </div>
           </div>
 
-          {/* Test Credentials Info */}
+          {/* Login Info */}
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <h3 className="font-medium text-blue-800 mb-2 text-sm">Test Credentials</h3>
+            <h3 className="font-medium text-blue-800 mb-2 text-sm">Branch Manager Login</h3>
             <div className="space-y-1 text-xs text-blue-700">
-              <p><strong>Email:</strong> manager@branch.com</p>
-              <p><strong>Password:</strong> manager123</p>
+              <p>Use your branch manager credentials provided by the administrator.</p>
+              <p>If you don't have credentials, contact your system administrator.</p>
             </div>
           </div>
 

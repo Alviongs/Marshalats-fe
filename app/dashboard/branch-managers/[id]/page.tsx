@@ -224,7 +224,7 @@ export default function BranchManagerDetailPage() {
                   <Mail className="w-5 h-5 text-gray-400" />
                   <div>
                     <p className="font-medium text-gray-900">Email</p>
-                    <p className="text-sm text-gray-600">{manager.contact_info.email}</p>
+                    <p className="text-sm text-gray-600">{manager.email || manager.contact_info?.email}</p>
                   </div>
                 </div>
 
@@ -232,7 +232,10 @@ export default function BranchManagerDetailPage() {
                   <Phone className="w-5 h-5 text-gray-400" />
                   <div>
                     <p className="font-medium text-gray-900">Phone</p>
-                    <p className="text-sm text-gray-600">{manager.contact_info.phone}</p>
+                    <p className="text-sm text-gray-600">
+                      {manager.contact_info?.country_code && `${manager.contact_info.country_code} `}
+                      {manager.phone || manager.contact_info?.phone}
+                    </p>
                   </div>
                 </div>
 
@@ -256,18 +259,22 @@ export default function BranchManagerDetailPage() {
                   </div>
                 )}
 
-                <div className="flex items-start space-x-3">
-                  <MapPin className="w-5 h-5 text-gray-400 mt-0.5" />
-                  <div>
-                    <p className="font-medium text-gray-900">Address</p>
-                    <p className="text-sm text-gray-600">
-                      {manager.contact_info.address.street}<br />
-                      {manager.contact_info.address.area && `${manager.contact_info.address.area}, `}
-                      {manager.contact_info.address.city}, {manager.contact_info.address.state}<br />
-                      {manager.contact_info.address.postal_code}, {manager.contact_info.address.country}
-                    </p>
+                {manager.address_info && (
+                  <div className="flex items-start space-x-3">
+                    <MapPin className="w-5 h-5 text-gray-400 mt-0.5" />
+                    <div>
+                      <p className="font-medium text-gray-900">Address</p>
+                      <p className="text-sm text-gray-600">
+                        {manager.address_info.address && `${manager.address_info.address}`}<br />
+                        {manager.address_info.area && `${manager.address_info.area}, `}
+                        {manager.address_info.city && `${manager.address_info.city}, `}
+                        {manager.address_info.state}<br />
+                        {manager.address_info.zip_code && `${manager.address_info.zip_code}, `}
+                        {manager.address_info.country}
+                      </p>
+                    </div>
                   </div>
-                </div>
+                )}
 
                 <div className="flex items-center space-x-3">
                   <Calendar className="w-5 h-5 text-gray-400" />
