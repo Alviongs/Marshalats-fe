@@ -315,16 +315,23 @@ function LoginFormContent() {
           {/* Login Type Selection */}
           <div className="pt-4 border-t border-gray-200">
             <p className="text-center text-sm text-gray-600 mb-4">Different role? Choose your login type:</p>
-            <div className="flex justify-center space-x-6 text-sm">
-              <Link 
-                href="/coach/login" 
+            <div className="flex justify-center space-x-4 text-sm">
+              <Link
+                href="/coach/login"
                 className="text-orange-600 hover:text-orange-800 font-medium transition-colors"
               >
                 Coach Login
               </Link>
               <span className="text-gray-300">|</span>
-              <Link 
-                href="/superadmin/login" 
+              <Link
+                href="/branch-manager/login"
+                className="text-blue-600 hover:text-blue-800 font-medium transition-colors"
+              >
+                Branch Manager
+              </Link>
+              <span className="text-gray-300">|</span>
+              <Link
+                href="/superadmin/login"
                 className="text-yellow-600 hover:text-yellow-800 font-medium transition-colors"
               >
                 Admin Login
