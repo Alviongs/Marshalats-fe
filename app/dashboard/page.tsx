@@ -240,6 +240,15 @@ export default function SuperAdminDashboard() {
             <Button
               variant="outline"
               className="flex items-center space-x-1 bg-transparent text-sm"
+              onClick={() => router.push("/dashboard/branch-managers/create")}
+            >
+              <img src={add_icon.src} alt="" className="w-8 h-8" />
+              <span className="hidden sm:inline">Add Branch Manager</span>
+              <span className="sm:hidden">Manager</span>
+            </Button>
+            <Button
+              variant="outline"
+              className="flex items-center space-x-1 bg-transparent text-sm"
               onClick={() => router.push("/dashboard/create-branch")}
             >
               <img src={add_icon.src} alt="" className="w-8 h-8" />

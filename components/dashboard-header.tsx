@@ -209,6 +209,16 @@ export default function DashboardHeader({ currentPage = "Dashboard" }: Dashboard
                         Masters
                       </button>
                       <button
+                        onClick={() => handleMobileNavigation("/dashboard/branch-managers")}
+                        className={`w-full text-left px-4 py-3 rounded-lg hover:bg-gray-100/80 text-sm font-medium transition-all duration-200 ${
+                          isActivePath("/dashboard/branch-managers")
+                            ? "bg-gradient-to-r from-yellow-50 to-yellow-100/50 text-yellow-800 border-l-3 border-yellow-400 shadow-sm"
+                            : "text-gray-700 hover:text-gray-900"
+                        }`}
+                      >
+                        Branch Managers
+                      </button>
+                      <button
                         onClick={() => handleMobileNavigation("/dashboard/students")}
                         className={`w-full text-left px-4 py-3 rounded-lg hover:bg-gray-100/80 text-sm font-medium transition-all duration-200 ${
                           isActivePath("/dashboard/students")
@@ -305,6 +315,16 @@ export default function DashboardHeader({ currentPage = "Dashboard" }: Dashboard
                 }`}
               >
                 Masters
+              </button>
+              <button
+                onClick={() => router.push("/dashboard/branch-managers")}
+                className={`pb-2 px-1 text-sm font-semibold whitespace-nowrap cursor-pointer border-b-2 transition-all duration-300 hover:scale-105 ${
+                  isActivePath("/dashboard/branch-managers")
+                    ? "text-gray-900 border-yellow-400 shadow-sm"
+                    : "text-gray-600 hover:text-gray-900 border-transparent hover:border-gray-300"
+                }`}
+              >
+                Branch Managers
               </button>
               <button
                 onClick={() => router.push("/dashboard/students")}
