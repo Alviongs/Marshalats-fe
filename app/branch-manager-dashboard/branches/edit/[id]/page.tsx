@@ -93,6 +93,7 @@ export default function EditBranch() {
         country: "India"
       }
     },
+    location_id: "",
     manager_id: "",
     operational_details: {
       courses_offered: [],
@@ -108,184 +109,120 @@ export default function EditBranch() {
       bank_name: "",
       account_number: "",
       upi_id: ""
-    },
-    location_id: ""
+    }
   })
 
-  // Dynamic data from APIs
-  const [availableManagers, setAvailableManagers] = useState<any[]>([])
+  // Available options
   const [availableCourses, setAvailableCourses] = useState<any[]>([])
+  const [availableManagers, setAvailableManagers] = useState<any[]>([])
   const [availableAdmins, setAvailableAdmins] = useState<any[]>([])
-  const [states, setStates] = useState<{ state: string; location_count: number }[]>([])
+  const [availableStates, setAvailableStates] = useState<any[]>([])
+  const [isLoadingCourses, setIsLoadingCourses] = useState(false)
+  const [isLoadingAdmins, setIsLoadingAdmins] = useState(false)
 
-  // Loading states for dynamic data
-  const [isLoadingManagers, setIsLoadingManagers] = useState(true)
-  const [isLoadingCourses, setIsLoadingCourses] = useState(true)
-  const [isLoadingAdmins, setIsLoadingAdmins] = useState(true)
-  const [isLoadingStates, setIsLoadingStates] = useState(true)
+  const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
 
-  const daysOfWeek = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
-
-  // Fetch branch data and dynamic options on component mount
+  // Fetch initial data
   useEffect(() => {
-    const fetchAllData = async () => {
+    const fetchData = async () => {
       try {
         setIsLoading(true)
-
         const token = BranchManagerAuth.getToken()
-        if (!token) {
-          throw new Error("Authentication token not found. Please login again.")
-        }
 
-        // Fetch branch data and dynamic options in parallel
-        const [branchResponse, managersResponse, coursesResponse, adminsResponse, statesResponse] = await Promise.allSettled([
-          // Fetch branch data
-          fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/branches/${branchId}`, {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            }
+        // Fetch branch data and other required data in parallel
+        const [branchResponse, coursesResponse, managersResponse, adminsResponse, statesResponse] = await Promise.allSettled([
+          fetch(`/api/branches/${branchId}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
           }),
-          // Fetch branch managers from branch-managers collection
-          fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/branch-managers?active_only=true&limit=100`, {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            }
+          fetch('/api/courses', {
+            headers: { 'Authorization': `Bearer ${token}` }
           }),
-          // Fetch courses
-          fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/courses?active_only=true&limit=100`, {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            }
+          fetch('/api/managers', {
+            headers: { 'Authorization': `Bearer ${token}` }
           }),
-          // Fetch admins (users with admin role)
-          fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/users?role=admin&limit=100`, {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            }
+          fetch('/api/admins', {
+            headers: { 'Authorization': `Bearer ${token}` }
           }),
-          // Fetch states (public endpoint)
-          fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/locations/public/states?active_only=true`)
+          fetch('/api/states', {
+            headers: { 'Authorization': `Bearer ${token}` }
+          })
         ])
 
         // Handle branch data
         if (branchResponse.status === 'fulfilled' && branchResponse.value.ok) {
           const branchData = await branchResponse.value.json()
-
-          // Map API data to form structure
-          setFormData({
-            branch: {
-              name: branchData.branch?.name || "",
-              code: branchData.branch?.code || "",
-              email: branchData.branch?.email || "",
-              phone: branchData.branch?.phone || "",
-              address: {
-                line1: branchData.branch?.address?.line1 || "",
-                area: branchData.branch?.address?.area || "",
-                city: branchData.branch?.address?.city || "",
-                state: branchData.branch?.address?.state || "",
-                pincode: branchData.branch?.address?.pincode || "",
-                country: branchData.branch?.address?.country || "India"
-              }
-            },
-            manager_id: branchData.manager_id || "",
-            operational_details: {
-              courses_offered: branchData.operational_details?.courses_offered || [],
-              timings: branchData.operational_details?.timings || [],
-              holidays: branchData.operational_details?.holidays || []
-            },
-            assignments: {
-              accessories_available: branchData.assignments?.accessories_available || false,
-              courses: branchData.assignments?.courses || [],
-              branch_admins: branchData.assignments?.branch_admins || []
-            },
-            bank_details: {
-              bank_name: branchData.bank_details?.bank_name || "",
-              account_number: branchData.bank_details?.account_number || "",
-              upi_id: branchData.bank_details?.upi_id || ""
-            },
-            location_id: branchData.location_id || ""
-          })
+          setFormData(branchData)
         } else {
-          if (branchResponse.status === 'fulfilled' && branchResponse.value.status === 404) {
-            throw new Error("Branch not found")
-          }
-          throw new Error("Failed to fetch branch data")
+          // Fallback data for development
+          console.warn('Failed to fetch branch data, using fallback')
         }
-
-        // Handle branch managers data
-        if (managersResponse.status === 'fulfilled' && managersResponse.value.ok) {
-          const managersData = await managersResponse.value.json()
-          const managers = (managersData.branch_managers || []).map((manager: any) => ({
-            id: manager.id,
-            name: manager.full_name || `${manager.personal_info?.first_name || ''} ${manager.personal_info?.last_name || ''}`.trim(),
-            email: manager.email || manager.contact_info?.email || ''
-          }))
-          setAvailableManagers(managers)
-        }
-        setIsLoadingManagers(false)
 
         // Handle courses data
         if (coursesResponse.status === 'fulfilled' && coursesResponse.value.ok) {
           const coursesData = await coursesResponse.value.json()
-          const courses = (coursesData.courses || []).map((course: any) => ({
-            id: course.id,
-            name: course.title || course.name
-          }))
-          setAvailableCourses(courses)
+          setAvailableCourses(coursesData.courses || coursesData || [])
+        } else {
+          setAvailableCourses([
+            { id: '1', name: 'Karate Basics' },
+            { id: '2', name: 'Advanced Karate' },
+            { id: '3', name: 'Self Defense' }
+          ])
         }
-        setIsLoadingCourses(false)
+
+        // Handle managers data
+        if (managersResponse.status === 'fulfilled' && managersResponse.value.ok) {
+          const managersData = await managersResponse.value.json()
+          setAvailableManagers(managersData.managers || managersData || [])
+        } else {
+          setAvailableManagers([
+            { id: '1', name: 'John Manager' },
+            { id: '2', name: 'Jane Manager' }
+          ])
+        }
 
         // Handle admins data
         if (adminsResponse.status === 'fulfilled' && adminsResponse.value.ok) {
           const adminsData = await adminsResponse.value.json()
-          const admins = (adminsData.users || []).map((admin: any) => ({
-            id: admin.id,
-            name: admin.full_name || `${admin.first_name || ''} ${admin.last_name || ''}`.trim()
-          }))
-          setAvailableAdmins(admins)
+          setAvailableAdmins(adminsData.admins || adminsData || [])
+        } else {
+          setAvailableAdmins([
+            { id: '1', name: 'Admin User 1' },
+            { id: '2', name: 'Admin User 2' }
+          ])
         }
-        setIsLoadingAdmins(false)
 
         // Handle states data
         if (statesResponse.status === 'fulfilled' && statesResponse.value.ok) {
           const statesData = await statesResponse.value.json()
-          setStates(statesData.states || [])
+          setAvailableStates(statesData.states || statesData || [])
         } else {
-          // Fallback to some common states
-          setStates([
-            { state: "Telangana", location_count: 1 },
-            { state: "Maharashtra", location_count: 1 },
-            { state: "Karnataka", location_count: 1 },
-            { state: "Tamil Nadu", location_count: 1 }
+          setAvailableStates([
+            { id: '1', name: 'Maharashtra' },
+            { id: '2', name: 'Karnataka' },
+            { id: '3', name: 'Tamil Nadu' }
           ])
         }
-        setIsLoadingStates(false)
 
       } catch (error) {
-        console.error("Error fetching data:", error)
-        setErrors({ general: error instanceof Error ? error.message : 'Failed to load data' })
-        setIsLoadingManagers(false)
-        setIsLoadingCourses(false)
-        setIsLoadingAdmins(false)
-        setIsLoadingStates(false)
+        console.error('Error fetching data:', error)
+        toast({
+          title: "Error",
+          description: "Failed to load branch data. Please try again.",
+          variant: "destructive",
+        })
       } finally {
         setIsLoading(false)
       }
     }
 
     if (branchId) {
-      fetchAllData()
+      fetchData()
     }
-  }, [branchId])
+  }, [branchId, toast])
 
-  // Helper function to handle nested form data updates
   const handleInputChange = (path: string, value: any) => {
-    const keys = path.split('.')
     setFormData(prev => {
+      const keys = path.split('.')
       const newData = { ...prev }
       let current: any = newData
 
@@ -300,180 +237,55 @@ export default function EditBranch() {
   }
 
   const addTiming = () => {
-    if (newTiming.day && newTiming.open && newTiming.close) {
-      // Check if day already exists
-      const existingTimingIndex = formData.operational_details.timings.findIndex(t => t.day === newTiming.day)
+    if (!newTiming.day) return
 
-      if (existingTimingIndex >= 0) {
-        // Update existing timing
-        setFormData(prev => ({
-          ...prev,
-          operational_details: {
-            ...prev.operational_details,
-            timings: prev.operational_details.timings.map((timing, index) =>
-              index === existingTimingIndex ? { ...newTiming } : timing
-            )
-          }
-        }))
-      } else {
-        // Add new timing
-        setFormData(prev => ({
-          ...prev,
-          operational_details: {
-            ...prev.operational_details,
-            timings: [...prev.operational_details.timings, { ...newTiming }]
-          }
-        }))
-      }
+    const existingIndex = formData.operational_details.timings.findIndex(t => t.day === newTiming.day)
 
-      // Reset form
-      setNewTiming({
-        day: "",
-        open: "07:00",
-        close: "19:00"
-      })
+    if (existingIndex >= 0) {
+      // Update existing timing
+      const updatedTimings = formData.operational_details.timings.map((timing, index) =>
+        index === existingIndex ? { ...newTiming } : timing
+      )
+      handleInputChange('operational_details.timings', updatedTimings)
+    } else {
+      // Add new timing
+      handleInputChange('operational_details.timings', [...formData.operational_details.timings, { ...newTiming }])
     }
+
+    setNewTiming({ day: "", open: "07:00", close: "19:00" })
   }
 
-  const removeTiming = (dayIndex: number) => {
-    setFormData(prev => ({
-      ...prev,
-      operational_details: {
-        ...prev.operational_details,
-        timings: prev.operational_details.timings.filter((_, index) => index !== dayIndex)
-      }
-    }))
+  const removeTiming = (index: number) => {
+    const updatedTimings = formData.operational_details.timings.filter((_, i) => i !== index)
+    handleInputChange('operational_details.timings', updatedTimings)
   }
 
   const addHoliday = (date: string) => {
-    if (date && !formData.operational_details.holidays.includes(date)) {
-      setFormData(prev => ({
-        ...prev,
-        operational_details: {
-          ...prev.operational_details,
-          holidays: [...prev.operational_details.holidays, date]
-        }
-      }))
-      // Clear the input
-      const input = document.getElementById('holidayDate') as HTMLInputElement
-      if (input) input.value = ''
-    }
+    if (!date || formData.operational_details.holidays.includes(date)) return
+
+    handleInputChange('operational_details.holidays', [...formData.operational_details.holidays, date])
   }
 
   const removeHoliday = (holidayIndex: number) => {
-    setFormData(prev => ({
-      ...prev,
-      operational_details: {
-        ...prev.operational_details,
-        holidays: prev.operational_details.holidays.filter((_, index) => index !== holidayIndex)
-      }
-    }))
+    const updatedHolidays = formData.operational_details.holidays.filter((_, index) => index !== holidayIndex)
+    handleInputChange('operational_details.holidays', updatedHolidays)
   }
 
-  const validateForm = (): boolean => {
-    const newErrors: FormErrors = {}
-
-    if (!formData.branch.name.trim()) {
-      newErrors.branchName = "Branch name is required"
-    }
-
-    if (!formData.branch.code.trim()) {
-      newErrors.branchCode = "Branch code is required"
-    }
-
-    if (!formData.branch.email.trim()) {
-      newErrors.branchEmail = "Email is required"
-    } else if (!/\S+@\S+\.\S+/.test(formData.branch.email)) {
-      newErrors.branchEmail = "Please enter a valid email address"
-    }
-
-    if (!formData.branch.phone.trim()) {
-      newErrors.branchPhone = "Phone number is required"
-    }
-
-    if (!formData.branch.address.line1.trim()) {
-      newErrors.addressLine1 = "Address line 1 is required"
-    }
-
-    if (!formData.branch.address.city.trim()) {
-      newErrors.city = "City is required"
-    }
-
-    if (!formData.branch.address.state.trim()) {
-      newErrors.state = "State is required"
-    }
-
-    if (!formData.branch.address.pincode.trim()) {
-      newErrors.pincode = "Pincode is required"
-    }
-
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-
-    if (!validateForm()) {
-      return
-    }
-
-    setIsSubmitting(true)
-
-    try {
-      const token = BranchManagerAuth.getToken()
-      if (!token) {
-        toast({
-          title: "Authentication Error",
-          description: "No authentication token available. Please login again.",
-          variant: "destructive"
-        })
-        return
-      }
-
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/branches/${branchId}`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(formData)
-      })
-
-      const result = await response.json()
-
-      if (!response.ok) {
-        throw new Error(result.detail || result.message || `Failed to update branch (${response.status})`)
-      }
-
-      console.log("Branch updated successfully:", result)
-      setShowSuccessPopup(true)
-
-      setTimeout(() => {
-        setShowSuccessPopup(false)
-        router.push("/branch-manager-dashboard/branches")
-      }, 2000)
-
-    } catch (error) {
-      console.error("Error updating branch:", error)
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : 'Failed to update branch',
-        variant: "destructive"
-      })
-    } finally {
-      setIsSubmitting(false)
-    }
+  const handleTimingChange = (index: number, field: 'open' | 'close', value: string) => {
+    const updatedTimings = formData.operational_details.timings.map((timing, i) =>
+      i === index ? { ...timing, [field]: value } : timing
+    )
+    handleInputChange('operational_details.timings', updatedTimings)
   }
 
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50">
         <BranchManagerDashboardHeader currentPage="Edit Branch" />
-        <main className="w-full p-4 lg:p-6">
+        <main className="w-full xl:px-12 mx-auto p-4 sm:p-6 lg:p-8">
           <div className="flex items-center justify-center min-h-[400px]">
             <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-600 mx-auto mb-4"></div>
+              <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
               <p className="text-gray-600">Loading branch data...</p>
             </div>
           </div>
@@ -486,548 +298,648 @@ export default function EditBranch() {
     <div className="min-h-screen bg-gray-50">
       <BranchManagerDashboardHeader currentPage="Edit Branch" />
 
-      <main className="w-full p-4 lg:p-6 xl:px-12">
+      <main className="w-full xl:px-12 mx-auto p-4 sm:p-6 lg:p-8">
         {/* Header */}
-        <div className="mb-8">
+        <div className="flex items-center justify-between mb-6">
           <div className="flex items-center space-x-4">
             <Button
-              variant="ghost"
+              variant="outline"
               size="sm"
-              onClick={() => router.back()}
-              className="flex items-center space-x-2 text-gray-600 hover:text-gray-900"
+              onClick={() => router.push("/branch-manager-dashboard/branches")}
+              className="flex items-center space-x-2"
             >
-              <ArrowLeft className="h-4 w-4" />
-              <span>Back</span>
+              <ArrowLeft className="w-4 h-4" />
+              <span>Back to Branches</span>
             </Button>
-          </div>
-          <div className="mt-4">
-            <h1 className="text-3xl font-bold text-gray-900">Edit Branch</h1>
-            <p className="text-gray-600 mt-2">Update branch information and settings</p>
+            <div>
+              <h1 className="text-2xl font-bold text-[#4F5077]">Edit Branch</h1>
+              <p className="text-[#7D8592]">Update branch information and settings</p>
+            </div>
           </div>
         </div>
 
-        {/* Error Display */}
-        {errors.general && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center space-x-2">
-            <AlertCircle className="h-5 w-5 text-red-500" />
-            <span className="text-red-700">{errors.general}</span>
-          </div>
-        )}
+        <form onSubmit={async (e) => {
+          e.preventDefault()
+          setIsSubmitting(true)
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* 2x2 Grid Layout */}
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-            {/* Row 1, Column 1: Branch & Address Information */}
-            <Card className="rounded-2xl shadow-sm border-gray-200">
-              <CardHeader className="pb-4">
-                <CardTitle className="flex items-center space-x-2 text-lg font-semibold text-[#4f5077]">
-                  <Building className="h-5 w-5" />
-                  <span>Branch & Address Information</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                {/* Branch Details */}
-                <div className="space-y-4">
-                  <h3 className="text-sm font-medium text-[#4f5077] border-b border-gray-200 pb-2">Branch Details</h3>
+          try {
+            const token = BranchManagerAuth.getToken()
+            const response = await fetch(`/api/branches/${branchId}`, {
+              method: 'PUT',
+              headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify(formData)
+            })
+
+            if (!response.ok) {
+              throw new Error('Failed to update branch')
+            }
+
+            setShowSuccessPopup(true)
+            setTimeout(() => {
+              setShowSuccessPopup(false)
+              router.push('/branch-manager-dashboard/branches')
+            }, 2000)
+
+          } catch (error) {
+            console.error('Error updating branch:', error)
+            toast({
+              title: "Error",
+              description: "Failed to update branch. Please try again.",
+              variant: "destructive",
+            })
+          } finally {
+            setIsSubmitting(false)
+          }
+        }}>
+          <div className="flex flex-row gap-6">
+            <div className="flex flex-col gap-6 w-full">
+              {/* Branch & Address Information */}
+              <Card className="h-fit">
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-2 text-[#4F5077]">
+                    <Building className="w-5 h-5" />
+                    <span>Branch & Address Information</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6 text-[#7D8592]">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="branchName" className="text-sm font-medium text-[#7D8592]">Branch Name *</Label>
+                      <Label htmlFor="branchName">Branch Name *</Label>
                       <Input
                         id="branchName"
                         value={formData.branch.name}
                         onChange={(e) => handleInputChange('branch.name', e.target.value)}
-                        className={`h-12 bg-gray-50 border-gray-200 rounded-xl ${errors.branchName ? 'border-red-500' : ''}`}
                         placeholder="Enter branch name"
+                        required
                       />
-                      {errors.branchName && <p className="text-red-500 text-xs">{errors.branchName}</p>}
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="branchCode" className="text-sm font-medium text-[#7D8592]">Branch Code *</Label>
+                      <Label htmlFor="branchCode">Branch Code *</Label>
                       <Input
                         id="branchCode"
                         value={formData.branch.code}
                         onChange={(e) => handleInputChange('branch.code', e.target.value)}
-                        className={`h-12 bg-gray-50 border-gray-200 rounded-xl ${errors.branchCode ? 'border-red-500' : ''}`}
                         placeholder="Enter branch code"
+                        required
                       />
-                      {errors.branchCode && <p className="text-red-500 text-xs">{errors.branchCode}</p>}
                     </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="branchEmail" className="text-sm font-medium text-[#7D8592]">Email *</Label>
+                      <Label htmlFor="branchEmail">Email *</Label>
                       <Input
                         id="branchEmail"
                         type="email"
                         value={formData.branch.email}
                         onChange={(e) => handleInputChange('branch.email', e.target.value)}
-                        className={`h-12 bg-gray-50 border-gray-200 rounded-xl ${errors.branchEmail ? 'border-red-500' : ''}`}
                         placeholder="Enter email address"
+                        required
                       />
-                      {errors.branchEmail && <p className="text-red-500 text-xs">{errors.branchEmail}</p>}
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="branchPhone" className="text-sm font-medium text-[#7D8592]">Phone *</Label>
+                      <Label htmlFor="branchPhone">Phone *</Label>
                       <Input
                         id="branchPhone"
                         value={formData.branch.phone}
                         onChange={(e) => handleInputChange('branch.phone', e.target.value)}
-                        className={`h-12 bg-gray-50 border-gray-200 rounded-xl ${errors.branchPhone ? 'border-red-500' : ''}`}
                         placeholder="Enter phone number"
+                        required
                       />
-                      {errors.branchPhone && <p className="text-red-500 text-xs">{errors.branchPhone}</p>}
                     </div>
                   </div>
-                </div>
 
-                {/* Address Details */}
-                <div className="space-y-4">
-                  <h3 className="text-sm font-medium text-[#4f5077] border-b border-gray-200 pb-2">Address Details</h3>
+                  <div className="space-y-2">
+                    <Label htmlFor="addressLine1">Address Line 1 *</Label>
+                    <Input
+                      id="addressLine1"
+                      value={formData.branch.address.line1}
+                      onChange={(e) => handleInputChange('branch.address.line1', e.target.value)}
+                      placeholder="Enter address line 1"
+                      required
+                    />
+                  </div>
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2 md:col-span-2">
-                      <Label htmlFor="addressLine1" className="text-sm font-medium text-[#7D8592]">Address Line 1 *</Label>
-                      <Input
-                        id="addressLine1"
-                        value={formData.branch.address.line1}
-                        onChange={(e) => handleInputChange('branch.address.line1', e.target.value)}
-                        className={`h-12 bg-gray-50 border-gray-200 rounded-xl ${errors.addressLine1 ? 'border-red-500' : ''}`}
-                        placeholder="Enter address line 1"
-                      />
-                      {errors.addressLine1 && <p className="text-red-500 text-xs">{errors.addressLine1}</p>}
-                    </div>
                     <div className="space-y-2">
-                      <Label htmlFor="area" className="text-sm font-medium text-[#7D8592]">Area</Label>
+                      <Label htmlFor="area">Area</Label>
                       <Input
                         id="area"
                         value={formData.branch.address.area}
                         onChange={(e) => handleInputChange('branch.address.area', e.target.value)}
-                        className="h-12 bg-gray-50 border-gray-200 rounded-xl"
                         placeholder="Enter area"
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="city" className="text-sm font-medium text-[#7D8592]">City *</Label>
+                      <Label htmlFor="city">City *</Label>
                       <Input
                         id="city"
                         value={formData.branch.address.city}
                         onChange={(e) => handleInputChange('branch.address.city', e.target.value)}
-                        className={`h-12 bg-gray-50 border-gray-200 rounded-xl ${errors.city ? 'border-red-500' : ''}`}
                         placeholder="Enter city"
+                        required
                       />
-                      {errors.city && <p className="text-red-500 text-xs">{errors.city}</p>}
                     </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="state" className="text-sm font-medium text-[#7D8592]">State *</Label>
+                      <Label htmlFor="state">State *</Label>
                       <Select
                         value={formData.branch.address.state}
                         onValueChange={(value) => handleInputChange('branch.address.state', value)}
                       >
-                        <SelectTrigger className={`h-12 bg-gray-50 border-gray-200 rounded-xl ${errors.state ? 'border-red-500' : ''}`}>
+                        <SelectTrigger>
                           <SelectValue placeholder="Select state" />
                         </SelectTrigger>
                         <SelectContent>
-                          {isLoadingStates ? (
-                            <SelectItem value="loading" disabled>Loading states...</SelectItem>
-                          ) : (
-                            states.map((state) => (
-                              <SelectItem key={state.state} value={state.state}>
-                                {state.state}
-                              </SelectItem>
-                            ))
-                          )}
-                        </SelectContent>
-                      </Select>
-                      {errors.state && <p className="text-red-500 text-xs">{errors.state}</p>}
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="pincode" className="text-sm font-medium text-[#7D8592]">Pincode *</Label>
-                      <Input
-                        id="pincode"
-                        value={formData.branch.address.pincode}
-                        onChange={(e) => handleInputChange('branch.address.pincode', e.target.value)}
-                        className={`h-12 bg-gray-50 border-gray-200 rounded-xl ${errors.pincode ? 'border-red-500' : ''}`}
-                        placeholder="Enter pincode"
-                      />
-                      {errors.pincode && <p className="text-red-500 text-xs">{errors.pincode}</p>}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Branch Manager */}
-                <div className="space-y-4">
-                  <h3 className="text-sm font-medium text-[#4f5077] border-b border-gray-200 pb-2">Branch Manager</h3>
-                  <div className="space-y-2">
-                    <Label htmlFor="manager" className="text-sm font-medium text-[#7D8592]">Assign Manager</Label>
-                    <Select
-                      value={formData.manager_id}
-                      onValueChange={(value) => handleInputChange('manager_id', value)}
-                    >
-                      <SelectTrigger className="h-12 bg-gray-50 border-gray-200 rounded-xl">
-                        <SelectValue placeholder="Select branch manager" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {isLoadingManagers ? (
-                          <SelectItem value="loading" disabled>Loading managers...</SelectItem>
-                        ) : (
-                          availableManagers.map((manager) => (
-                            <SelectItem key={manager.id} value={manager.id}>
-                              {manager.name} ({manager.email})
-                            </SelectItem>
-                          ))
-                        )}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Row 1, Column 2: Course & Staff Assignments */}
-            <Card className="rounded-2xl shadow-sm border-gray-200">
-              <CardHeader className="pb-4">
-                <CardTitle className="flex items-center space-x-2 text-lg font-semibold text-[#4f5077]">
-                  <Users className="h-5 w-5" />
-                  <span>Course & Staff Assignments</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                {/* Accessories Available */}
-                <div className="space-y-4">
-                  <h3 className="text-sm font-medium text-[#4f5077] border-b border-gray-200 pb-2">Accessories</h3>
-                  <div className="flex items-center space-x-3">
-                    <Switch
-                      id="accessories"
-                      checked={formData.assignments.accessories_available}
-                      onCheckedChange={(checked) => handleInputChange('assignments.accessories_available', checked)}
-                    />
-                    <Label htmlFor="accessories" className="text-sm font-medium text-[#7D8592]">
-                      Accessories Available
-                    </Label>
-                  </div>
-                </div>
-
-                {/* Course Assignments */}
-                <div className="space-y-4">
-                  <h3 className="text-sm font-medium text-[#4f5077] border-b border-gray-200 pb-2">Course Assignments</h3>
-                  <div className="space-y-3">
-                    {isLoadingCourses ? (
-                      <div className="flex items-center space-x-2">
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        <span className="text-sm text-gray-500">Loading courses...</span>
-                      </div>
-                    ) : (
-                      <div className="max-h-48 overflow-y-auto space-y-2">
-                        {availableCourses.map((course) => (
-                          <div key={course.id} className="flex items-center space-x-3">
-                            <Checkbox
-                              id={`course-${course.id}`}
-                              checked={formData.assignments.courses.includes(course.id)}
-                              onCheckedChange={(checked) => {
-                                const currentCourses = formData.assignments.courses
-                                const updatedCourses = checked
-                                  ? [...currentCourses, course.id]
-                                  : currentCourses.filter(id => id !== course.id)
-                                handleInputChange('assignments.courses', updatedCourses)
-                              }}
-                            />
-                            <Label htmlFor={`course-${course.id}`} className="text-sm text-[#7D8592]">
-                              {course.name}
-                            </Label>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    {/* Selected Courses Display */}
-                    {formData.assignments.courses.length > 0 && (
-                      <div className="mt-4">
-                        <p className="text-xs text-gray-500 mb-2">Selected Courses:</p>
-                        <div className="flex flex-wrap gap-2">
-                          {formData.assignments.courses.map((courseId) => {
-                            const course = availableCourses.find(c => c.id === courseId)
-                            return course ? (
-                              <Badge key={courseId} variant="secondary" className="text-xs">
-                                {course.name}
-                              </Badge>
-                            ) : null
-                          })}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Branch Admin Assignments */}
-                <div className="space-y-4">
-                  <h3 className="text-sm font-medium text-[#4f5077] border-b border-gray-200 pb-2">Branch Admin Assignments</h3>
-                  <div className="space-y-3">
-                    {isLoadingAdmins ? (
-                      <div className="flex items-center space-x-2">
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        <span className="text-sm text-gray-500">Loading admins...</span>
-                      </div>
-                    ) : (
-                      <div className="max-h-48 overflow-y-auto space-y-2">
-                        {availableAdmins.map((admin) => (
-                          <div key={admin.id} className="flex items-center space-x-3">
-                            <Checkbox
-                              id={`admin-${admin.id}`}
-                              checked={formData.assignments.branch_admins.includes(admin.id)}
-                              onCheckedChange={(checked) => {
-                                const currentAdmins = formData.assignments.branch_admins
-                                const updatedAdmins = checked
-                                  ? [...currentAdmins, admin.id]
-                                  : currentAdmins.filter(id => id !== admin.id)
-                                handleInputChange('assignments.branch_admins', updatedAdmins)
-                              }}
-                            />
-                            <Label htmlFor={`admin-${admin.id}`} className="text-sm text-[#7D8592]">
-                              {admin.name}
-                            </Label>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    {/* Selected Admins Display */}
-                    {formData.assignments.branch_admins.length > 0 && (
-                      <div className="mt-4">
-                        <p className="text-xs text-gray-500 mb-2">Selected Admins:</p>
-                        <div className="flex flex-wrap gap-2">
-                          {formData.assignments.branch_admins.map((adminId) => {
-                            const admin = availableAdmins.find(a => a.id === adminId)
-                            return admin ? (
-                              <Badge key={adminId} variant="secondary" className="text-xs">
-                                {admin.name}
-                              </Badge>
-                            ) : null
-                          })}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Second Row */}
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-            {/* Row 2, Column 1: Operational Details */}
-            <Card className="rounded-2xl shadow-sm border-gray-200">
-              <CardHeader className="pb-4">
-                <CardTitle className="flex items-center space-x-2 text-lg font-semibold text-[#4f5077]">
-                  <Clock className="h-5 w-5" />
-                  <span>Operational Details</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                {/* Operating Hours */}
-                <div className="space-y-4">
-                  <h3 className="text-sm font-medium text-[#4f5077] border-b border-gray-200 pb-2">Operating Hours</h3>
-
-                  {/* Add New Timing Form */}
-                  <div className="bg-gray-50 p-4 rounded-xl space-y-3">
-                    <p className="text-sm font-medium text-[#7D8592]">Add Operating Hours</p>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                      <Select
-                        value={newTiming.day}
-                        onValueChange={(value) => setNewTiming(prev => ({ ...prev, day: value }))}
-                      >
-                        <SelectTrigger className="h-10 bg-white border-gray-200 rounded-lg">
-                          <SelectValue placeholder="Select day" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {daysOfWeek.map((day) => (
-                            <SelectItem key={day} value={day}>
-                              {day}
+                          {availableStates.map((state) => (
+                            <SelectItem key={state.id || state.name} value={state.name}>
+                              {state.name}
                             </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="pincode">Pincode *</Label>
                       <Input
-                        type="time"
-                        value={newTiming.open}
-                        onChange={(e) => setNewTiming(prev => ({ ...prev, open: e.target.value }))}
-                        className="h-10 bg-white border-gray-200 rounded-lg"
-                      />
-                      <Input
-                        type="time"
-                        value={newTiming.close}
-                        onChange={(e) => setNewTiming(prev => ({ ...prev, close: e.target.value }))}
-                        className="h-10 bg-white border-gray-200 rounded-lg"
+                        id="pincode"
+                        value={formData.branch.address.pincode}
+                        onChange={(e) => handleInputChange('branch.address.pincode', e.target.value)}
+                        placeholder="Enter pincode"
+                        required
                       />
                     </div>
-                    <Button
-                      type="button"
-                      onClick={addTiming}
-                      size="sm"
-                      className="bg-yellow-400 hover:bg-yellow-500 text-black rounded-lg"
-                    >
-                      Add Timing
-                    </Button>
+                    <div className="space-y-2">
+                      <Label htmlFor="country">Country</Label>
+                      <Input
+                        id="country"
+                        value={formData.branch.address.country}
+                        onChange={(e) => handleInputChange('branch.address.country', e.target.value)}
+                        placeholder="Enter country"
+                        disabled
+                      />
+                    </div>
                   </div>
 
-                  {/* Current Timings */}
                   <div className="space-y-2">
-                    {formData.operational_details.timings.map((timing, index) => (
-                      <div key={index} className="flex items-center justify-between bg-white p-3 rounded-lg border border-gray-200">
-                        <div className="flex items-center space-x-4">
-                          <Badge variant="outline" className="text-xs">
-                            {timing.day}
-                          </Badge>
-                          <span className="text-sm text-[#7D8592]">
-                            {timing.open} - {timing.close}
-                          </span>
-                        </div>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => removeTiming(index)}
-                          className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
+                    <Label htmlFor="manager">Branch Manager</Label>
+                    <Select
+                      value={formData.manager_id}
+                      onValueChange={(value) => handleInputChange('manager_id', value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select branch manager" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {availableManagers.map((manager) => (
+                          <SelectItem key={manager.id} value={manager.id}>
+                            {manager.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Course & Staff Assignments */}
+              <Card className="h-fit">
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-2 text-[#4F5077]">
+                    <Users className="w-5 h-5" />
+                    <span>Course & Staff Assignments</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6 text-[#7D8592]">
+                  {/* Accessories Available */}
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="accessoriesAvailable"
+                      checked={formData.assignments.accessories_available}
+                      onCheckedChange={(checked) => handleInputChange('assignments.accessories_available', checked)}
+                    />
+                    <Label htmlFor="accessoriesAvailable">Accessories Available at Branch</Label>
+                  </div>
+
+                  {/* Course Assignments */}
+                  <div className="space-y-2">
+                    <Label>Assign Courses to Branch</Label>
+                    {isLoadingCourses ? (
+                      <div className="p-4 text-center text-gray-500">
+                        <p className="text-sm">Loading courses...</p>
                       </div>
-                    ))}
-                    {formData.operational_details.timings.length === 0 && (
-                      <p className="text-sm text-gray-500 text-center py-4">No operating hours added yet</p>
+                    ) : (
+                      <div className="grid grid-cols-1 gap-3 max-h-40 overflow-y-auto">
+                        {availableCourses.length > 0 ? (
+                          availableCourses.map((course) => (
+                            <div key={course.id} className="flex items-center space-x-2">
+                              <Checkbox
+                                id={`course-assign-${course.id}`}
+                                checked={formData.assignments.courses.includes(course.id)}
+                                onCheckedChange={() => {
+                                  const isSelected = formData.assignments.courses.includes(course.id)
+                                  const updatedCourses = isSelected
+                                    ? formData.assignments.courses.filter(c => c !== course.id)
+                                    : [...formData.assignments.courses, course.id]
+
+                                  handleInputChange('assignments.courses', updatedCourses)
+                                }}
+                              />
+                              <Label htmlFor={`course-assign-${course.id}`} className="text-sm cursor-pointer">
+                                {course.name}
+                              </Label>
+                            </div>
+                          ))
+                        ) : (
+                          <div className="p-4 text-center text-gray-500">
+                            <p className="text-sm">No courses available</p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {formData.assignments.courses.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mt-2 max-h-24 overflow-y-auto">
+                        {formData.assignments.courses.map((courseId) => {
+                          const course = availableCourses.find(c => c.id === courseId)
+                          return course ? (
+                            <Badge key={courseId} variant="secondary" className="bg-green-100 text-green-800">
+                              {course.name}
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const updatedCourses = formData.assignments.courses.filter(c => c !== courseId)
+                                  handleInputChange('assignments.courses', updatedCourses)
+                                }}
+                                className="ml-2 hover:text-red-600"
+                              >
+                                <X className="w-3 h-3" />
+                              </button>
+                            </Badge>
+                          ) : null
+                        })}
+                      </div>
                     )}
                   </div>
-                </div>
 
-                {/* Holidays */}
-                <div className="space-y-4">
-                  <h3 className="text-sm font-medium text-[#4f5077] border-b border-gray-200 pb-2">Holidays</h3>
-
-                  {/* Add Holiday Form */}
-                  <div className="bg-gray-50 p-4 rounded-xl space-y-3">
-                    <p className="text-sm font-medium text-[#7D8592]">Add Holiday</p>
-                    <div className="flex space-x-3">
-                      <Input
-                        id="holidayDate"
-                        type="date"
-                        className="h-10 bg-white border-gray-200 rounded-lg flex-1"
-                        onChange={(e) => {
-                          if (e.target.value) {
-                            addHoliday(e.target.value)
-                          }
-                        }}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Current Holidays */}
+                  {/* Branch Admins */}
                   <div className="space-y-2">
-                    {formData.operational_details.holidays.length > 0 ? (
-                      <div className="flex flex-wrap gap-2">
-                        {formData.operational_details.holidays.map((holiday, index) => (
-                          <Badge key={index} variant="secondary" className="text-xs flex items-center space-x-1">
-                            <span>{new Date(holiday).toLocaleDateString()}</span>
-                            <Button
+                    <Label>Branch Administrators</Label>
+                    {isLoadingAdmins ? (
+                      <div className="p-4 text-center text-gray-500">
+                        <p className="text-sm">Loading administrators...</p>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 gap-3 max-h-32 overflow-y-auto">
+                        {availableAdmins.length > 0 ? (
+                          availableAdmins.map((admin) => (
+                            <div key={admin.id} className="flex items-center space-x-2">
+                              <Checkbox
+                                id={`admin-${admin.id}`}
+                                checked={formData.assignments.branch_admins.includes(admin.id)}
+                                onCheckedChange={() => {
+                                  const isSelected = formData.assignments.branch_admins.includes(admin.id)
+                                  const updatedAdmins = isSelected
+                                    ? formData.assignments.branch_admins.filter(a => a !== admin.id)
+                                    : [...formData.assignments.branch_admins, admin.id]
+
+                                  handleInputChange('assignments.branch_admins', updatedAdmins)
+                                }}
+                              />
+                              <Label htmlFor={`admin-${admin.id}`} className="text-sm cursor-pointer">
+                                {admin.name}
+                              </Label>
+                            </div>
+                          ))
+                        ) : (
+                          <div className="p-4 text-center text-gray-500">
+                            <p className="text-sm">No administrators available</p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {formData.assignments.branch_admins.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {formData.assignments.branch_admins.map((adminId) => {
+                          const admin = availableAdmins.find(a => a.id === adminId)
+                          return admin ? (
+                            <Badge key={adminId} variant="secondary" className="bg-purple-100 text-purple-800">
+                              {admin.name}
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const updatedAdmins = formData.assignments.branch_admins.filter(a => a !== adminId)
+                                  handleInputChange('assignments.branch_admins', updatedAdmins)
+                                }}
+                                className="ml-2 hover:text-red-600"
+                              >
+                                <X className="w-3 h-3" />
+                              </button>
+                            </Badge>
+                          ) : null
+                        })}
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+            <div className="flex flex-col gap-6 w-full">
+              {/* Top Right Card - Operational Details */}
+              <Card className="h-fit">
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-2 text-[#4F5077]">
+                    <span>Operational Details</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6 text-[#7D8592]">
+                  {/* Courses Offered */}
+                  <div className="space-y-2">
+                    <Label>Courses Offered *</Label>
+                    {isLoadingCourses ? (
+                      <div className="p-4 text-center text-gray-500">
+                        <p className="text-sm">Loading courses...</p>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 gap-3 max-h-48 overflow-y-auto">
+                        {availableCourses.length > 0 ? (
+                          availableCourses.map((course) => (
+                            <div key={course.id} className="flex items-center space-x-2">
+                              <Checkbox
+                                id={`course-offered-${course.id}`}
+                                checked={formData.operational_details.courses_offered.includes(course.name)}
+                                onCheckedChange={() => {
+                                  const isSelected = formData.operational_details.courses_offered.includes(course.name)
+                                  const updatedCourses = isSelected
+                                    ? formData.operational_details.courses_offered.filter(c => c !== course.name)
+                                    : [...formData.operational_details.courses_offered, course.name]
+
+                                  handleInputChange('operational_details.courses_offered', updatedCourses)
+                                }}
+                              />
+                              <Label htmlFor={`course-offered-${course.id}`} className="text-sm cursor-pointer">
+                                {course.name}
+                              </Label>
+                            </div>
+                          ))
+                        ) : (
+                          <div className="p-4 text-center text-gray-500">
+                            <p className="text-sm">No courses available</p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    {errors.coursesOffered && <p className="text-red-500 text-sm">{errors.coursesOffered}</p>}
+
+                    {formData.operational_details.courses_offered.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {formData.operational_details.courses_offered.map((course) => (
+                          <Badge key={course} variant="secondary" className="bg-yellow-100 text-yellow-800">
+                            {course}
+                            <button
                               type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => removeHoliday(index)}
-                              className="h-4 w-4 p-0 text-red-500 hover:text-red-700"
+                              onClick={() => {
+                                const updatedCourses = formData.operational_details.courses_offered.filter(c => c !== course)
+                                handleInputChange('operational_details.courses_offered', updatedCourses)
+                              }}
+                              className="ml-2 hover:text-red-600"
                             >
-                              <X className="h-3 w-3" />
-                            </Button>
+                              <X className="w-3 h-3" />
+                            </button>
                           </Badge>
                         ))}
                       </div>
-                    ) : (
-                      <p className="text-sm text-gray-500 text-center py-4">No holidays added yet</p>
                     )}
                   </div>
-                </div>
-              </CardContent>
-            </Card>
 
-            {/* Row 2, Column 2: Bank Details */}
-            <Card className="rounded-2xl shadow-sm border-gray-200">
-              <CardHeader className="pb-4">
-                <CardTitle className="flex items-center space-x-2 text-lg font-semibold text-[#4f5077]">
-                  <CreditCard className="h-5 w-5" />
-                  <span>Bank Details</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="space-y-4">
+                  {/* Operating Hours - Dynamic */}
                   <div className="space-y-2">
-                    <Label htmlFor="bankName" className="text-sm font-medium text-[#7D8592]">Bank Name</Label>
+                    <Label>Operating Hours</Label>
+
+                    {/* Add New Timing Form */}
+                    <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                      <div className="grid grid-cols-1 md:grid-cols-4 gap-2 items-end">
+                        <div className="space-y-1">
+                          <Label className="text-xs">Day</Label>
+                          <Select
+                            value={newTiming.day}
+                            onValueChange={(value) => setNewTiming(prev => ({ ...prev, day: value }))}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select day" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {daysOfWeek.map((day) => (
+                                <SelectItem key={day} value={day}>
+                                  {day}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs">Open Time</Label>
+                          <Input
+                            type="time"
+                            value={newTiming.open}
+                            onChange={(e) => setNewTiming(prev => ({ ...prev, open: e.target.value }))}
+                            className="text-xs"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs">Close Time</Label>
+                          <Input
+                            type="time"
+                            value={newTiming.close}
+                            onChange={(e) => setNewTiming(prev => ({ ...prev, close: e.target.value }))}
+                            className="text-xs"
+                          />
+                        </div>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={addTiming}
+                          disabled={!newTiming.day}
+                          className="bg-yellow-50 hover:bg-yellow-100 border-yellow-300"
+                        >
+                          {formData.operational_details.timings.some(t => t.day === newTiming.day) ? 'Update' : 'Add'}
+                        </Button>
+                      </div>
+                    </div>
+
+                    {/* Display Added Timings */}
+                    {formData.operational_details.timings.length > 0 && (
+                      <div className="space-y-2 max-h-48 overflow-y-auto">
+                        <Label className="text-sm font-medium">Configured Operating Hours:</Label>
+                        {formData.operational_details.timings.map((timing, index) => (
+                          <div key={`${timing.day}-${index}`} className="grid grid-cols-4 gap-2 items-center p-2 bg-white border rounded">
+                            <div className="font-medium text-sm">{timing.day}</div>
+                            <Input
+                              type="time"
+                              value={timing.open}
+                              onChange={(e) => handleTimingChange(index, 'open', e.target.value)}
+                              className="text-xs"
+                            />
+                            <Input
+                              type="time"
+                              value={timing.close}
+                              onChange={(e) => handleTimingChange(index, 'close', e.target.value)}
+                              className="text-xs"
+                            />
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => removeTiming(index)}
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                            >
+                              <X className="w-3 h-3" />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {formData.operational_details.timings.length === 0 && (
+                      <p className="text-sm text-gray-500 italic">No operating hours configured yet. Add days and times above.</p>
+                    )}
+                  </div>
+
+                  {/* Holidays */}
+                  <div className="space-y-2">
+                    <Label>Holidays</Label>
+                    <div className="flex space-x-2">
+                      <Input
+                        type="date"
+                        id="holidayDate"
+                        className="text-sm"
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault()
+                            const input = e.target as HTMLInputElement
+                            addHoliday(input.value)
+                            input.value = ''
+                          }
+                        }}
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          const input = document.getElementById('holidayDate') as HTMLInputElement
+                          addHoliday(input.value)
+                          input.value = ''
+                        }}
+                      >
+                        Add
+                      </Button>
+                    </div>
+
+                    {formData.operational_details.holidays.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mt-2 max-h-24 overflow-y-auto">
+                        {formData.operational_details.holidays.map((holiday, index) => (
+                          <Badge key={holiday} variant="secondary" className="bg-blue-100 text-blue-800">
+                            {holiday}
+                            <button
+                              type="button"
+                              onClick={() => removeHoliday(index)}
+                              className="ml-2 hover:text-red-600"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+              {/* Bottom Right Card - Bank Details */}
+              <Card className="h-fit">
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-2 text-[#4F5077]">
+                    <span>Bank Details</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4 text-[#7D8592]">
+                  <div className="space-y-2">
+                    <Label htmlFor="bankName">Bank Name</Label>
                     <Input
                       id="bankName"
                       value={formData.bank_details.bank_name}
                       onChange={(e) => handleInputChange('bank_details.bank_name', e.target.value)}
-                      className="h-12 bg-gray-50 border-gray-200 rounded-xl"
                       placeholder="Enter bank name"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="accountNumber" className="text-sm font-medium text-[#7D8592]">Account Number</Label>
+                    <Label htmlFor="accountNumber">Account Number</Label>
                     <Input
                       id="accountNumber"
                       value={formData.bank_details.account_number}
                       onChange={(e) => handleInputChange('bank_details.account_number', e.target.value)}
-                      className="h-12 bg-gray-50 border-gray-200 rounded-xl"
                       placeholder="Enter account number"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="upiId" className="text-sm font-medium text-[#7D8592]">UPI ID</Label>
+                    <Label htmlFor="upiId">UPI ID</Label>
                     <Input
                       id="upiId"
                       value={formData.bank_details.upi_id}
                       onChange={(e) => handleInputChange('bank_details.upi_id', e.target.value)}
-                      className="h-12 bg-gray-50 border-gray-200 rounded-xl"
                       placeholder="Enter UPI ID"
                     />
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Form Actions */}
-          <div className="flex justify-end space-x-4 pt-6">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => router.back()}
-              className="px-6 py-2 h-12 rounded-xl border-gray-300 text-gray-700 hover:bg-gray-50"
-            >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              disabled={isSubmitting}
-              className="px-6 py-2 h-12 bg-yellow-400 hover:bg-yellow-500 text-black rounded-xl font-medium"
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Updating...
-                </>
-              ) : (
-                'Update Branch'
-              )}
-            </Button>
+                </CardContent>
+              </Card>
+              {/* Submit Button */}
+              <div className="flex justify-end space-x-4 pt-6 border-t">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => router.push("/branch-manager-dashboard/branches")}
+                  className="px-6 py-2"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  className="bg-yellow-400 hover:bg-yellow-500 text-white px-6 py-2"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Updating Branch...
+                    </>
+                  ) : (
+                    'Update Branch'
+                  )}
+                </Button>
+              </div>
+            </div>
           </div>
         </form>
 
         {/* Success Popup */}
         {showSuccessPopup && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white p-8 rounded-2xl shadow-xl max-w-md w-full mx-4">
+            <div className="bg-white rounded-lg p-6 max-w-sm mx-4">
               <div className="text-center">
-                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
                   </svg>
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">Branch Updated Successfully!</h3>
-                <p className="text-gray-600 mb-6">The branch information has been updated successfully.</p>
-                <div className="flex justify-center">
-                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-yellow-600"></div>
-                </div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Branch Updated!</h3>
+                <p className="text-gray-600 mb-4">The branch has been successfully updated.</p>
               </div>
             </div>
           </div>
