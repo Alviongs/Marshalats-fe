@@ -51,6 +51,13 @@ interface Student {
     pincode: string
     country: string
   }
+  // Payment information
+  payment_summary?: {
+    total_paid: number
+    total_pending: number
+    last_payment_date?: string
+    payment_status: 'paid' | 'pending' | 'overdue' | 'partial'
+  }
 }
 
 export default function BranchManagerStudentList() {
@@ -82,6 +89,80 @@ export default function BranchManagerStudentList() {
       return
     }
   }, [router])
+
+  // Helper function to fetch payment data for students
+  const fetchStudentPayments = async (studentIds: string[], token: string) => {
+    try {
+      console.log('💰 Fetching payment data for students:', studentIds.length)
+
+      // Fetch all payments for the branch manager (already filtered by managed branches)
+      const paymentsResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/payments?limit=1000`, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      })
+
+      if (!paymentsResponse.ok) {
+        console.warn('Failed to fetch payment data:', paymentsResponse.status)
+        return {}
+      }
+
+      const paymentsData = await paymentsResponse.json()
+      const payments = paymentsData.payments || []
+
+      console.log('💰 Retrieved payments:', payments.length)
+
+      // Group payments by student_id and calculate summaries
+      const paymentSummaries: Record<string, any> = {}
+
+      payments.forEach((payment: any) => {
+        const studentId = payment.student_id
+        if (!studentId || !studentIds.includes(studentId)) return
+
+        if (!paymentSummaries[studentId]) {
+          paymentSummaries[studentId] = {
+            total_paid: 0,
+            total_pending: 0,
+            last_payment_date: null,
+            payment_status: 'pending'
+          }
+        }
+
+        const amount = payment.amount || 0
+        const status = payment.payment_status || 'pending'
+        const paymentDate = payment.payment_date
+
+        if (status === 'paid') {
+          paymentSummaries[studentId].total_paid += amount
+          if (paymentDate && (!paymentSummaries[studentId].last_payment_date || paymentDate > paymentSummaries[studentId].last_payment_date)) {
+            paymentSummaries[studentId].last_payment_date = paymentDate
+          }
+        } else {
+          paymentSummaries[studentId].total_pending += amount
+        }
+      })
+
+      // Determine overall payment status for each student
+      Object.keys(paymentSummaries).forEach(studentId => {
+        const summary = paymentSummaries[studentId]
+        if (summary.total_pending === 0 && summary.total_paid > 0) {
+          summary.payment_status = 'paid'
+        } else if (summary.total_paid > 0 && summary.total_pending > 0) {
+          summary.payment_status = 'partial'
+        } else if (summary.total_pending > 0) {
+          summary.payment_status = 'pending'
+        }
+      })
+
+      console.log('💰 Payment summaries calculated for', Object.keys(paymentSummaries).length, 'students')
+      return paymentSummaries
+
+    } catch (error) {
+      console.error('Error fetching student payments:', error)
+      return {}
+    }
+  }
 
   // Load students data for branch manager from API
   useEffect(() => {
@@ -196,14 +277,29 @@ export default function BranchManagerStudentList() {
         console.log('Transformed students:', transformedStudents)
         console.log('Final students count:', transformedStudents.length)
 
-        if (transformedStudents.length === 0) {
+        // Fetch payment data for all students
+        const studentIds = transformedStudents.map(student => student.id)
+        const paymentSummaries = await fetchStudentPayments(studentIds, token)
+
+        // Integrate payment data with student data
+        const studentsWithPayments = transformedStudents.map(student => ({
+          ...student,
+          payment_summary: paymentSummaries[student.id] || {
+            total_paid: 0,
+            total_pending: 0,
+            last_payment_date: null,
+            payment_status: 'pending' as const
+          }
+        }))
+
+        if (studentsWithPayments.length === 0) {
           console.log('No students found for branch manager')
           setError("No students enrolled in your branches. Please contact your administrator if you expect to see students here.")
         } else {
-          console.log(`✅ Loaded ${transformedStudents.length} student(s) for ${currentUser.full_name}`)
+          console.log(`✅ Loaded ${studentsWithPayments.length} student(s) with payment data for ${currentUser.full_name}`)
         }
 
-        setStudents(transformedStudents)
+        setStudents(studentsWithPayments)
       } catch (err: any) {
         console.error('Error loading students data:', err)
         setError(err.message || 'Failed to load student information')
@@ -293,8 +389,24 @@ export default function BranchManagerStudentList() {
         }
       }))
 
-      setStudents(transformedStudents)
+      // Fetch payment data for refreshed students
+      const studentIds = transformedStudents.map(student => student.id)
+      const paymentSummaries = await fetchStudentPayments(studentIds, token)
+
+      // Integrate payment data with refreshed student data
+      const studentsWithPayments = transformedStudents.map(student => ({
+        ...student,
+        payment_summary: paymentSummaries[student.id] || {
+          total_paid: 0,
+          total_pending: 0,
+          last_payment_date: null,
+          payment_status: 'pending' as const
+        }
+      }))
+
+      setStudents(studentsWithPayments)
       setError(null)
+      console.log('✅ Students refreshed successfully with payment data:', studentsWithPayments.length)
     } catch (err: any) {
       console.error('Error refreshing students data:', err)
       setError(err.message || 'Failed to refresh students data')
@@ -531,13 +643,44 @@ export default function BranchManagerStudentList() {
                     
                     <div className="flex items-center space-x-4">
                       <div className="text-right">
-                        <Badge variant={student.is_active ? "default" : "secondary"}>
-                          {student.is_active ? "Active" : "Inactive"}
-                        </Badge>
+                        <div className="flex items-center space-x-2 mb-1">
+                          <Badge variant={student.is_active ? "default" : "secondary"}>
+                            {student.is_active ? "Active" : "Inactive"}
+                          </Badge>
+                          {student.payment_summary && (
+                            <Badge
+                              variant={
+                                student.payment_summary.payment_status === 'paid' ? 'default' :
+                                student.payment_summary.payment_status === 'partial' ? 'secondary' :
+                                'destructive'
+                              }
+                              className={
+                                student.payment_summary.payment_status === 'paid' ? 'bg-green-100 text-green-800' :
+                                student.payment_summary.payment_status === 'partial' ? 'bg-yellow-100 text-yellow-800' :
+                                'bg-red-100 text-red-800'
+                              }
+                            >
+                              {student.payment_summary.payment_status === 'paid' ? 'Paid' :
+                               student.payment_summary.payment_status === 'partial' ? 'Partial' :
+                               'Pending'}
+                            </Badge>
+                          )}
+                        </div>
                         {student.courses && student.courses.length > 0 && (
                           <p className="text-xs text-gray-500 mt-1">
                             {student.courses[0].course_name}
                           </p>
+                        )}
+                        {student.payment_summary && (student.payment_summary.total_paid > 0 || student.payment_summary.total_pending > 0) && (
+                          <div className="text-xs text-gray-500 mt-1">
+                            {student.payment_summary.total_paid > 0 && (
+                              <span className="text-green-600">₹{student.payment_summary.total_paid.toLocaleString()}</span>
+                            )}
+                            {student.payment_summary.total_paid > 0 && student.payment_summary.total_pending > 0 && <span> / </span>}
+                            {student.payment_summary.total_pending > 0 && (
+                              <span className="text-red-600">₹{student.payment_summary.total_pending.toLocaleString()} due</span>
+                            )}
+                          </div>
                         )}
                       </div>
                       
