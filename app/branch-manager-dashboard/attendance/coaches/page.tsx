@@ -5,355 +5,307 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Search, MessageCircle, Phone, AlertCircle, RefreshCw } from "lucide-react"
+import { Search, MessageCircle, Phone } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useRouter } from "next/navigation"
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import BranchManagerDashboardHeader from "@/components/branch-manager-dashboard-header"
-import { BranchManagerAuth } from "@/lib/branchManagerAuth"
-
-interface CoachAttendance {
-  coach_id: string
-  coach_name: string
-  email: string
-  phone?: string
-  branch_id: string
-  expertise: string[]
-  total_days: number
-  present_days: number
-  attendance_percentage: number
-  last_attendance?: string
-}
 
 export default function BranchManagerCoachAttendancePage() {
   const router = useRouter()
   const [activeTab, setActiveTab] = useState("master")
-  const [coaches, setCoaches] = useState<CoachAttendance[]>([])
-  const [filteredCoaches, setFilteredCoaches] = useState<CoachAttendance[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [searchTerm, setSearchTerm] = useState("")
-  const [selectedFilter, setSelectedFilter] = useState("all")
-  const [selectedMonth, setSelectedMonth] = useState("current")
-  const [debugInfo, setDebugInfo] = useState<any>(null)
 
-  const loadCoachAttendance = async () => {
-    try {
-      setLoading(true)
-      setError(null)
+  // Sample coach attendance data
+  const coachAttendanceData = [
+    {
+      date: "28/04/2025",
+      coachName: "Abhi ram",
+      gender: "Male",
+      expertise: "Martial Arts",
+      email: "Abhi@gmail.com",
+      dateOfJoin: "20/04/2025",
+      checkIn: "06:30 AM",
+      checkOut: "09:00 AM",
+      attendance: "90%",
+    },
+    // Repeat for multiple entries
+    ...Array(10)
+      .fill(null)
+      .map((_, index) => ({
+        date: "28/04/2025",
+        coachName: "Abhi ram",
+        gender: "Male",
+        expertise: "Martial Arts",
+        email: "Abhi@gmail.com",
+        dateOfJoin: "20/04/2025",
+        checkIn: "06:30 AM",
+        checkOut: "09:00 AM",
+        attendance: "90%",
+      })),
+  ]
 
-      const currentUser = BranchManagerAuth.getCurrentUser()
-      const token = BranchManagerAuth.getToken()
+  const studentAttendanceData = [
+    {
+      date: "28/04/2025",
+      studentName: "Krishna Kumar Jit",
+      gender: "Male",
+      expertise: "Martial Arts",
+      email: "krishna@gmail.com",
+      dateOfJoin: "20/04/2025",
+      checkIn: "06:30 AM",
+      checkOut: "09:00 AM",
+      attendance: "90%",
+      notes: "Double punch",
+    },
+    {
+      date: "28/04/2025",
+      studentName: "Arun K",
+      gender: "Female",
+      expertise: "Martial Arts",
+      email: "arun@gmail.com",
+      dateOfJoin: "20/04/2025",
+      checkIn: "06:30 AM",
+      checkOut: "09:00 AM",
+      attendance: "85%",
+      notes: "Missed punch",
+    },
+    {
+      date: "28/04/2025",
+      studentName: "Priya Sharma",
+      gender: "Female",
+      expertise: "Karate",
+      email: "priya@gmail.com",
+      dateOfJoin: "15/04/2025",
+      checkIn: "07:00 AM",
+      checkOut: "09:30 AM",
+      attendance: "95%",
+      notes: "Perfect form",
+    },
+    {
+      date: "28/04/2025",
+      studentName: "Raj Patel",
+      gender: "Male",
+      expertise: "Taekwondo",
+      email: "raj@gmail.com",
+      dateOfJoin: "18/04/2025",
+      checkIn: "06:45 AM",
+      checkOut: "09:15 AM",
+      attendance: "88%",
+      notes: "Good progress",
+    },
+    {
+      date: "28/04/2025",
+      studentName: "Sneha Reddy",
+      gender: "Female",
+      expertise: "Kung Fu",
+      email: "sneha@gmail.com",
+      dateOfJoin: "22/04/2025",
+      checkIn: "06:30 AM",
+      checkOut: "09:00 AM",
+      attendance: "92%",
+      notes: "Excellent technique",
+    },
+  ]
 
-      if (!currentUser || !token) {
-        setError("Authentication required. Please log in.")
-        router.push('/branch-manager/login')
-        return
-      }
+  return (
+    <div className="min-h-screen bg-gray-50 overflow-x-hidden">
+      <BranchManagerDashboardHeader currentPage="Coach Attendance" />
 
-      console.log('🔍 Branch Manager Coach Attendance - Loading data...')
-      console.log('Current user:', currentUser.full_name)
-      console.log('Token available:', !!token)
-
-      // Calculate date range based on selected month
-      const now = new Date()
-      let startDate, endDate
-      
-      if (selectedMonth === "current") {
-        startDate = new Date(now.getFullYear(), now.getMonth(), 1)
-        endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0)
-      } else {
-        // Previous month
-        startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1)
-        endDate = new Date(now.getFullYear(), now.getMonth(), 0)
-      }
-
-      const params = new URLSearchParams({
-        start_date: startDate.toISOString(),
-        end_date: endDate.toISOString()
-      })
-
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/attendance/coaches?${params}`, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        }
-      })
-
-      console.log('Coach attendance API response status:', response.status)
-
-      if (!response.ok) {
-        const errorData = await response.text()
-        console.error('Coach attendance API error:', errorData)
-        throw new Error(`Failed to load coach attendance: ${response.status} - ${errorData}`)
-      }
-
-      const data = await response.json()
-      console.log('Coach attendance data received:', data)
-
-      setCoaches(data.coaches || [])
-      setFilteredCoaches(data.coaches || [])
-      
-      setDebugInfo({
-        totalCoaches: data.total || 0,
-        dateRange: `${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()}`,
-        apiEndpoint: '/api/attendance/coaches',
-        responseStatus: response.status
-      })
-
-    } catch (err) {
-      console.error('Error loading coach attendance:', err)
-      setError(err instanceof Error ? err.message : 'Failed to load coach attendance data')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleSearch = (term: string) => {
-    setSearchTerm(term)
-    filterCoaches(term, selectedFilter)
-  }
-
-  const handleFilterChange = (filter: string) => {
-    setSelectedFilter(filter)
-    filterCoaches(searchTerm, filter)
-  }
-
-  const filterCoaches = (search: string, filter: string) => {
-    let filtered = coaches
-
-    // Apply search filter
-    if (search) {
-      filtered = filtered.filter(coach =>
-        coach.coach_name.toLowerCase().includes(search.toLowerCase()) ||
-        coach.email.toLowerCase().includes(search.toLowerCase()) ||
-        coach.expertise.some(exp => exp.toLowerCase().includes(search.toLowerCase()))
-      )
-    }
-
-    // Apply attendance filter
-    if (filter === "high") {
-      filtered = filtered.filter(coach => coach.attendance_percentage >= 90)
-    } else if (filter === "medium") {
-      filtered = filtered.filter(coach => coach.attendance_percentage >= 70 && coach.attendance_percentage < 90)
-    } else if (filter === "low") {
-      filtered = filtered.filter(coach => coach.attendance_percentage < 70)
-    }
-
-    setFilteredCoaches(filtered)
-  }
-
-  const handleRefresh = () => {
-    loadCoachAttendance()
-  }
-
-  const getAttendanceBadgeVariant = (percentage: number) => {
-    if (percentage >= 90) return "default" // Green
-    if (percentage >= 70) return "secondary" // Yellow
-    return "destructive" // Red
-  }
-
-  const getAttendanceStatus = (percentage: number) => {
-    if (percentage >= 90) return "Excellent"
-    if (percentage >= 70) return "Good"
-    return "Needs Improvement"
-  }
-
-  useEffect(() => {
-    loadCoachAttendance()
-  }, [selectedMonth])
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <BranchManagerDashboardHeader />
-        <div className="flex items-center justify-center h-64">
-          <div className="text-center">
-            <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-4 text-blue-600" />
-            <p className="text-gray-600">Loading coach attendance data...</p>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <BranchManagerDashboardHeader />
-        <div className="flex items-center justify-center h-64">
-          <div className="text-center">
-            <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Unable to Load Coach Attendance</h3>
-            <p className="text-gray-600 mb-4">{error}</p>
-            <Button onClick={handleRefresh} className="bg-blue-600 hover:bg-blue-700">
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Try Again
+      <main className="w-full p-4 lg:p-6 overflow-x-hidden xl:px-12">
+        {/* Page Header */}
+        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4">
+          <h1 className="text-2xl font-bold text-[#0A1629]">Attendance</h1>
+          <div className="flex flex-wrap gap-2 lg:gap-3">
+            <Button className="bg-yellow-400 hover:bg-yellow-500 text-white text-sm">Send Alerts</Button>
+            <Button variant="outline" className="text-sm bg-transparent text-[#5A6ACF]">
+              View Report
+            </Button>
+            <Button variant="outline" className="text-sm flex items-center space-x-2 bg-transparent text-[#5A6ACF]">
+              <span>📥</span>
+              <span>Download attendance sheet</span>
             </Button>
           </div>
         </div>
-      </div>
-    )
-  }
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <BranchManagerDashboardHeader />
-      
-      <div className="p-6">
-        {/* Header */}
-        <div className="flex justify-between items-center mb-6">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Coach Attendance</h1>
-            <p className="text-gray-600">Track and monitor coach attendance records</p>
+        {/* Attendance Tabs */}
+        <div className="mb-6">
+          <div className="flex space-x-2">
+            <Button
+              onClick={() => setActiveTab("student")}
+              className={
+                activeTab === "student"
+                  ? "bg-yellow-400 hover:bg-yellow-500 text-white"
+                  : "bg-[#D8E0F0] text-black hover:bg-gray-300"
+              }
+            >
+              Student Attendance
+            </Button>
+            <Button
+              onClick={() => setActiveTab("master")}
+              className={
+                activeTab === "master"
+                  ? "bg-yellow-400 hover:bg-yellow-500 text-white"
+                  : "bg-[#D8E0F0] text-black hover:bg-gray-300"
+              }
+            >
+              Master Attendance
+            </Button>
           </div>
-          <Button onClick={handleRefresh} variant="outline" className="flex items-center gap-2">
-            <RefreshCw className="h-4 w-4" />
-            Refresh
-          </Button>
         </div>
 
-        {/* Debug Info */}
-        {debugInfo && (
-          <Card className="mb-6 border-blue-200 bg-blue-50">
-            <CardContent className="p-4">
-              <h3 className="font-semibold text-blue-900 mb-2">📊 Debug Information</h3>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                <div>
-                  <span className="font-medium text-blue-800">Total Coaches:</span>
-                  <span className="ml-2 text-blue-700">{debugInfo.totalCoaches}</span>
+        <Card>
+          <CardContent className="p-6">
+            {/* Section Header with Filters */}
+            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4">
+              <h2 className="text-lg font-semibold text-[#4F5077]">
+                {activeTab === "student" ? "Student Attendance" : "Master Attendance"}
+              </h2>
+              <div className="flex flex-wrap gap-2 lg:gap-4 items-center">
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm text-black">Branch:</span>
+                  <Select defaultValue="select-branch">
+                    <SelectTrigger className="w-32 bg-[#F1F1F1] text-[#9593A8]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="select-branch">Select branch</SelectItem>
+                      <SelectItem value="madhapur">Madhapur</SelectItem>
+                      <SelectItem value="hitech">Hitech City</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
-                <div>
-                  <span className="font-medium text-blue-800">Date Range:</span>
-                  <span className="ml-2 text-blue-700">{debugInfo.dateRange}</span>
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm text-[#6B7A99]">Select Month:</span>
+                  <Select defaultValue="april">
+                    <SelectTrigger className="w-24 bg-[#F1F1F1] text-[#9593A8]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="april">April</SelectItem>
+                      <SelectItem value="march">March</SelectItem>
+                      <SelectItem value="may">May</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
-                <div>
-                  <span className="font-medium text-blue-800">API Endpoint:</span>
-                  <span className="ml-2 text-blue-700">{debugInfo.apiEndpoint}</span>
-                </div>
-                <div>
-                  <span className="font-medium text-blue-800">Status:</span>
-                  <span className="ml-2 text-blue-700">{debugInfo.responseStatus}</span>
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm text-gray-600">Sort By:</span>
+                  <Select defaultValue="today">
+                    <SelectTrigger className="w-20 bg-[#F1F1F1] text-[#9593A8]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="today">Today</SelectItem>
+                      <SelectItem value="week">Week</SelectItem>
+                      <SelectItem value="month">Month</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
-            </CardContent>
-          </Card>
-        )}
+            </div>
 
-        {/* Filters */}
-        <div className="flex flex-col sm:flex-row gap-4 mb-6">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-            <Input
-              placeholder="Search coaches by name, email, or expertise..."
-              value={searchTerm}
-              onChange={(e) => handleSearch(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-          <Select value={selectedFilter} onValueChange={handleFilterChange}>
-            <SelectTrigger className="w-full sm:w-48">
-              <SelectValue placeholder="Filter by attendance" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Coaches</SelectItem>
-              <SelectItem value="high">High Attendance (90%+)</SelectItem>
-              <SelectItem value="medium">Medium Attendance (70-89%)</SelectItem>
-              <SelectItem value="low">Low Attendance (&lt;70%)</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-            <SelectTrigger className="w-full sm:w-48">
-              <SelectValue placeholder="Select month" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="current">Current Month</SelectItem>
-              <SelectItem value="previous">Previous Month</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* Coach Attendance Cards */}
-        {filteredCoaches.length === 0 ? (
-          <Card>
-            <CardContent className="p-8 text-center">
-              <AlertCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">No Coach Attendance Data</h3>
-              <p className="text-gray-600">
-                {coaches.length === 0 
-                  ? "No coach attendance records found for the selected period."
-                  : "No coaches match your current search and filter criteria."
-                }
-              </p>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="grid gap-4">
-            {filteredCoaches.map((coach) => (
-              <Card key={coach.coach_id} className="hover:shadow-md transition-shadow">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
-                      <Avatar className="h-12 w-12">
-                        <AvatarImage src="" alt={coach.coach_name} />
-                        <AvatarFallback className="bg-blue-100 text-blue-600">
-                          {coach.coach_name.split(' ').map(n => n[0]).join('').toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <h3 className="font-semibold text-gray-900">{coach.coach_name}</h3>
-                        <p className="text-sm text-gray-600">{coach.email}</p>
-                        {coach.expertise.length > 0 && (
-                          <p className="text-sm text-gray-500">
-                            Expertise: {coach.expertise.join(', ')}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center space-x-4">
-                      <div className="text-right">
-                        <div className="text-sm text-gray-600">
-                          {coach.present_days}/{coach.total_days} days
-                        </div>
-                        <Badge variant={getAttendanceBadgeVariant(coach.attendance_percentage)}>
-                          {coach.attendance_percentage.toFixed(1)}% - {getAttendanceStatus(coach.attendance_percentage)}
-                        </Badge>
-                        {coach.last_attendance && (
-                          <div className="text-xs text-gray-500 mt-1">
-                            Last: {new Date(coach.last_attendance).toLocaleDateString()}
-                          </div>
-                        )}
-                      </div>
-                      
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="outline" size="sm">
-                            Actions
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent>
-                          <DropdownMenuItem onClick={() => window.open(`mailto:${coach.email}`)}>
-                            <MessageCircle className="h-4 w-4 mr-2" />
-                            Send Email
-                          </DropdownMenuItem>
-                          {coach.phone && (
-                            <DropdownMenuItem onClick={() => window.open(`tel:${coach.phone}`)}>
-                              <Phone className="h-4 w-4 mr-2" />
-                              Call Coach
-                            </DropdownMenuItem>
-                          )}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
-      </div>
+            {/* Attendance Table */}
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b bg-gray-50">
+                    <th className="text-left py-3 px-2 font-semibold text-[#6B7A99]">Name</th>
+                    <th className="text-left py-3 px-2 font-semibold text-[#6B7A99]">
+                      {activeTab === "student" ? "Student Name" : "Coach Name"}
+                    </th>
+                    <th className="text-left py-3 px-2 font-semibold text-[#6B7A99]">Gender</th>
+                    <th className="text-left py-3 px-2 font-semibold text-[#6B7A99]">Expertise</th>
+                    <th className="text-left py-3 px-2 font-semibold text-[#6B7A99]">Email Id</th>
+                    <th className="text-left py-3 px-2 font-semibold text-[#6B7A99]">Date of join</th>
+                    <th className="text-left py-3 px-2 font-semibold text-[#6B7A99]">Check in</th>
+                    <th className="text-left py-3 px-2 font-semibold text-[#6B7A99]">Check out</th>
+                    <th className="text-left py-3 px-2 font-semibold text-[#6B7A99]">Attendance</th>
+                    <th className="text-left py-3 px-2 font-semibold text-[#6B7A99]">
+                      {activeTab === "student" ? "Notes" : "Alerts"}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {activeTab === "student"
+                    ? studentAttendanceData.map((student, index) => (
+                        <tr key={index} className="border-b hover:bg-gray-50">
+                          <td className="py-3 px-2">{student.date}</td>
+                          <td className="py-3 px-2">{student.studentName}</td>
+                          <td className="py-3 px-2">{student.gender}</td>
+                          <td className="py-3 px-2">{student.expertise}</td>
+                          <td className="py-3 px-2">{student.email}</td>
+                          <td className="py-3 px-2">{student.dateOfJoin}</td>
+                          <td className="py-3 px-2">{student.checkIn}</td>
+                          <td className="py-3 px-2">{student.checkOut}</td>
+                          <td className="py-3 px-2">
+                            <div className="flex items-center space-x-2">
+                              <span>{student.attendance}</span>
+                              <Badge
+                                className="bg-yellow-100 text-yellow-800 hover:bg-yellow-200 cursor-pointer"
+                                onClick={() => router.push(`/branch-manager-dashboard/attendance/student-detail/${index}`)}
+                              >
+                                View more
+                              </Badge>
+                            </div>
+                          </td>
+                          <td className="py-3 px-2">
+                            <span
+                              className={`text-xs px-2 py-1 rounded ${
+                                student.notes === "Double punch" ||
+                                student.notes === "Perfect form" ||
+                                student.notes === "Excellent technique"
+                                  ? "bg-green-100 text-green-800"
+                                  : student.notes === "Missed punch"
+                                    ? "bg-red-100 text-red-800"
+                                    : "bg-blue-100 text-blue-800"
+                              }`}
+                            >
+                              {student.notes}
+                            </span>
+                          </td>
+                        </tr>
+                      ))
+                    : coachAttendanceData.map((coach, index) => (
+                        <tr key={index} className="border-b hover:bg-gray-50">
+                          <td className="py-3 px-2">{coach.date}</td>
+                          <td className="py-3 px-2">{coach.coachName}</td>
+                          <td className="py-3 px-2">{coach.gender}</td>
+                          <td className="py-3 px-2">{coach.expertise}</td>
+                          <td className="py-3 px-2">{coach.email}</td>
+                          <td className="py-3 px-2">{coach.dateOfJoin}</td>
+                          <td className="py-3 px-2">{coach.checkIn}</td>
+                          <td className="py-3 px-2">{coach.checkOut}</td>
+                          <td className="py-3 px-2">
+                            <div className="flex items-center space-x-2">
+                              <span>{coach.attendance}</span>
+                              <Badge
+                                className="bg-yellow-100 text-yellow-800 hover:bg-yellow-200 cursor-pointer"
+                                onClick={() => router.push(`/branch-manager-dashboard/attendance/coach-detail/${index}`)}
+                              >
+                                View more
+                              </Badge>
+                            </div>
+                          </td>
+                          <td className="py-3 px-2">
+                            <div className="flex items-center space-x-2">
+                              <div className="flex items-center justify-center w-8 h-8 bg-green-100 rounded-full">
+                                <MessageCircle className="w-4 h-4 text-green-600" />
+                              </div>
+                              <span className="text-xs text-gray-500">WhatsApp</span>
+                              <div className="flex items-center justify-center w-8 h-8 bg-blue-100 rounded-full">
+                                <Phone className="w-4 h-4 text-blue-600" />
+                              </div>
+                              <span className="text-xs text-gray-500">SMS</span>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
+      </main>
     </div>
   )
 }
