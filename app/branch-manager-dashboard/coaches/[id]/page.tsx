@@ -6,14 +6,14 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
-import { 
-  ArrowLeft, 
-  User, 
-  Phone, 
-  Mail, 
-  MapPin, 
-  Calendar, 
-  BookOpen, 
+import {
+  ArrowLeft,
+  User,
+  Phone,
+  Mail,
+  MapPin,
+  Calendar,
+  BookOpen,
   TrendingUp,
   Users,
   Clock,
@@ -23,7 +23,9 @@ import {
   Star,
   Target,
   GraduationCap,
-  Briefcase
+  Briefcase,
+  AlertCircle,
+  XCircle
 } from "lucide-react"
 import BranchManagerDashboardHeader from "@/components/branch-manager-dashboard-header"
 import { BranchManagerAuth } from "@/lib/branchManagerAuth"
@@ -105,97 +107,125 @@ export default function BranchManagerCoachDetailPage() {
       setLoading(true)
       setError(null)
 
-      // Mock coach details data
-      const mockCoach: CoachDetails = {
-        id: coachId,
-        full_name: "John Smith",
-        contact_info: {
-          email: "john.smith@marshalats.com",
-          phone: "+1234567891",
-          address: {
-            street: "456 Coach Street",
-            city: "City Center",
-            state: "State",
-            postal_code: "12345",
-            country: "Country"
-          }
-        },
-        areas_of_expertise: ["Martial Arts", "Self Defense", "Fitness Training"],
-        qualifications: ["Bachelor's in Sports Science", "Certified Personal Trainer"],
-        certifications: ["Black Belt Karate", "CPR Certified", "First Aid Certified"],
-        hire_date: "2023-01-15",
-        is_active: true,
-        branch_assignments: ["branch_001"],
-        bio: "Experienced martial arts instructor with over 10 years of teaching experience. Specializes in traditional martial arts and modern self-defense techniques.",
-        experience_years: 10,
-        created_at: "2023-01-15T00:00:00Z",
-        updated_at: new Date().toISOString(),
-        total_students: 45,
-        active_courses: 3,
-        student_satisfaction: 4.8,
-        retention_rate: 92
+      const token = BranchManagerAuth.getToken()
+      if (!token) {
+        throw new Error("Authentication token not found. Please login again.")
       }
 
-      const mockCourseAssignments: CourseAssignment[] = [
-        {
-          id: "assignment_001",
-          course_name: "Martial Arts Beginner",
-          difficulty_level: "Beginner",
-          enrolled_students: 20,
-          schedule: "Mon, Wed, Fri - 6:00 PM",
-          branch_name: "Main Branch",
-          status: 'active'
-        },
-        {
-          id: "assignment_002",
-          course_name: "Self Defense Advanced",
-          difficulty_level: "Advanced",
-          enrolled_students: 15,
-          schedule: "Tue, Thu - 7:00 PM",
-          branch_name: "Main Branch",
-          status: 'active'
-        },
-        {
-          id: "assignment_003",
-          course_name: "Fitness Training",
-          difficulty_level: "All Levels",
-          enrolled_students: 10,
-          schedule: "Sat - 9:00 AM",
-          branch_name: "Main Branch",
-          status: 'active'
+      // Fetch coach basic details
+      console.log('🔍 Fetching coach details for ID:', coachId)
+      const coachResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/coaches/${coachId}`, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         }
-      ]
+      })
 
-      const mockStudentAssignments: StudentAssignment[] = [
-        {
-          id: "student_001",
-          student_name: "Alice Johnson",
-          course_name: "Martial Arts Beginner",
-          enrollment_date: "2024-01-15",
-          progress: 75,
-          status: 'active'
-        },
-        {
-          id: "student_002",
-          student_name: "Bob Wilson",
-          course_name: "Self Defense Advanced",
-          enrollment_date: "2024-02-01",
-          progress: 60,
-          status: 'active'
-        },
-        {
-          id: "student_003",
-          student_name: "Carol Davis",
-          course_name: "Fitness Training",
-          enrollment_date: "2024-01-20",
-          progress: 90,
-          status: 'active'
+      if (!coachResponse.ok) {
+        if (coachResponse.status === 404) {
+          throw new Error("Coach not found")
         }
-      ]
+        if (coachResponse.status === 403) {
+          throw new Error("You don't have permission to view this coach")
+        }
+        const errorText = await coachResponse.text()
+        throw new Error(`Failed to fetch coach details: ${coachResponse.status} - ${errorText}`)
+      }
 
-      setCoach(mockCoach)
-      setCourseAssignments(mockCourseAssignments)
-      setStudentAssignments(mockStudentAssignments)
+      const coachData = await coachResponse.json()
+      console.log('✅ Coach data received:', coachData)
+
+      // Transform the API response to match our interface
+      const coach: CoachDetails = {
+        id: coachData.id,
+        full_name: coachData.full_name,
+        contact_info: {
+          email: coachData.contact_info?.email || "",
+          phone: coachData.contact_info?.phone || "",
+          address: coachData.address_info || coachData.contact_info?.address || {
+            street: "",
+            city: "",
+            state: "",
+            postal_code: "",
+            country: ""
+          }
+        },
+        areas_of_expertise: coachData.areas_of_expertise || [],
+        qualifications: coachData.professional_info?.qualifications || [],
+        certifications: coachData.professional_info?.certifications || [],
+        hire_date: coachData.professional_info?.hire_date || coachData.created_at,
+        is_active: coachData.is_active,
+        branch_assignments: coachData.branch_id ? [coachData.branch_id] : [],
+        bio: coachData.professional_info?.bio || "",
+        experience_years: coachData.professional_info?.experience_years || 0,
+        created_at: coachData.created_at,
+        updated_at: coachData.updated_at,
+        total_students: 0, // Will be calculated from student assignments
+        active_courses: 0, // Will be calculated from course assignments
+        student_satisfaction: 0, // Would need to be calculated from ratings
+        retention_rate: 0 // Would need to be calculated from historical data
+      }
+
+      // Fetch course assignments
+      console.log('🔍 Fetching course assignments...')
+      const coursesResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/coaches/${coachId}/courses`, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      })
+
+      let courseAssignments: CourseAssignment[] = []
+      if (coursesResponse.ok) {
+        const coursesData = await coursesResponse.json()
+        console.log('✅ Course assignments received:', coursesData)
+
+        courseAssignments = coursesData.courses?.map((course: any) => ({
+          id: course.id,
+          course_name: course.course_name || course.title || "Unknown Course",
+          difficulty_level: course.difficulty_level || "Beginner",
+          enrolled_students: course.enrolled_students || 0,
+          schedule: course.schedule || "Schedule TBD",
+          branch_name: course.branch_name || "Unknown Branch",
+          status: course.status || 'active'
+        })) || []
+      } else {
+        console.warn('⚠️ Failed to fetch course assignments:', coursesResponse.status)
+      }
+
+      // Fetch student assignments
+      console.log('🔍 Fetching student assignments...')
+      const studentsResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/coaches/${coachId}/students`, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      })
+
+      let studentAssignments: StudentAssignment[] = []
+      if (studentsResponse.ok) {
+        const studentsData = await studentsResponse.json()
+        console.log('✅ Student assignments received:', studentsData)
+
+        studentAssignments = studentsData.students?.map((student: any) => ({
+          id: student.id,
+          student_name: student.student_name || student.full_name || "Unknown Student",
+          course_name: student.course_name || "Unknown Course",
+          enrollment_date: student.enrollment_date || student.created_at,
+          progress: student.progress || 0,
+          status: student.status || 'active'
+        })) || []
+      } else {
+        console.warn('⚠️ Failed to fetch student assignments:', studentsResponse.status)
+      }
+
+      // Update coach with calculated metrics
+      coach.active_courses = courseAssignments.length
+      coach.total_students = studentAssignments.length
+
+      setCoach(coach)
+      setCourseAssignments(courseAssignments)
+      setStudentAssignments(studentAssignments)
 
     } catch (err: any) {
       console.error("Error fetching coach details:", err)
@@ -251,20 +281,102 @@ export default function BranchManagerCoachDetailPage() {
     )
   }
 
-  if (error || !coach) {
+  if (error) {
+    const getErrorIcon = () => {
+      if (error.includes("permission") || error.includes("403")) {
+        return <XCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
+      }
+      if (error.includes("not found") || error.includes("404")) {
+        return <AlertCircle className="w-16 h-16 text-yellow-500 mx-auto mb-4" />
+      }
+      return <XCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
+    }
+
+    const getErrorTitle = () => {
+      if (error.includes("permission") || error.includes("403")) {
+        return "Access Denied"
+      }
+      if (error.includes("not found") || error.includes("404")) {
+        return "Coach Not Found"
+      }
+      return "Error Loading Coach"
+    }
+
+    const getErrorDescription = () => {
+      if (error.includes("permission") || error.includes("403")) {
+        return "You don't have permission to view this coach. This coach may not be working in any branches you manage."
+      }
+      if (error.includes("not found") || error.includes("404")) {
+        return "The coach you're looking for doesn't exist or may have been removed."
+      }
+      return "There was an error loading the coach details. Please try again."
+    }
+
     return (
       <div className="min-h-screen bg-gray-50">
         <BranchManagerDashboardHeader currentPage="Coach Details" />
         <main className="w-full p-4 lg:py-4 px-19">
           <div className="max-w-7xl mx-auto">
-            <div className="text-center py-8">
-              <p className="text-red-600">{error || "Coach not found"}</p>
-              <Button 
+            <div className="flex items-center mb-6">
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={() => router.push("/branch-manager-dashboard/coaches")}
-                className="mt-4"
+                className="flex items-center space-x-2"
               >
-                Back to Coaches
+                <ArrowLeft className="w-4 h-4" />
+                <span>Back to Coaches</span>
               </Button>
+            </div>
+
+            <Card className="max-w-md mx-auto">
+              <CardContent className="text-center py-8">
+                {getErrorIcon()}
+                <h2 className="text-xl font-semibold text-gray-900 mb-2">{getErrorTitle()}</h2>
+                <p className="text-gray-600 mb-6">{getErrorDescription()}</p>
+                <div className="space-y-3">
+                  <Button
+                    onClick={() => fetchCoachDetails()}
+                    className="w-full"
+                  >
+                    Try Again
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => router.push("/branch-manager-dashboard/coaches")}
+                    className="w-full"
+                  >
+                    Back to Coaches
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </main>
+      </div>
+    )
+  }
+
+  // Don't render if coach data is not loaded yet
+  if (!coach) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <BranchManagerDashboardHeader currentPage="Coach Details" />
+        <main className="w-full p-4 lg:py-4 px-19">
+          <div className="max-w-7xl mx-auto">
+            <div className="animate-pulse space-y-6">
+              <div className="flex items-center space-x-4">
+                <div className="h-8 w-8 bg-gray-200 rounded"></div>
+                <div className="h-8 bg-gray-200 rounded w-1/4"></div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                {[...Array(4)].map((_, i) => (
+                  <div key={i} className="bg-white p-6 rounded-lg shadow">
+                    <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                    <div className="h-8 bg-gray-200 rounded w-1/2"></div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </main>
@@ -275,7 +387,7 @@ export default function BranchManagerCoachDetailPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <BranchManagerDashboardHeader currentPage="Coach Details" />
-      
+
       <main className="w-full p-4 lg:py-4 px-19">
         <div className="max-w-7xl mx-auto">
           {/* Header */}

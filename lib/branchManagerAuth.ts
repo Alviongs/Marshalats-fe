@@ -29,6 +29,20 @@ export const BranchManagerAuth = {
   storeLoginData: (loginResponse: any) => {
     const { access_token, token_type, expires_in, branch_manager } = loginResponse
 
+    // Check if we're in a browser environment
+    if (typeof window === 'undefined') {
+      // Return user data without storing if not in browser
+      return {
+        id: branch_manager.id,
+        full_name: branch_manager.full_name,
+        email: branch_manager.email,
+        phone: branch_manager.phone,
+        role: "branch_manager",
+        branch_id: branch_manager.branch_assignment?.branch_id || branch_manager.branch_id,
+        branch_name: branch_manager.branch_assignment?.branch_name || branch_manager.branch_name
+      }
+    }
+
     // Store token information
     localStorage.setItem("access_token", access_token)
     localStorage.setItem("token", access_token) // For compatibility
@@ -58,6 +72,9 @@ export const BranchManagerAuth = {
   // Get current user data
   getCurrentUser: (): BranchManagerUser | null => {
     try {
+      // Check if we're in a browser environment
+      if (typeof window === 'undefined') return null
+
       const userStr = localStorage.getItem("branch_manager") || localStorage.getItem("user")
       if (!userStr) return null
 
@@ -72,6 +89,9 @@ export const BranchManagerAuth = {
   // Set current user data
   setCurrentUser: (userData: BranchManagerUser) => {
     try {
+      // Check if we're in a browser environment
+      if (typeof window === 'undefined') return
+
       localStorage.setItem("branch_manager", JSON.stringify(userData))
       localStorage.setItem("user", JSON.stringify(userData)) // For compatibility
     } catch (error) {
@@ -81,11 +101,14 @@ export const BranchManagerAuth = {
 
   // Get current token
   getToken: (): string | null => {
+    if (typeof window === 'undefined') return null
     return localStorage.getItem("access_token") || localStorage.getItem("token")
   },
 
   // Check if token is valid
   isTokenValid: (): boolean => {
+    if (typeof window === 'undefined') return false
+
     const token = localStorage.getItem("access_token") || localStorage.getItem("token")
     const expirationStr = localStorage.getItem("token_expiration")
 
@@ -97,6 +120,8 @@ export const BranchManagerAuth = {
 
   // Get authorization headers for API requests
   getAuthHeaders: (): Record<string, string> => {
+    if (typeof window === 'undefined') return { "Content-Type": "application/json" }
+
     const token = localStorage.getItem("access_token") || localStorage.getItem("token")
     const tokenType = localStorage.getItem("token_type") || "Bearer"
 
@@ -110,6 +135,8 @@ export const BranchManagerAuth = {
 
   // Clear all authentication data
   clearAuthData: () => {
+    if (typeof window === 'undefined') return
+
     localStorage.removeItem("access_token")
     localStorage.removeItem("token")
     localStorage.removeItem("token_type")

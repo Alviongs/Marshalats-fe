@@ -122,141 +122,143 @@ export default function BranchManagerStudentDetailPage() {
       setLoading(true)
       setError(null)
 
-      // Mock student details data
-      const mockStudent: StudentDetails = {
-        id: studentId,
-        student_id: "STU001",
-        full_name: "Alice Johnson",
-        email: "alice.johnson@email.com",
-        phone: "+1234567893",
-        date_of_birth: "1995-03-20",
-        gender: "Female",
-        address: {
-          street: "789 Student Avenue",
-          city: "City Center",
-          state: "State",
-          postal_code: "12345",
-          country: "Country"
-        },
-        emergency_contact: {
-          name: "Robert Johnson",
-          phone: "+1234567894",
-          relationship: "Father"
-        },
-        is_active: true,
-        role: "student",
-        created_at: "2024-01-15T00:00:00Z",
-        updated_at: new Date().toISOString(),
-        courses: [
-          {
-            course_id: "course_001",
-            course_name: "Martial Arts Beginner",
-            level: "Beginner",
-            duration: "3 months",
-            enrollment_date: "2024-01-15",
-            progress: 75,
-            status: 'active'
-          },
-          {
-            course_id: "course_002",
-            course_name: "Yoga Intermediate",
-            level: "Intermediate",
-            duration: "6 months",
-            enrollment_date: "2024-02-01",
-            progress: 45,
-            status: 'active'
-          }
-        ],
-        total_courses: 3,
-        completed_courses: 1,
-        attendance_percentage: 85,
-        outstanding_balance: 2500
+      const token = BranchManagerAuth.getToken()
+      if (!token) {
+        throw new Error("Authentication token not found. Please login again.")
       }
 
-      const mockEnrollmentHistory: EnrollmentHistory[] = [
-        {
-          id: "enrollment_001",
-          course_name: "Martial Arts Beginner",
-          enrollment_date: "2024-01-15",
-          status: "active",
-          progress: 75,
-          grade: "A"
-        },
-        {
-          id: "enrollment_002",
-          course_name: "Yoga Intermediate",
-          enrollment_date: "2024-02-01",
-          status: "active",
-          progress: 45
-        },
-        {
-          id: "enrollment_003",
-          course_name: "Dance Basics",
-          enrollment_date: "2023-10-01",
-          completion_date: "2023-12-31",
-          status: "completed",
-          progress: 100,
-          grade: "A+"
+      // Fetch student basic details
+      console.log('🔍 Fetching student details for ID:', studentId)
+      const studentResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/users/${studentId}`, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         }
-      ]
+      })
 
-      const mockPaymentRecords: PaymentRecord[] = [
-        {
-          id: "payment_001",
-          amount: 2500,
-          payment_date: "2024-01-15",
-          payment_method: "Credit Card",
-          status: 'completed',
-          description: "Martial Arts Beginner - Course Fee"
-        },
-        {
-          id: "payment_002",
-          amount: 3000,
-          payment_date: "2024-02-01",
-          payment_method: "Bank Transfer",
-          status: 'completed',
-          description: "Yoga Intermediate - Course Fee"
-        },
-        {
-          id: "payment_003",
-          amount: 1500,
-          payment_date: "2024-03-01",
-          payment_method: "UPI",
-          status: 'pending',
-          description: "Monthly Membership Fee"
+      if (!studentResponse.ok) {
+        if (studentResponse.status === 404) {
+          throw new Error("Student not found")
         }
-      ]
-
-      const mockAttendanceRecords: AttendanceRecord[] = [
-        {
-          date: "2024-03-15",
-          course_name: "Martial Arts Beginner",
-          status: 'present',
-          duration_minutes: 60
-        },
-        {
-          date: "2024-03-14",
-          course_name: "Yoga Intermediate",
-          status: 'present',
-          duration_minutes: 90
-        },
-        {
-          date: "2024-03-13",
-          course_name: "Martial Arts Beginner",
-          status: 'late',
-          duration_minutes: 45
-        },
-        {
-          date: "2024-03-12",
-          course_name: "Yoga Intermediate",
-          status: 'absent'
+        if (studentResponse.status === 403) {
+          throw new Error("You don't have permission to view this student")
         }
-      ]
+        const errorText = await studentResponse.text()
+        throw new Error(`Failed to fetch student details: ${studentResponse.status} - ${errorText}`)
+      }
 
-      setStudent(mockStudent)
-      setEnrollmentHistory(mockEnrollmentHistory)
-      setPaymentRecords(mockPaymentRecords)
-      setAttendanceRecords(mockAttendanceRecords)
+      const studentData = await studentResponse.json()
+      console.log('✅ Student data received:', studentData)
+
+      // Transform the API response to match our interface
+      const student: StudentDetails = {
+        id: studentData.user.id,
+        student_id: studentData.user.student_id || studentData.user.id,
+        full_name: studentData.user.full_name,
+        email: studentData.user.email,
+        phone: studentData.user.phone,
+        date_of_birth: studentData.user.date_of_birth,
+        gender: studentData.user.gender,
+        address: studentData.user.address || {
+          street: "",
+          city: "",
+          state: "",
+          postal_code: "",
+          country: ""
+        },
+        emergency_contact: studentData.user.emergency_contact || {
+          name: "",
+          phone: "",
+          relationship: ""
+        },
+        is_active: studentData.user.is_active,
+        role: studentData.user.role,
+        created_at: studentData.user.created_at,
+        updated_at: studentData.user.updated_at,
+        courses: studentData.enrollments?.map((enrollment: any) => ({
+          course_id: enrollment.course_id,
+          course_name: enrollment.course_details?.title || "Unknown Course",
+          level: enrollment.course_details?.difficulty_level || "Beginner",
+          duration: "N/A", // This would need to come from course details
+          enrollment_date: enrollment.enrollment_date || enrollment.created_at,
+          progress: enrollment.progress || 0,
+          status: enrollment.status || 'active'
+        })) || [],
+        total_courses: studentData.enrollments?.length || 0,
+        completed_courses: studentData.enrollments?.filter((e: any) => e.status === 'completed').length || 0,
+        attendance_percentage: 0, // This would need to be calculated from attendance data
+        outstanding_balance: 0 // This would need to be calculated from payment data
+      }
+
+      // Fetch enrollment history
+      console.log('🔍 Fetching enrollment history...')
+      const enrollmentResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/users/${studentId}/enrollments`, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      })
+
+      let enrollmentHistory: EnrollmentHistory[] = []
+      if (enrollmentResponse.ok) {
+        const enrollmentData = await enrollmentResponse.json()
+        console.log('✅ Enrollment data received:', enrollmentData)
+
+        enrollmentHistory = enrollmentData.enrollments?.map((enrollment: any) => ({
+          id: enrollment.id,
+          course_name: enrollment.course_name || "Unknown Course",
+          enrollment_date: enrollment.enrollment_date || enrollment.created_at,
+          completion_date: enrollment.completion_date,
+          status: enrollment.status || 'active',
+          progress: enrollment.progress || 0,
+          grade: enrollment.grade || undefined
+        })) || []
+      } else {
+        console.warn('⚠️ Failed to fetch enrollment history:', enrollmentResponse.status)
+      }
+
+      // Fetch payment history
+      console.log('🔍 Fetching payment history...')
+      const paymentResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/users/${studentId}/payments`, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      })
+
+      let paymentRecords: PaymentRecord[] = []
+      let outstandingBalance = 0
+      if (paymentResponse.ok) {
+        const paymentData = await paymentResponse.json()
+        console.log('✅ Payment data received:', paymentData)
+
+        paymentRecords = paymentData.payments?.map((payment: any) => ({
+          id: payment.id,
+          amount: payment.amount || 0,
+          payment_date: payment.payment_date || payment.created_at,
+          payment_method: payment.payment_method || "Unknown",
+          status: payment.status || 'pending',
+          description: payment.description || `Payment for ${payment.course_name || 'Course'}`
+        })) || []
+
+        // Calculate outstanding balance from pending payments
+        outstandingBalance = paymentRecords
+          .filter(payment => payment.status === 'pending')
+          .reduce((sum, payment) => sum + payment.amount, 0)
+      } else {
+        console.warn('⚠️ Failed to fetch payment history:', paymentResponse.status)
+      }
+
+      // Update student with calculated values
+      student.outstanding_balance = outstandingBalance
+
+      // For now, use empty attendance records as we don't have that endpoint yet
+      const attendanceRecords: AttendanceRecord[] = []
+
+      setStudent(student)
+      setEnrollmentHistory(enrollmentHistory)
+      setPaymentRecords(paymentRecords)
+      setAttendanceRecords(attendanceRecords)
 
     } catch (err: any) {
       console.error("Error fetching student details:", err)
@@ -333,19 +335,101 @@ export default function BranchManagerStudentDetailPage() {
   }
 
   if (error || !student) {
+    const getErrorIcon = () => {
+      if (error.includes("permission") || error.includes("403")) {
+        return <XCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
+      }
+      if (error.includes("not found") || error.includes("404")) {
+        return <AlertCircle className="w-16 h-16 text-yellow-500 mx-auto mb-4" />
+      }
+      return <XCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
+    }
+
+    const getErrorTitle = () => {
+      if (error.includes("permission") || error.includes("403")) {
+        return "Access Denied"
+      }
+      if (error.includes("not found") || error.includes("404")) {
+        return "Student Not Found"
+      }
+      return "Error Loading Student"
+    }
+
+    const getErrorDescription = () => {
+      if (error.includes("permission") || error.includes("403")) {
+        return "You don't have permission to view this student. This student may not be enrolled in any branches you manage."
+      }
+      if (error.includes("not found") || error.includes("404")) {
+        return "The student you're looking for doesn't exist or may have been removed."
+      }
+      return "There was an error loading the student details. Please try again."
+    }
+
     return (
       <div className="min-h-screen bg-gray-50">
         <BranchManagerDashboardHeader currentPage="Student Details" />
         <main className="w-full p-4 lg:py-4 px-19">
           <div className="max-w-7xl mx-auto">
-            <div className="text-center py-8">
-              <p className="text-red-600">{error || "Student not found"}</p>
-              <Button 
+            <div className="flex items-center mb-6">
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={() => router.push("/branch-manager-dashboard/students")}
-                className="mt-4"
+                className="flex items-center space-x-2"
               >
-                Back to Students
+                <ArrowLeft className="w-4 h-4" />
+                <span>Back to Students</span>
               </Button>
+            </div>
+
+            <Card className="max-w-md mx-auto">
+              <CardContent className="text-center py-8">
+                {getErrorIcon()}
+                <h2 className="text-xl font-semibold text-gray-900 mb-2">{getErrorTitle()}</h2>
+                <p className="text-gray-600 mb-6">{getErrorDescription()}</p>
+                <div className="space-y-3">
+                  <Button
+                    onClick={() => fetchStudentDetails()}
+                    className="w-full"
+                  >
+                    Try Again
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => router.push("/branch-manager-dashboard/students")}
+                    className="w-full"
+                  >
+                    Back to Students
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </main>
+      </div>
+    )
+  }
+
+  // Don't render if student data is not loaded yet
+  if (!student) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <BranchManagerDashboardHeader currentPage="Student Details" />
+        <main className="w-full p-4 lg:py-4 px-19">
+          <div className="max-w-7xl mx-auto">
+            <div className="animate-pulse space-y-6">
+              <div className="flex items-center space-x-4">
+                <div className="h-8 w-8 bg-gray-200 rounded"></div>
+                <div className="h-8 bg-gray-200 rounded w-1/4"></div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                {[...Array(4)].map((_, i) => (
+                  <div key={i} className="bg-white p-6 rounded-lg shadow">
+                    <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                    <div className="h-8 bg-gray-200 rounded w-1/2"></div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </main>
@@ -356,7 +440,7 @@ export default function BranchManagerStudentDetailPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <BranchManagerDashboardHeader currentPage="Student Details" />
-      
+
       <main className="w-full p-4 lg:py-4 px-19">
         <div className="max-w-7xl mx-auto">
           {/* Header */}
