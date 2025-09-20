@@ -59,75 +59,46 @@ export default function BranchManagerProfilePage() {
 
         const token = BranchManagerAuth.getToken()
         if (!token) {
-          throw new Error("Authentication token not found")
+          router.push("/branch-manager/login")
+          return
         }
 
-        // Try to fetch profile from API first
-        let profileData: BranchManagerProfile | null = null
+        const response = await fetch('/api/branch-managers/me', {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        })
 
-        try {
-          const response = await fetch('/api/branch-managers/me', {
-            method: 'GET',
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            }
-          })
-
-          if (response.ok) {
-            const data = await response.json()
-            const branchManagerData = data.branch_manager
-
-            // Transform backend data to frontend format
-            profileData = {
+        if (response.ok) {
+          const result = await response.json()
+          if (result.branch_manager) {
+            const branchManagerData = result.branch_manager
+            const profileData: BranchManagerProfile = {
               id: branchManagerData.id,
-              full_name: branchManagerData.full_name ||
-                        (branchManagerData.personal_info ?
-                         `${branchManagerData.personal_info.first_name} ${branchManagerData.personal_info.last_name}` :
-                         "Branch Manager"),
-              email: branchManagerData.email || branchManagerData.contact_info?.email || "",
-              phone: branchManagerData.phone || branchManagerData.contact_info?.phone || "",
-              branch_name: branchManagerData.branch_name || branchManagerData.branch_assignment?.branch_name || "",
-              branch_id: branchManagerData.branch_id || branchManagerData.branch_assignment?.branch_id || "",
+              full_name: branchManagerData.full_name || "Branch Manager",
+              email: branchManagerData.email || "",
+              phone: branchManagerData.phone || "",
+              branch_name: branchManagerData.branch_assignment?.branch_name || "",
+              branch_id: branchManagerData.branch_assignment?.branch_id || "",
               is_active: branchManagerData.is_active !== undefined ? branchManagerData.is_active : true,
               created_at: branchManagerData.created_at || new Date().toISOString(),
               updated_at: branchManagerData.updated_at || new Date().toISOString()
             }
-          } else if (response.status === 401) {
-            BranchManagerAuth.logout()
-            router.push("/branch-manager/login")
-            return
+
+            setProfile(profileData)
+            setFormData({
+              full_name: profileData.full_name,
+              email: profileData.email,
+              phone: profileData.phone || "",
+            })
           }
-        } catch (apiError) {
-          console.warn('API fetch failed, falling back to auth data:', apiError)
+        } else if (response.status === 401) {
+          router.push("/branch-manager/login")
+        } else {
+          throw new Error("Failed to load profile")
         }
-
-        // Fallback to auth data if API fails
-        if (!profileData) {
-          const currentUser = BranchManagerAuth.getCurrentUser()
-          if (!currentUser) {
-            throw new Error("No profile data available")
-          }
-
-          profileData = {
-            id: currentUser.id,
-            full_name: currentUser.full_name || "Branch Manager",
-            email: currentUser.email || "",
-            phone: currentUser.phone || "",
-            branch_name: currentUser.branch_name || "",
-            branch_id: currentUser.branch_id || "",
-            is_active: true,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          }
-        }
-
-        setProfile(profileData)
-        setFormData({
-          full_name: profileData.full_name,
-          email: profileData.email,
-          phone: profileData.phone || "",
-        })
 
       } catch (error) {
         console.error('Error loading profile:', error)
@@ -174,115 +145,73 @@ export default function BranchManagerProfilePage() {
   }
 
   const handleSave = async () => {
-    if (!validateForm()) {
-      return
-    }
+    if (!validateForm()) return
+
+    setIsSubmitting(true)
 
     try {
-      setIsSubmitting(true)
-
       const token = BranchManagerAuth.getToken()
       if (!token) {
-        throw new Error("Authentication token not found")
+        router.push("/branch-manager/login")
+        return
       }
 
-      // Prepare update data in the format expected by the backend
-      const updateData = {
-        personal_info: {
-          first_name: formData.full_name.split(' ')[0] || formData.full_name,
-          last_name: formData.full_name.split(' ').slice(1).join(' ') || ""
+      const response = await fetch('/api/branch-managers/me', {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
         },
-        contact_info: {
-          email: formData.email,
-          phone: formData.phone.replace(/\D/g, ''), // Remove non-digits
-          country_code: "+91" // Default country code
-        }
-      }
-
-      // Try to make API call to update profile
-      let updateSuccessful = false
-
-      try {
-        const response = await fetch('/api/branch-managers/me', {
-          method: 'PUT',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(updateData)
-        })
-
-        if (response.ok) {
-          const result = await response.json()
-
-          // Update profile state with the response data
-          if (result.branch_manager) {
-            const updatedBranchManager = result.branch_manager
-            const updatedProfile: BranchManagerProfile = {
-              id: updatedBranchManager.id,
-              full_name: updatedBranchManager.full_name ||
-                        (updatedBranchManager.personal_info ?
-                         `${updatedBranchManager.personal_info.first_name} ${updatedBranchManager.personal_info.last_name}` :
-                         formData.full_name),
-              email: updatedBranchManager.email || updatedBranchManager.contact_info?.email || formData.email,
-              phone: updatedBranchManager.phone || updatedBranchManager.contact_info?.phone || formData.phone,
-              branch_name: updatedBranchManager.branch_name || profile?.branch_name || "",
-              branch_id: updatedBranchManager.branch_id || profile?.branch_id || "",
-              is_active: updatedBranchManager.is_active !== undefined ? updatedBranchManager.is_active : true,
-              created_at: updatedBranchManager.created_at || profile?.created_at || new Date().toISOString(),
-              updated_at: updatedBranchManager.updated_at || new Date().toISOString()
-            }
-            setProfile(updatedProfile)
-            updateSuccessful = true
-          }
-        } else if (response.status === 401) {
-          BranchManagerAuth.logout()
-          router.push("/branch-manager/login")
-          return
-        } else {
-          const errorData = await response.json().catch(() => ({}))
-          console.warn('API update failed:', errorData)
-        }
-      } catch (apiError) {
-        console.warn('API update failed:', apiError)
-      }
-
-      // Fallback: update local state if API failed
-      if (!updateSuccessful && profile) {
-        const updatedProfile = {
-          ...profile,
+        body: JSON.stringify({
           full_name: formData.full_name,
           email: formData.email,
-          phone: formData.phone,
-          updated_at: new Date().toISOString()
-        }
-        setProfile(updatedProfile)
-
-        // Also update the auth data
-        const currentUser = BranchManagerAuth.getCurrentUser()
-        if (currentUser) {
-          const updatedUser = {
-            ...currentUser,
-            full_name: formData.full_name,
-            email: formData.email,
-            phone: formData.phone
-          }
-          BranchManagerAuth.setCurrentUser(updatedUser)
-        }
-      }
-
-      setIsEditing(false)
-      toast({
-        title: "Success",
-        description: "Profile updated successfully",
+          phone: formData.phone
+        })
       })
 
+      if (response.ok) {
+        const result = await response.json()
+        // Handle both possible response structures from backend
+        const updatedData = result.data || result.branch_manager
+        if (updatedData) {
+          const profileData: BranchManagerProfile = {
+            id: updatedData.id,
+            full_name: updatedData.full_name || "Branch Manager",
+            email: updatedData.email || "",
+            phone: updatedData.phone || "",
+            branch_name: updatedData.branch_assignment?.branch_name || profile?.branch_name || "",
+            branch_id: updatedData.branch_assignment?.branch_id || profile?.branch_id || "",
+            is_active: updatedData.is_active !== undefined ? updatedData.is_active : true,
+            created_at: updatedData.created_at || new Date().toISOString(),
+            updated_at: updatedData.updated_at || new Date().toISOString()
+          }
+
+          setProfile(profileData)
+          setIsEditing(false)
+
+          toast({
+            title: "Success",
+            description: result.message || "Profile updated successfully",
+            variant: "default"
+          })
+        }
+      } else if (response.status === 401) {
+        router.push("/branch-manager/login")
+      } else {
+        const errorData = await response.json()
+        toast({
+          title: "Error",
+          description: errorData.detail || "Failed to update profile",
+          variant: "destructive"
+        })
+      }
+
     } catch (error) {
-      console.error('Error updating profile:', error)
+      console.error("Error updating profile:", error)
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to update profile. Please try again.",
-        variant: "destructive",
+        description: "Network error. Please try again.",
+        variant: "destructive"
       })
     } finally {
       setIsSubmitting(false)

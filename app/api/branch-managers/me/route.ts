@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // Forward the request to the backend
+    // Forward request to backend
     const response = await fetch(`${BACKEND_URL}/api/branch-managers/me`, {
       method: 'GET',
       headers: {
@@ -22,15 +22,15 @@ export async function GET(request: NextRequest) {
       }
     })
 
-    const data = await response.json()
-
     if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
       return NextResponse.json(
-        { error: data.detail || 'Failed to fetch profile' },
+        errorData,
         { status: response.status }
       )
     }
 
+    const data = await response.json()
     return NextResponse.json(data)
 
   } catch (error) {
@@ -56,7 +56,7 @@ export async function PUT(request: NextRequest) {
     // Get the request body
     const updateData = await request.json()
 
-    // Forward the request to the backend
+    // Forward request to the now-working backend API
     const response = await fetch(`${BACKEND_URL}/api/branch-managers/me`, {
       method: 'PUT',
       headers: {
@@ -66,27 +66,27 @@ export async function PUT(request: NextRequest) {
       body: JSON.stringify(updateData)
     })
 
-    const data = await response.json()
-
     if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
       return NextResponse.json(
-        { error: data.detail || 'Failed to update profile' },
+        errorData,
         { status: response.status }
       )
     }
 
-    return NextResponse.json(data)
+    const result = await response.json()
+    return NextResponse.json(result)
 
   } catch (error) {
     console.error('Error updating branch manager profile:', error)
-    
+
     if (error instanceof SyntaxError) {
       return NextResponse.json(
         { error: 'Invalid JSON payload' },
         { status: 400 }
       )
     }
-    
+
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

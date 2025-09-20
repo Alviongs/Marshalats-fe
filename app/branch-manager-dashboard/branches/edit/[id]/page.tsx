@@ -131,76 +131,98 @@ export default function EditBranch() {
 
         // Fetch branch data and other required data in parallel
         const [branchResponse, coursesResponse, managersResponse, adminsResponse, statesResponse] = await Promise.allSettled([
-          fetch(`/api/branches/${branchId}`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+          fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/branches/${branchId}`, {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
           }),
-          fetch('/api/courses', {
-            headers: { 'Authorization': `Bearer ${token}` }
+          fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/courses?active_only=true&limit=100`, {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
           }),
-          fetch('/api/managers', {
-            headers: { 'Authorization': `Bearer ${token}` }
+          fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/branch-managers?active_only=true&limit=100`, {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
           }),
-          fetch('/api/admins', {
-            headers: { 'Authorization': `Bearer ${token}` }
+          fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/coaches?active_only=true&limit=100`, {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
           }),
-          fetch('/api/states', {
-            headers: { 'Authorization': `Bearer ${token}` }
+          fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/locations`, {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
           })
         ])
 
         // Handle branch data
         if (branchResponse.status === 'fulfilled' && branchResponse.value.ok) {
           const branchData = await branchResponse.value.json()
+          console.log('Branch data received:', branchData)
           setFormData(branchData)
         } else {
-          // Fallback data for development
-          console.warn('Failed to fetch branch data, using fallback')
+          console.error('Failed to fetch branch data:', branchResponse)
+          toast({
+            title: "Error",
+            description: "Failed to load branch data. Please try again.",
+            variant: "destructive",
+          })
         }
 
         // Handle courses data
         if (coursesResponse.status === 'fulfilled' && coursesResponse.value.ok) {
           const coursesData = await coursesResponse.value.json()
-          setAvailableCourses(coursesData.courses || coursesData || [])
+          setAvailableCourses(coursesData.courses || [])
         } else {
-          setAvailableCourses([
-            { id: '1', name: 'Karate Basics' },
-            { id: '2', name: 'Advanced Karate' },
-            { id: '3', name: 'Self Defense' }
-          ])
+          console.warn('Failed to fetch courses data')
+          setAvailableCourses([])
         }
 
         // Handle managers data
         if (managersResponse.status === 'fulfilled' && managersResponse.value.ok) {
           const managersData = await managersResponse.value.json()
-          setAvailableManagers(managersData.managers || managersData || [])
+          const managers = managersData.branch_managers || []
+          setAvailableManagers(managers.map((manager: any) => ({
+            id: manager.id,
+            name: manager.full_name || `${manager.personal_info?.first_name || ''} ${manager.personal_info?.last_name || ''}`.trim()
+          })))
         } else {
-          setAvailableManagers([
-            { id: '1', name: 'John Manager' },
-            { id: '2', name: 'Jane Manager' }
-          ])
+          console.warn('Failed to fetch managers data')
+          setAvailableManagers([])
         }
 
-        // Handle admins data
+        // Handle admins data (coaches)
         if (adminsResponse.status === 'fulfilled' && adminsResponse.value.ok) {
           const adminsData = await adminsResponse.value.json()
-          setAvailableAdmins(adminsData.admins || adminsData || [])
+          const coaches = adminsData.coaches || []
+          setAvailableAdmins(coaches.map((coach: any) => ({
+            id: coach.id,
+            name: coach.full_name || `${coach.personal_info?.first_name || ''} ${coach.personal_info?.last_name || ''}`.trim()
+          })))
         } else {
-          setAvailableAdmins([
-            { id: '1', name: 'Admin User 1' },
-            { id: '2', name: 'Admin User 2' }
-          ])
+          console.warn('Failed to fetch coaches data')
+          setAvailableAdmins([])
         }
 
-        // Handle states data
+        // Handle states data (locations)
         if (statesResponse.status === 'fulfilled' && statesResponse.value.ok) {
           const statesData = await statesResponse.value.json()
-          setAvailableStates(statesData.states || statesData || [])
+          const locations = statesData.locations || []
+          setAvailableStates(locations.map((location: any) => ({
+            id: location.id,
+            name: location.state
+          })))
         } else {
-          setAvailableStates([
-            { id: '1', name: 'Maharashtra' },
-            { id: '2', name: 'Karnataka' },
-            { id: '3', name: 'Tamil Nadu' }
-          ])
+          console.warn('Failed to fetch locations data')
+          setAvailableStates([])
         }
 
       } catch (error) {
@@ -324,7 +346,7 @@ export default function EditBranch() {
 
           try {
             const token = BranchManagerAuth.getToken()
-            const response = await fetch(`/api/branches/${branchId}`, {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/branches/${branchId}`, {
               method: 'PUT',
               headers: {
                 'Authorization': `Bearer ${token}`,
@@ -334,8 +356,12 @@ export default function EditBranch() {
             })
 
             if (!response.ok) {
-              throw new Error('Failed to update branch')
+              const errorData = await response.json().catch(() => ({}))
+              throw new Error(errorData.detail || 'Failed to update branch')
             }
+
+            const result = await response.json()
+            console.log('Branch updated successfully:', result)
 
             setShowSuccessPopup(true)
             setTimeout(() => {
@@ -347,7 +373,7 @@ export default function EditBranch() {
             console.error('Error updating branch:', error)
             toast({
               title: "Error",
-              description: "Failed to update branch. Please try again.",
+              description: error instanceof Error ? error.message : "Failed to update branch. Please try again.",
               variant: "destructive",
             })
           } finally {

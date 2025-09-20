@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 // Mock data for testing - in production this would come from your database
 const mockBranches = [
   {
-    id: "branch-uuid-1",
+    id: "c9ed7bb7-c31e-4b0f-9edf-760b41de9628", // Match the ID from the URL
     branch: {
       name: "Downtown Martial Arts",
       code: "DMA01",
