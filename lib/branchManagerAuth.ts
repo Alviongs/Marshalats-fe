@@ -69,6 +69,16 @@ export const BranchManagerAuth = {
     }
   },
 
+  // Set current user data
+  setCurrentUser: (userData: BranchManagerUser) => {
+    try {
+      localStorage.setItem("branch_manager", JSON.stringify(userData))
+      localStorage.setItem("user", JSON.stringify(userData)) // For compatibility
+    } catch (error) {
+      console.error("Error storing branch manager data:", error)
+    }
+  },
+
   // Get current token
   getToken: (): string | null => {
     return localStorage.getItem("access_token") || localStorage.getItem("token")
