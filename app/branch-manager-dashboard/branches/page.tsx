@@ -88,7 +88,7 @@ export default function BranchManagerBranchInfo() {
     }
   }, [router])
 
-  // Load branch data (for branch manager, this would be their specific branch)
+  // Load branch data from real API
   useEffect(() => {
     const fetchBranchData = async () => {
       try {
@@ -96,66 +96,60 @@ export default function BranchManagerBranchInfo() {
         setError(null)
 
         const currentUser = BranchManagerAuth.getCurrentUser()
-        if (!currentUser) {
-          throw new Error("User data not found")
+        const token = BranchManagerAuth.getToken()
+
+        if (!currentUser || !token) {
+          throw new Error("Authentication required. Please login again.")
         }
 
-        // Mock branch data for the branch manager's specific branch
-        const mockBranch: Branch = {
-          id: currentUser.branch_id || "branch_001",
-          branch: {
-            name: currentUser.branch_name || "Main Branch",
-            code: "MB001",
-            email: "mainbranch@marshalats.com",
-            phone: "+1234567890",
-            address: {
-              line1: "123 Main Street",
-              area: "Downtown",
-              city: "City Center",
-              state: "State",
-              pincode: "12345",
-              country: "Country"
-            }
-          },
-          manager_id: currentUser.id,
-          is_active: true,
-          operational_details: {
-            courses_offered: ["Martial Arts", "Yoga", "Dance", "Fitness"],
-            timings: [
-              { day: "Monday", open: "06:00", close: "22:00" },
-              { day: "Tuesday", open: "06:00", close: "22:00" },
-              { day: "Wednesday", open: "06:00", close: "22:00" },
-              { day: "Thursday", open: "06:00", close: "22:00" },
-              { day: "Friday", open: "06:00", close: "22:00" },
-              { day: "Saturday", open: "07:00", close: "20:00" },
-              { day: "Sunday", open: "08:00", close: "18:00" }
-            ],
-            holidays: ["2024-01-01", "2024-12-25"]
-          },
-          assignments: {
-            accessories_available: true,
-            courses: ["course_001", "course_002", "course_003"],
-            branch_admins: [currentUser.id]
-          },
-          bank_details: {
-            bank_name: "Main Bank",
-            account_number: "1234567890",
-            upi_id: "branch@upi"
-          },
-          statistics: {
-            coach_count: 8,
-            student_count: 150,
-            course_count: 12,
-            active_courses: 10
-          },
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
+        console.log('Loading branches for branch manager:', currentUser.full_name)
+
+        // Call real backend API to get branches
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/branches?limit=100`, {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          }
+        })
+
+        if (!response.ok) {
+          const errorText = await response.text()
+          console.error('Branches API error:', response.status, errorText)
+
+          if (response.status === 401) {
+            throw new Error("Authentication failed. Please login again.")
+          } else if (response.status === 403) {
+            throw new Error("You don't have permission to access branch information.")
+          } else {
+            throw new Error(`Failed to load branches: ${response.status} - ${errorText}`)
+          }
         }
 
-        setBranches([mockBranch])
-      } catch (err) {
+        const data = await response.json()
+        console.log('✅ Branches API response:', data)
+
+        const branchesData = data.branches || []
+
+        // Debug: Show branch IDs for cross-reference with coaches page
+        console.log('🏢 BRANCHES PAGE - Branch IDs that should be used for coach filtering:')
+        const branchIds = branchesData.map((branch: any) => branch.id)
+        console.log('🏢 Branch IDs:', branchIds)
+        branchesData.forEach((branch: any, index: number) => {
+          console.log(`   Branch ${index + 1}: ${branch.branch?.name || 'Unknown'} (ID: ${branch.id}) - Manager ID: ${branch.manager_id}`)
+        })
+
+        if (branchesData.length === 0) {
+          console.log('No branches found for branch manager')
+          setError("No branches assigned to you. Please contact your administrator to assign branches to your account.")
+        } else {
+          console.log(`✅ Loaded ${branchesData.length} branch(es) for ${currentUser.full_name}`)
+          console.log('🔗 These branch IDs should match the coaches filtering on the coaches page')
+        }
+
+        setBranches(branchesData)
+      } catch (err: any) {
         console.error('Error loading branch data:', err)
-        setError('Failed to load branch information')
+        setError(err.message || 'Failed to load branch information')
       } finally {
         setLoading(false)
       }
@@ -207,12 +201,23 @@ export default function BranchManagerBranchInfo() {
             <p className="text-sm text-gray-500 mt-1">Manage your branch details and settings</p>
           </div>
           <div className="flex flex-wrap gap-2 lg:gap-3">
+            {branches.length > 0 && (
+              <Button
+                onClick={() => handleEditBranch(branches[0]?.id)}
+                className="bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                Edit Branch
+              </Button>
+            )}
             <Button
-              onClick={() => handleEditBranch(branches[0]?.id)}
-              className="bg-blue-600 hover:bg-blue-700 text-white"
-              disabled={branches.length === 0}
+              variant="outline"
+              onClick={() => window.location.reload()}
+              className="flex items-center space-x-2"
             >
-              Edit Branch
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              <span>Refresh</span>
             </Button>
           </div>
         </div>
@@ -257,12 +262,75 @@ export default function BranchManagerBranchInfo() {
                 ))}
               </div>
             ) : error ? (
-              <div className="text-center py-8">
-                <p className="text-red-600">{error}</p>
+              <div className="text-center py-12">
+                <div className="max-w-md mx-auto">
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+                    <div className="flex items-center justify-center w-12 h-12 mx-auto mb-4 bg-red-100 rounded-full">
+                      <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 19.5c-.77.833.192 2.5 1.732 2.5z" />
+                      </svg>
+                    </div>
+                    <h3 className="text-lg font-medium text-red-800 mb-2">Unable to Load Branches</h3>
+                    <p className="text-red-700 mb-4">{error}</p>
+                    <Button
+                      onClick={() => window.location.reload()}
+                      variant="outline"
+                      className="border-red-300 text-red-700 hover:bg-red-50"
+                    >
+                      Try Again
+                    </Button>
+                  </div>
+                </div>
               </div>
             ) : currentBranches.length === 0 ? (
-              <div className="text-center py-8">
-                <p className="text-gray-500">No branch information found</p>
+              <div className="text-center py-12">
+                <div className="max-w-md mx-auto">
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+                    <div className="flex items-center justify-center w-12 h-12 mx-auto mb-4 bg-yellow-100 rounded-full">
+                      <svg className="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-4m-5 0H9m0 0H5m0 0h2M7 7h10M7 11h10M7 15h10" />
+                      </svg>
+                    </div>
+                    <h3 className="text-lg font-medium text-yellow-800 mb-2">No Branches Assigned</h3>
+                    <p className="text-yellow-700 mb-4">
+                      {searchTerm
+                        ? `No branches match your search "${searchTerm}"`
+                        : "You don't have any branches assigned to manage yet."
+                      }
+                    </p>
+                    {!searchTerm && (
+                      <div className="text-sm text-yellow-600 mb-4 text-left">
+                        <p className="mb-2">This could mean:</p>
+                        <ul className="list-disc list-inside space-y-1">
+                          <li>Your branch manager account hasn't been assigned to any branches</li>
+                          <li>The branch assignments are still being processed</li>
+                          <li>There may be a temporary system issue</li>
+                        </ul>
+                        <p className="mt-2">
+                          Please contact your system administrator for assistance.
+                        </p>
+                      </div>
+                    )}
+                    <div className="flex justify-center space-x-3">
+                      {searchTerm && (
+                        <Button
+                          variant="outline"
+                          onClick={() => setSearchTerm("")}
+                          className="border-yellow-300 text-yellow-700 hover:bg-yellow-50"
+                        >
+                          Clear Search
+                        </Button>
+                      )}
+                      <Button
+                        onClick={() => window.location.reload()}
+                        variant="outline"
+                        className="border-yellow-300 text-yellow-700 hover:bg-yellow-50"
+                      >
+                        Refresh
+                      </Button>
+                    </div>
+                  </div>
+                </div>
               </div>
             ) : (
               <div className="space-y-6">

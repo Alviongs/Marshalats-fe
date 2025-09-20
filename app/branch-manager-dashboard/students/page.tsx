@@ -90,59 +90,77 @@ export default function BranchManagerStudentList() {
         setLoading(true)
         setError(null)
 
+        const currentUser = BranchManagerAuth.getCurrentUser()
         const token = BranchManagerAuth.getToken()
-        if (!token) {
-          setError("Authentication token not found. Please login again.")
-          return
+
+        if (!currentUser || !token) {
+          throw new Error("Authentication required. Please login again.")
         }
 
-        // First, get the current branch manager's profile to get their managed branches
-        const profileResponse = await fetch(`http://localhost:8003/api/branch-managers/me`, {
-          method: 'GET',
+        console.log('Loading students for branch manager:', currentUser.full_name)
+        console.log('Branch manager branch assignment:', currentUser.branch_assignment)
+
+        // First, let's get the branches this manager manages to understand the filtering
+        console.log('🔍 DEBUGGING: Fetching branches first to understand filtering...')
+        const branchesResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/branches?limit=100`, {
           headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
           }
         })
 
-        if (!profileResponse.ok) {
-          throw new Error(`Failed to fetch branch manager profile: ${profileResponse.status}`)
+        if (branchesResponse.ok) {
+          const branchesData = await branchesResponse.json()
+          const managedBranches = branchesData.branches || []
+          const branchIds = managedBranches.map((branch: any) => branch.id)
+          console.log('🏢 Branches managed by this branch manager:', managedBranches.length)
+          console.log('🏢 Branch IDs:', branchIds)
+          managedBranches.forEach((branch: any, index: number) => {
+            console.log(`   Branch ${index + 1}: ${branch.branch?.name || 'Unknown'} (ID: ${branch.id})`)
+          })
         }
 
-        const profileData = await profileResponse.json()
-        const branchManager = profileData.branch_manager
-
-        // Get the branch ID from the branch manager's assignment
-        const branchId = branchManager?.branch_assignment?.branch_id
-
-        if (!branchId) {
-          setError("No branch assigned to this manager")
-          return
-        }
-
-        // Fetch student details with course enrollment data
-        const studentsResponse = await fetch(`http://localhost:8003/api/users/students/details`, {
-          method: 'GET',
+        // Call real backend API to get students
+        console.log('👨‍🎓 Now fetching students...')
+        const studentsResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/users/students/details`, {
           headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
           }
         })
+
+        console.log('Students API response status:', studentsResponse.status)
 
         if (!studentsResponse.ok) {
-          throw new Error(`Failed to fetch students: ${studentsResponse.status}`)
+          const errorText = await studentsResponse.text()
+          console.error('Students API error:', studentsResponse.status, errorText)
+
+          if (studentsResponse.status === 401) {
+            throw new Error("Authentication failed. Please login again.")
+          } else if (studentsResponse.status === 403) {
+            throw new Error("You don't have permission to access student information.")
+          } else {
+            throw new Error(`Failed to load students: ${studentsResponse.status} - ${errorText}`)
+          }
         }
 
         const studentsData = await studentsResponse.json()
+        console.log('👨‍🎓 Students API response:', studentsData)
+        console.log('👨‍🎓 Students API response type:', typeof studentsData)
+        console.log('👨‍🎓 Students API response keys:', Object.keys(studentsData || {}))
+
         const allStudents = studentsData.students || []
 
-        // Filter students by the branch manager's branch (based on their course enrollments)
-        const branchStudents = allStudents.filter((student: any) => {
-          // Check if student has any enrollments in courses from this branch
-          return student.enrollments?.some((enrollment: any) =>
-            enrollment.branch_id === branchId
-          ) || student.branch_id === branchId
+        // Debug: Show enrollment data for each student
+        console.log('👨‍🎓 Processing students:', allStudents.length)
+        allStudents.forEach((student: any, index: number) => {
+          const enrollments = student.enrollments || []
+          const branchIds = enrollments.map((e: any) => e.branch_id).filter(Boolean)
+          console.log(`   Student ${index + 1}: ${student.full_name || 'Unknown'} - Enrolled in branches: ${branchIds.join(', ') || 'None'}`)
         })
+
+        // The backend should already filter students by managed branches, so we use all returned students
+        const branchStudents = allStudents
 
         // Transform the API data to match our Student interface
         const transformedStudents: Student[] = branchStudents.map((student: any) => ({
@@ -152,7 +170,7 @@ export default function BranchManagerStudentList() {
           email: student.email || "",
           phone: student.phone || "",
           role: student.role || "student",
-          branch_id: branchId,
+          branch_id: student.branch_id || "",
           date_of_birth: student.date_of_birth,
           is_active: student.is_active ?? true,
           created_at: student.created_at || new Date().toISOString(),
@@ -163,7 +181,7 @@ export default function BranchManagerStudentList() {
             course_name: enrollment.course_name || enrollment.course?.name || "Unknown Course",
             level: enrollment.course?.difficulty_level || "Beginner",
             duration: enrollment.course?.duration || "3 months",
-            branch_name: branchManager?.branch_assignment?.branch_name || "Branch"
+            branch_name: enrollment.branch_name || "Branch"
           })) || [],
           address: student.address || {
             line1: "",
@@ -175,10 +193,20 @@ export default function BranchManagerStudentList() {
           }
         }))
 
+        console.log('Transformed students:', transformedStudents)
+        console.log('Final students count:', transformedStudents.length)
+
+        if (transformedStudents.length === 0) {
+          console.log('No students found for branch manager')
+          setError("No students enrolled in your branches. Please contact your administrator if you expect to see students here.")
+        } else {
+          console.log(`✅ Loaded ${transformedStudents.length} student(s) for ${currentUser.full_name}`)
+        }
+
         setStudents(transformedStudents)
       } catch (err: any) {
         console.error('Error loading students data:', err)
-        setError(err.message || 'Failed to load students data')
+        setError(err.message || 'Failed to load student information')
       } finally {
         setLoading(false)
       }
@@ -212,49 +240,28 @@ export default function BranchManagerStudentList() {
         return
       }
 
-      // Get branch manager profile
-      const profileResponse = await fetch(`http://localhost:8003/api/branch-managers/me`, {
-        method: 'GET',
+      // Fetch fresh students data - backend handles filtering by managed branches
+      console.log('🔄 Refreshing students data...')
+      const studentsResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/users/students/details`, {
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      })
-
-      if (!profileResponse.ok) {
-        throw new Error(`Failed to fetch branch manager profile: ${profileResponse.status}`)
-      }
-
-      const profileData = await profileResponse.json()
-      const branchManager = profileData.branch_manager
-      const branchId = branchManager?.branch_assignment?.branch_id
-
-      if (!branchId) {
-        setError("No branch assigned to this manager")
-        return
-      }
-
-      // Fetch fresh students data
-      const studentsResponse = await fetch(`http://localhost:8003/api/users/students/details`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         }
       })
 
       if (!studentsResponse.ok) {
-        throw new Error(`Failed to fetch students: ${studentsResponse.status}`)
+        const errorText = await studentsResponse.text()
+        console.error('Students refresh API error:', studentsResponse.status, errorText)
+        throw new Error(`Failed to refresh students: ${studentsResponse.status} - ${errorText}`)
       }
 
       const studentsData = await studentsResponse.json()
+      console.log('🔄 Refreshed students data:', studentsData)
+
       const allStudents = studentsData.students || []
 
-      const branchStudents = allStudents.filter((student: any) => {
-        return student.enrollments?.some((enrollment: any) =>
-          enrollment.branch_id === branchId
-        ) || student.branch_id === branchId
-      })
+      // The backend already filters students by managed branches, so we use all returned students
+      const branchStudents = allStudents
 
       const transformedStudents: Student[] = branchStudents.map((student: any) => ({
         id: student.id,
@@ -263,7 +270,7 @@ export default function BranchManagerStudentList() {
         email: student.email || "",
         phone: student.phone || "",
         role: student.role || "student",
-        branch_id: branchId,
+        branch_id: student.branch_id || "",
         date_of_birth: student.date_of_birth,
         is_active: student.is_active ?? true,
         created_at: student.created_at || new Date().toISOString(),
@@ -274,7 +281,7 @@ export default function BranchManagerStudentList() {
           course_name: enrollment.course_name || enrollment.course?.name || "Unknown Course",
           level: enrollment.course?.difficulty_level || "Beginner",
           duration: enrollment.course?.duration || "3 months",
-          branch_name: branchManager?.branch_assignment?.branch_name || "Branch"
+          branch_name: enrollment.branch_name || "Branch"
         })) || [],
         address: student.address || {
           line1: "",
@@ -428,12 +435,81 @@ export default function BranchManagerStudentList() {
                 ))}
               </div>
             ) : error ? (
-              <div className="text-center py-8">
-                <p className="text-red-600">{error}</p>
+              <div className="text-center py-12">
+                <div className="max-w-md mx-auto">
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+                    <div className="flex items-center justify-center w-12 h-12 mx-auto mb-4 bg-red-100 rounded-full">
+                      <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 19.5c-.77.833.192 2.5 1.732 2.5z" />
+                      </svg>
+                    </div>
+                    <h3 className="text-lg font-medium text-red-800 mb-2">Unable to Load Students</h3>
+                    <p className="text-red-700 mb-4">{error}</p>
+                    <Button
+                      onClick={() => window.location.reload()}
+                      variant="outline"
+                      className="border-red-300 text-red-700 hover:bg-red-50"
+                    >
+                      Try Again
+                    </Button>
+                  </div>
+                </div>
               </div>
             ) : currentStudents.length === 0 ? (
-              <div className="text-center py-8">
-                <p className="text-gray-500">No students found</p>
+              <div className="text-center py-12">
+                <div className="max-w-md mx-auto">
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+                    <div className="flex items-center justify-center w-12 h-12 mx-auto mb-4 bg-yellow-100 rounded-full">
+                      <svg className="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+                      </svg>
+                    </div>
+                    <h3 className="text-lg font-medium text-yellow-800 mb-2">No Students Found</h3>
+                    <p className="text-yellow-700 mb-4">
+                      {searchTerm
+                        ? `No students match your search "${searchTerm}"`
+                        : "You don't have any students enrolled in your branches yet."
+                      }
+                    </p>
+                    {!searchTerm && (
+                      <div className="text-sm text-yellow-600 mb-4 text-left">
+                        <p className="mb-2">This could mean:</p>
+                        <ul className="list-disc list-inside space-y-1">
+                          <li>No students have enrolled in courses at your branches</li>
+                          <li>Your branch manager account may not have branch assignments</li>
+                          <li>The student enrollments are still being processed</li>
+                        </ul>
+                        <p className="mt-2">
+                          Please contact your system administrator for assistance.
+                        </p>
+                      </div>
+                    )}
+                    <div className="flex justify-center space-x-3">
+                      {searchTerm && (
+                        <Button
+                          variant="outline"
+                          onClick={() => setSearchTerm("")}
+                          className="border-yellow-300 text-yellow-700 hover:bg-yellow-50"
+                        >
+                          Clear Search
+                        </Button>
+                      )}
+                      <Button
+                        onClick={() => window.location.reload()}
+                        variant="outline"
+                        className="border-yellow-300 text-yellow-700 hover:bg-yellow-50"
+                      >
+                        Refresh
+                      </Button>
+                      <Button
+                        onClick={() => router.push("/branch-manager-dashboard/add-student")}
+                        className="bg-blue-600 hover:bg-blue-700 text-white"
+                      >
+                        Add Student
+                      </Button>
+                    </div>
+                  </div>
+                </div>
               </div>
             ) : (
               <div className="space-y-4">

@@ -58,51 +58,74 @@ export default function BranchManagerCoursesList() {
         setLoading(true)
         setError(null)
 
+        const currentUser = BranchManagerAuth.getCurrentUser()
         const token = BranchManagerAuth.getToken()
-        if (!token) {
-          setError("Authentication token not found. Please login again.")
-          return
+
+        if (!currentUser || !token) {
+          throw new Error("Authentication required. Please login again.")
         }
 
-        // First, get the current branch manager's profile to get their managed branches
-        const profileResponse = await fetch(`http://localhost:8003/api/branch-managers/me`, {
-          method: 'GET',
+        console.log('Loading courses for branch manager:', currentUser.full_name)
+        console.log('Branch manager branch assignment:', currentUser.branch_assignment)
+
+        // First, let's get the branches this manager manages to understand the filtering
+        console.log('🔍 DEBUGGING: Fetching branches first to understand filtering...')
+        const branchesResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/branches?limit=100`, {
           headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
           }
         })
 
-        if (!profileResponse.ok) {
-          throw new Error(`Failed to fetch branch manager profile: ${profileResponse.status}`)
+        if (branchesResponse.ok) {
+          const branchesData = await branchesResponse.json()
+          const managedBranches = branchesData.branches || []
+          const branchIds = managedBranches.map((branch: any) => branch.id)
+          console.log('🏢 Branches managed by this branch manager:', managedBranches.length)
+          console.log('🏢 Branch IDs:', branchIds)
+          managedBranches.forEach((branch: any, index: number) => {
+            console.log(`   Branch ${index + 1}: ${branch.branch?.name || 'Unknown'} (ID: ${branch.id})`)
+          })
         }
 
-        const profileData = await profileResponse.json()
-        const branchManager = profileData.branch_manager
-
-        // Get the branch ID from the branch manager's assignment
-        const branchId = branchManager?.branch_assignment?.branch_id
-
-        if (!branchId) {
-          setError("No branch assigned to this manager")
-          return
-        }
-
-        // Fetch courses for the specific branch
-        const coursesResponse = await fetch(`http://localhost:8003/api/courses/by-branch/${branchId}`, {
-          method: 'GET',
+        // Call real backend API to get courses (backend handles filtering by managed branches)
+        console.log('📚 Now fetching courses...')
+        const coursesResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/courses?limit=100`, {
           headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
           }
         })
+
+        console.log('Courses API response status:', coursesResponse.status)
 
         if (!coursesResponse.ok) {
-          throw new Error(`Failed to fetch courses: ${coursesResponse.status}`)
+          const errorText = await coursesResponse.text()
+          console.error('Courses API error:', coursesResponse.status, errorText)
+
+          if (coursesResponse.status === 401) {
+            throw new Error("Authentication failed. Please login again.")
+          } else if (coursesResponse.status === 403) {
+            throw new Error("You don't have permission to access course information.")
+          } else {
+            throw new Error(`Failed to load courses: ${coursesResponse.status} - ${errorText}`)
+          }
         }
 
         const coursesData = await coursesResponse.json()
+        console.log('📚 Courses API response:', coursesData)
+        console.log('📚 Courses API response type:', typeof coursesData)
+        console.log('📚 Courses API response keys:', Object.keys(coursesData || {}))
+
         const branchCourses = coursesData.courses || []
+
+        // Debug: Show course data and branch assignments
+        console.log('📚 Processing courses:', branchCourses.length)
+        branchCourses.forEach((course: any, index: number) => {
+          const branchAssignments = course.branch_assignments || []
+          const branchIds = branchAssignments.map((ba: any) => ba.branch_id).filter(Boolean)
+          console.log(`   Course ${index + 1}: ${course.name || course.title || 'Unknown'} - Assigned to branches: ${branchIds.join(', ') || 'None'}`)
+        })
 
         // Transform the API data to match our Course interface
         const transformedCourses: Course[] = branchCourses.map((course: any) => ({
@@ -114,8 +137,11 @@ export default function BranchManagerCoursesList() {
           price: course.pricing?.amount || course.price || 0,
           is_active: course.settings?.active ?? course.is_active ?? true,
           description: course.description || "",
-          enrolled_students: course.student_count || course.enrolled_students || 0,
-          assigned_coaches: course.instructors?.map((instructor: any) => ({
+          enrolled_students: course.student_enrollment_count || course.student_count || course.enrolled_students || 0,
+          assigned_coaches: course.instructor_assignments?.map((instructor: any) => ({
+            coach_id: instructor.instructor_id || instructor.id || instructor.coach_id,
+            coach_name: instructor.instructor_name || instructor.full_name || instructor.coach_name || instructor.name
+          })) || course.instructors?.map((instructor: any) => ({
             coach_id: instructor.id || instructor.coach_id,
             coach_name: instructor.full_name || instructor.coach_name || instructor.name
           })) || [],
@@ -123,10 +149,20 @@ export default function BranchManagerCoursesList() {
           updated_at: course.updated_at || new Date().toISOString()
         }))
 
+        console.log('Transformed courses:', transformedCourses)
+        console.log('Final courses count:', transformedCourses.length)
+
+        if (transformedCourses.length === 0) {
+          console.log('No courses found for branch manager')
+          setError("No courses available at your branches. Please contact your administrator if you expect to see courses here.")
+        } else {
+          console.log(`✅ Loaded ${transformedCourses.length} course(s) for ${currentUser.full_name}`)
+        }
+
         setCourses(transformedCourses)
       } catch (err: any) {
         console.error('Error loading courses data:', err)
-        setError(err.message || 'Failed to load courses data')
+        setError(err.message || 'Failed to load course information')
       } finally {
         setLoading(false)
       }
@@ -160,41 +196,24 @@ export default function BranchManagerCoursesList() {
         return
       }
 
-      // Get branch manager profile
-      const profileResponse = await fetch(`http://localhost:8003/api/branch-managers/me`, {
-        method: 'GET',
+      // Fetch fresh courses data - backend handles filtering by managed branches
+      console.log('🔄 Refreshing courses data...')
+      const coursesResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/courses?limit=100`, {
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      })
-
-      if (!profileResponse.ok) {
-        throw new Error(`Failed to fetch branch manager profile: ${profileResponse.status}`)
-      }
-
-      const profileData = await profileResponse.json()
-      const branchId = profileData.branch_manager?.branch_assignment?.branch_id
-
-      if (!branchId) {
-        setError("No branch assigned to this manager")
-        return
-      }
-
-      // Fetch fresh courses data
-      const coursesResponse = await fetch(`http://localhost:8003/api/courses/by-branch/${branchId}`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         }
       })
 
       if (!coursesResponse.ok) {
-        throw new Error(`Failed to fetch courses: ${coursesResponse.status}`)
+        const errorText = await coursesResponse.text()
+        console.error('Courses refresh API error:', coursesResponse.status, errorText)
+        throw new Error(`Failed to refresh courses: ${coursesResponse.status} - ${errorText}`)
       }
 
       const coursesData = await coursesResponse.json()
+      console.log('🔄 Refreshed courses data:', coursesData)
+
       const branchCourses = coursesData.courses || []
 
       const transformedCourses: Course[] = branchCourses.map((course: any) => ({
@@ -206,8 +225,11 @@ export default function BranchManagerCoursesList() {
         price: course.pricing?.amount || course.price || 0,
         is_active: course.settings?.active ?? course.is_active ?? true,
         description: course.description || "",
-        enrolled_students: course.student_count || course.enrolled_students || 0,
-        assigned_coaches: course.instructors?.map((instructor: any) => ({
+        enrolled_students: course.student_enrollment_count || course.student_count || course.enrolled_students || 0,
+        assigned_coaches: course.instructor_assignments?.map((instructor: any) => ({
+          coach_id: instructor.instructor_id || instructor.id || instructor.coach_id,
+          coach_name: instructor.instructor_name || instructor.full_name || instructor.coach_name || instructor.name
+        })) || course.instructors?.map((instructor: any) => ({
           coach_id: instructor.id || instructor.coach_id,
           coach_name: instructor.full_name || instructor.coach_name || instructor.name
         })) || [],
@@ -219,7 +241,7 @@ export default function BranchManagerCoursesList() {
       setError(null)
     } catch (err: any) {
       console.error('Error refreshing courses data:', err)
-      setError(err.message || 'Failed to refresh courses data')
+      setError(err.message || 'Failed to refresh course information')
     } finally {
       setRefreshing(false)
     }
@@ -331,13 +353,79 @@ export default function BranchManagerCoursesList() {
                 ))}
               </div>
             ) : error ? (
-              <div className="text-center py-8">
-                <p className="text-red-600">{error}</p>
+              <div className="text-center py-12">
+                <div className="max-w-md mx-auto">
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+                    <div className="flex items-center justify-center w-12 h-12 mx-auto mb-4 bg-red-100 rounded-full">
+                      <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 19.5c-.77.833.192 2.5 1.732 2.5z" />
+                      </svg>
+                    </div>
+                    <h3 className="text-lg font-medium text-red-800 mb-2">Unable to Load Courses</h3>
+                    <p className="text-red-700 mb-4">{error}</p>
+                    <Button
+                      onClick={() => window.location.reload()}
+                      variant="outline"
+                      className="border-red-300 text-red-700 hover:bg-red-50"
+                    >
+                      Try Again
+                    </Button>
+                  </div>
+                </div>
               </div>
             ) : currentCourses.length === 0 ? (
-              <div className="text-center py-8">
-                <BookOpen className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-500">No courses found</p>
+              <div className="text-center py-12">
+                <div className="max-w-md mx-auto">
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+                    <div className="flex items-center justify-center w-12 h-12 mx-auto mb-4 bg-yellow-100 rounded-full">
+                      <BookOpen className="w-6 h-6 text-yellow-600" />
+                    </div>
+                    <h3 className="text-lg font-medium text-yellow-800 mb-2">No Courses Found</h3>
+                    <p className="text-yellow-700 mb-4">
+                      {searchTerm
+                        ? `No courses match your search "${searchTerm}"`
+                        : "You don't have any courses available at your branches yet."
+                      }
+                    </p>
+                    {!searchTerm && (
+                      <div className="text-sm text-yellow-600 mb-4 text-left">
+                        <p className="mb-2">This could mean:</p>
+                        <ul className="list-disc list-inside space-y-1">
+                          <li>No courses have been assigned to your managed branches</li>
+                          <li>Your branch manager account may not have branch assignments</li>
+                          <li>The course assignments are still being processed</li>
+                        </ul>
+                        <p className="mt-2">
+                          Please contact your system administrator for assistance.
+                        </p>
+                      </div>
+                    )}
+                    <div className="flex justify-center space-x-3">
+                      {searchTerm && (
+                        <Button
+                          variant="outline"
+                          onClick={() => setSearchTerm("")}
+                          className="border-yellow-300 text-yellow-700 hover:bg-yellow-50"
+                        >
+                          Clear Search
+                        </Button>
+                      )}
+                      <Button
+                        onClick={() => window.location.reload()}
+                        variant="outline"
+                        className="border-yellow-300 text-yellow-700 hover:bg-yellow-50"
+                      >
+                        Refresh
+                      </Button>
+                      <Button
+                        onClick={() => router.push("/branch-manager-dashboard/create-course")}
+                        className="bg-blue-600 hover:bg-blue-700 text-white"
+                      >
+                        Add Course
+                      </Button>
+                    </div>
+                  </div>
+                </div>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
