@@ -7,11 +7,12 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Search, Edit, Trash2, ToggleLeft, ToggleRight, Eye, Mail, Loader2, Plus } from "lucide-react"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useRouter } from "next/navigation"
 import DashboardHeader from "@/components/dashboard-header"
 import { TokenManager } from "@/lib/tokenManager"
+import { SuperAdminAuth } from "@/lib/auth"
 import { useToast } from "@/hooks/use-toast"
 
 interface BranchManager {
@@ -50,6 +51,7 @@ export default function BranchManagersListPage() {
   const [selectedManager, setSelectedManager] = useState<string | null>(null)
   const [selectedManagerForCredentials, setSelectedManagerForCredentials] = useState<BranchManager | null>(null)
   const [isSendingCredentials, setIsSendingCredentials] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
   const [branchManagers, setBranchManagers] = useState<BranchManager[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -77,12 +79,23 @@ export default function BranchManagersListPage() {
           throw new Error("Backend server is not responding. Please ensure the server is running on port 8003.")
         }
 
-        const token = TokenManager.getToken()
+        // Check if superadmin is authenticated
+        if (!SuperAdminAuth.isAuthenticated()) {
+          console.log("❌ Superadmin not authenticated")
+          // Redirect to superadmin login page
+          router.push('/superadmin/login')
+          return
+        }
+
+        const token = SuperAdminAuth.getToken()
         console.log("🔑 Token available:", !!token)
         console.log("🔑 Token preview:", token ? token.substring(0, 20) + '...' : 'No token')
 
         if (!token) {
-          throw new Error("Authentication token not found. Please login again.")
+          console.log("❌ No authentication token found")
+          // Redirect to superadmin login page
+          router.push('/superadmin/login')
+          return
         }
 
         const apiUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/branch-managers`
@@ -111,11 +124,20 @@ export default function BranchManagersListPage() {
         // Handle different response formats
         const managersData = data.branch_managers || data || []
         console.log("📊 Managers data:", managersData)
+        console.log("📊 Number of managers:", managersData.length)
+
         setBranchManagers(managersData)
 
       } catch (error) {
         console.error("❌ Error fetching branch managers:", error)
-        setError(error instanceof Error ? error.message : 'Failed to fetch branch managers')
+        const errorMessage = error instanceof Error ? error.message : 'Failed to fetch branch managers'
+        setError(errorMessage)
+
+        // If it's an authentication error, redirect to superadmin login
+        if (errorMessage.includes('Authentication token not found') || errorMessage.includes('Not authenticated')) {
+          console.log("🔄 Redirecting to superadmin login page due to authentication error")
+          router.push('/superadmin/login')
+        }
       } finally {
         setLoading(false)
       }
@@ -132,10 +154,38 @@ export default function BranchManagersListPage() {
   const handleDeleteConfirm = async () => {
     if (selectedManager !== null) {
       try {
-        const token = TokenManager.getToken()
+        setIsDeleting(true)
+
+        // Enhanced authentication debugging
+        console.log("🔍 Starting delete operation for branch manager:", selectedManager)
+
+        const token = SuperAdminAuth.getToken()
+        const user = SuperAdminAuth.getCurrentUser()
+        const isAuth = SuperAdminAuth.isAuthenticated()
+
+        console.log("Authentication status:", {
+          hasToken: !!token,
+          tokenPreview: token ? token.substring(0, 20) + "..." : "null",
+          isAuthenticated: isAuth,
+          user: user,
+          userRole: user?.role
+        })
+
         if (!token) {
           throw new Error("Authentication token not found. Please login again.")
         }
+
+        if (!isAuth) {
+          throw new Error("Authentication token has expired. Please login again.")
+        }
+
+        // Check user role - only super admin can delete branch managers
+        const allowedRoles = ['super_admin', 'superadmin']
+        if (!user || !allowedRoles.includes(user.role)) {
+          throw new Error(`Insufficient permissions. Only Super Admin can delete branch managers. Current role: ${user?.role || 'none'}`)
+        }
+
+        console.log("🚀 Making DELETE request to:", `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/branch-managers/${selectedManager}`)
 
         const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/branch-managers/${selectedManager}`, {
           method: 'DELETE',
@@ -145,10 +195,29 @@ export default function BranchManagersListPage() {
           }
         })
 
+        console.log("📡 Response received:", {
+          status: response.status,
+          statusText: response.statusText,
+          ok: response.ok
+        })
+
         if (!response.ok) {
-          const errorData = await response.json()
-          throw new Error(errorData.detail || errorData.message || `Failed to delete branch manager (${response.status})`)
+          const errorData = await response.json().catch(() => ({}))
+          console.error("❌ Delete request failed:", errorData)
+
+          if (response.status === 403) {
+            // Show the actual error message from the backend
+            throw new Error(errorData.detail || errorData.message || "Insufficient permissions to delete branch managers.")
+          } else if (response.status === 404) {
+            throw new Error("Branch manager not found. It may have already been deleted.")
+          } else if (response.status === 401) {
+            throw new Error("Authentication failed. Please login again.")
+          } else {
+            throw new Error(errorData.detail || errorData.message || `Failed to delete branch manager (${response.status})`)
+          }
         }
+
+        console.log("✅ Branch manager deleted successfully")
 
         // Remove manager from local state
         setBranchManagers(branchManagers.filter(manager => manager.id !== selectedManager))
@@ -161,12 +230,14 @@ export default function BranchManagersListPage() {
         })
 
       } catch (error) {
-        console.error("Error deleting branch manager:", error)
+        console.error("❌ Error deleting branch manager:", error)
         toast({
           title: "Error",
           description: error instanceof Error ? error.message : 'Failed to delete branch manager',
           variant: "destructive",
         })
+      } finally {
+        setIsDeleting(false)
       }
     }
   }
@@ -182,8 +253,9 @@ export default function BranchManagersListPage() {
     try {
       setIsSendingCredentials(true)
 
-      const token = TokenManager.getToken()
-      if (!token) {
+      const token = SuperAdminAuth.getToken()
+
+      if (!token || !SuperAdminAuth.isAuthenticated()) {
         throw new Error("Authentication token not found. Please login again.")
       }
 
@@ -222,8 +294,9 @@ export default function BranchManagersListPage() {
 
   const toggleManagerStatus = async (managerId: string, currentStatus: boolean) => {
     try {
-      const token = TokenManager.getToken()
-      if (!token) {
+      const token = SuperAdminAuth.getToken()
+
+      if (!token || !SuperAdminAuth.isAuthenticated()) {
         throw new Error("Authentication token not found. Please login again.")
       }
 
@@ -271,6 +344,8 @@ export default function BranchManagersListPage() {
     manager.contact_info.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
     manager.branch_assignment?.branch_name?.toLowerCase().includes(searchTerm.toLowerCase())
   )
+
+
 
   // Pagination logic
   const totalPages = Math.ceil(filteredManagers.length / itemsPerPage)
@@ -325,12 +400,23 @@ export default function BranchManagersListPage() {
                 <div>
                   <h3 className="text-lg font-semibold text-red-800">Error Loading Branch Managers</h3>
                   <p className="text-red-600 mt-1">{error}</p>
-                  <Button
-                    onClick={() => window.location.reload()}
-                    className="mt-4 bg-red-600 hover:bg-red-700 text-white"
-                  >
-                    Retry
-                  </Button>
+                  <div className="flex gap-3 mt-4">
+                    {error.includes('Authentication') ? (
+                      <Button
+                        onClick={() => router.push('/superadmin/login')}
+                        className="bg-blue-600 hover:bg-blue-700 text-white"
+                      >
+                        Go to Superadmin Login
+                      </Button>
+                    ) : (
+                      <Button
+                        onClick={() => window.location.reload()}
+                        className="bg-red-600 hover:bg-red-700 text-white"
+                      >
+                        Retry
+                      </Button>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -491,57 +577,65 @@ export default function BranchManagersListPage() {
                           </Badge>
                         </div>
                         
-                        <div className="col-span-2 flex items-center space-x-2">
+                        <div className="col-span-2 flex items-center space-x-1">
+                          {/* View Button */}
                           <Button
                             size="sm"
                             variant="ghost"
                             onClick={() => router.push(`/dashboard/branch-managers/${manager.id}`)}
+                            className="p-1 h-8 w-8"
+                            title="View Branch Manager"
                           >
-                            <Eye className="w-4 h-4" />
+                            <Eye className="w-4 h-4 text-gray-600" />
                           </Button>
-                          
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button size="sm" variant="ghost">
-                                <Edit className="w-4 h-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent>
-                              <DropdownMenuItem
-                                onClick={() => router.push(`/dashboard/branch-managers/edit/${manager.id}`)}
-                              >
-                                Edit Details
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() => handleSendCredentials(manager)}
-                              >
-                                <Mail className="w-4 h-4 mr-2" />
-                                Send Credentials
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() => toggleManagerStatus(manager.id, manager.is_active)}
-                              >
-                                {manager.is_active ? (
-                                  <>
-                                    <ToggleLeft className="w-4 h-4 mr-2" />
-                                    Deactivate
-                                  </>
-                                ) : (
-                                  <>
-                                    <ToggleRight className="w-4 h-4 mr-2" />
-                                    Activate
-                                  </>
-                                )}
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() => handleDeleteClick(manager.id)}
-                                className="text-red-600"
-                              >
-                                <Trash2 className="w-4 h-4 mr-2" />
-                                Delete
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
+
+                          {/* Edit Button */}
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => router.push(`/dashboard/branch-managers/edit/${manager.id}`)}
+                            className="p-1 h-8 w-8"
+                            title="Edit Branch Manager"
+                          >
+                            <Edit className="w-4 h-4 text-gray-600" />
+                          </Button>
+
+                          {/* Send Credentials Button */}
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleSendCredentials(manager)}
+                            className="p-1 h-8 w-8"
+                            title="Send Credentials"
+                          >
+                            <Mail className="w-4 h-4 text-blue-600" />
+                          </Button>
+
+                          {/* Toggle Status Button */}
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => toggleManagerStatus(manager.id, manager.is_active)}
+                            className="p-1 h-8 w-8"
+                            title={manager.is_active ? "Deactivate" : "Activate"}
+                          >
+                            {manager.is_active ? (
+                              <ToggleLeft className="w-4 h-4 text-orange-600" />
+                            ) : (
+                              <ToggleRight className="w-4 h-4 text-green-600" />
+                            )}
+                          </Button>
+
+                          {/* Delete Button */}
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleDeleteClick(manager.id)}
+                            className="p-1 h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
+                            title="Delete Branch Manager"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
                         </div>
                       </div>
                     ))}
@@ -603,14 +697,23 @@ export default function BranchManagersListPage() {
                   setShowDeletePopup(false)
                   setSelectedManager(null)
                 }}
+                disabled={isDeleting}
               >
                 Cancel
               </Button>
               <Button
                 variant="destructive"
                 onClick={handleDeleteConfirm}
+                disabled={isDeleting}
               >
-                Delete
+                {isDeleting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Deleting...
+                  </>
+                ) : (
+                  'Delete'
+                )}
               </Button>
             </div>
           </div>
