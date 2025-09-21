@@ -7,7 +7,7 @@ export interface APIConfig {
 }
 
 export const getAPIConfig = (): APIConfig => {
-  const baseURL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8003'
+  const baseURL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://31.97.224.169:8003'
   const timeout = parseInt(process.env.NEXT_PUBLIC_API_TIMEOUT || '30000', 10)
   const retryAttempts = parseInt(process.env.NEXT_PUBLIC_API_RETRY_ATTEMPTS || '3', 10)
   const isDevelopment = baseURL.includes('localhost') || baseURL.includes('127.0.0.1')
@@ -23,7 +23,7 @@ export const getAPIConfig = (): APIConfig => {
 // Environment-specific configurations
 export const environments = {
   development: {
-    baseURL: 'http://localhost:8003',
+    baseURL: 'http://31.97.224.169:8003',
     timeout: 30000,
     retryAttempts: 3,
     isDevelopment: true

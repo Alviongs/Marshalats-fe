@@ -26,7 +26,7 @@ class NotificationAPI {
   private baseURL: string
 
   constructor() {
-    this.baseURL = process.env.NEXT_PUBLIC_BACKEND_URL || process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8003'
+    this.baseURL = process.env.NEXT_PUBLIC_BACKEND_URL || process.env.NEXT_PUBLIC_API_BASE_URL || 'http://31.97.224.169:8003'
   }
 
   private async makeRequest(endpoint: string, options: RequestInit = {}) {

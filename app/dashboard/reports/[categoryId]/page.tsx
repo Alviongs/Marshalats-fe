@@ -306,7 +306,7 @@ function CategoryReportsPageContent() {
         }
 
         // Use the backend API endpoint for branches with courses
-        const response = await fetch(`http://localhost:8003/api/branches-with-courses`, {
+        const response = await fetch(`http://31.97.224.169:8003/api/branches-with-courses`, {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${token}`,

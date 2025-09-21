@@ -10,8 +10,8 @@ Create a `.env.local` file in the root directory with the following variables:
 
 ```bash
 # API Configuration
-NEXT_PUBLIC_API_BASE_URL=http://localhost:8003
-API_BASE_URL=http://localhost:8003
+NEXT_PUBLIC_API_BASE_URL=http://31.97.224.169:8003
+API_BASE_URL=http://31.97.224.169:8003
 
 # API Settings
 NEXT_PUBLIC_API_TIMEOUT=30000
@@ -26,7 +26,7 @@ JWT_EXPIRES_IN=24h
 
 **Development:**
 ```bash
-NEXT_PUBLIC_API_BASE_URL=http://localhost:8003
+NEXT_PUBLIC_API_BASE_URL=http://31.97.224.169:8003
 ```
 
 **Staging:**
