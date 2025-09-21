@@ -432,6 +432,15 @@ export default function BranchManagerStudentList() {
     if (studentToDelete) {
       try {
         const authHeaders = BranchManagerAuth.getAuthHeaders()
+        const currentUser = BranchManagerAuth.getCurrentUser()
+
+        console.log("🔍 Delete Debug Info:", {
+          studentToDelete,
+          authHeaders,
+          currentUser,
+          hasToken: !!authHeaders.Authorization
+        })
+
         if (!authHeaders.Authorization) {
           throw new Error("Authentication token not found. Please login again.")
         }
@@ -443,11 +452,17 @@ export default function BranchManagerStudentList() {
 
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}))
+          console.error("Delete API Error Response:", {
+            status: response.status,
+            statusText: response.statusText,
+            errorData
+          })
 
           if (response.status === 401) {
             throw new Error("Invalid authentication credentials. Please login again.")
           } else if (response.status === 403) {
-            throw new Error("Insufficient permissions to delete students.")
+            // Show the actual error message from the backend
+            throw new Error(errorData.detail || errorData.message || "Insufficient permissions to delete students.")
           } else {
             throw new Error(errorData.detail || errorData.message || `Failed to delete student (${response.status})`)
           }
