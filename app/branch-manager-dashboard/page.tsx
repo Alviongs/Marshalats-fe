@@ -94,6 +94,8 @@ export default function BranchManagerDashboard() {
   const [coachesLoading, setCoachesLoading] = useState(true)
   const [coachesError, setCoachesError] = useState<string | null>(null)
 
+
+
   // Payment data state
   const [paymentStats, setPaymentStats] = useState<PaymentStats | null>(null)
   const [recentPayments, setRecentPayments] = useState<Payment[]>([])
@@ -114,24 +116,40 @@ export default function BranchManagerDashboard() {
       try {
         setLoading(true)
         setError(null)
-        
-        // For now, use mock data since we're focusing on UI
-        const mockStats: DashboardStats = {
-          total_students: 150,
-          active_students: 142,
-          total_coaches: 8,
-          active_coaches: 7,
+
+        // Check authentication
+        if (!BranchManagerAuth.isAuthenticated()) {
+          router.replace('/branch-manager/login')
+          return
+        }
+
+        const token = BranchManagerAuth.getToken()
+        if (!token) {
+          setError('Authentication token not found. Please login again.')
+          return
+        }
+
+        // Get dashboard statistics from API
+        const response = await dashboardAPI.getBranchManagerDashboardStats(token)
+        const stats = response.dashboard_stats
+
+        // Map API response to expected format
+        const dashboardStats: DashboardStats = {
+          total_students: stats.active_students || 0,
+          active_students: stats.active_students || 0,
+          total_coaches: stats.total_coaches || 0,
+          active_coaches: stats.active_coaches || 0,
           total_branches: 1, // Branch manager sees only their branch
           active_branches: 1,
-          total_courses: 12,
-          active_courses: 10,
-          total_enrollments: 180,
-          active_enrollments: 165,
-          this_month_enrollments: 25,
-          last_month_enrollments: 18
+          total_courses: stats.active_courses || 0,
+          active_courses: stats.active_courses || 0,
+          total_enrollments: stats.active_enrollments || 0,
+          active_enrollments: stats.active_enrollments || 0,
+          this_month_enrollments: stats.active_enrollments || 0,
+          last_month_enrollments: 0 // This would need additional API support
         }
-        
-        setDashboardStats(mockStats)
+
+        setDashboardStats(dashboardStats)
       } catch (err) {
         console.error('Error loading dashboard data:', err)
         setError('Failed to load dashboard statistics')
@@ -144,36 +162,25 @@ export default function BranchManagerDashboard() {
       try {
         setCoachesLoading(true)
         setCoachesError(null)
-        
-        // Mock coaches data for branch manager
-        const mockCoaches: Coach[] = [
-          {
-            id: "coach_001",
-            full_name: "John Smith",
-            email: "john@branch.com",
-            phone: "+1234567890",
-            specialization: "Martial Arts",
-            experience_years: 5,
-            is_active: true,
-            branch_id: "branch_001",
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          },
-          {
-            id: "coach_002", 
-            full_name: "Sarah Johnson",
-            email: "sarah@branch.com",
-            phone: "+1234567891",
-            specialization: "Yoga",
-            experience_years: 3,
-            is_active: true,
-            branch_id: "branch_001",
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          }
-        ]
-        
-        setCoaches(mockCoaches)
+
+        // Check authentication
+        if (!BranchManagerAuth.isAuthenticated()) {
+          return
+        }
+
+        const token = BranchManagerAuth.getToken()
+        if (!token) {
+          setCoachesError('Authentication token not found. Please login again.')
+          return
+        }
+
+        // Get coaches data from API
+        const response = await dashboardAPI.getBranchManagerCoaches(token, {
+          active_only: true,
+          limit: 10
+        })
+
+        setCoaches(response.coaches || [])
       } catch (err) {
         console.error('Error loading coaches data:', err)
         setCoachesError('Failed to load coaches data')
@@ -186,43 +193,26 @@ export default function BranchManagerDashboard() {
       try {
         setPaymentsLoading(true)
         setPaymentsError(null)
-        
-        // Mock payment data for branch manager
-        const mockPaymentStats: PaymentStats = {
-          total_collection: 125000,
-          this_month_collection: 15000,
-          pending_payments: 8500,
-          overdue_payments: 2500,
-          total_payments: 45,
-          successful_payments: 42,
-          failed_payments: 3
+
+        // Check authentication
+        if (!BranchManagerAuth.isAuthenticated()) {
+          return
         }
-        
-        const mockRecentPayments: Payment[] = [
-          {
-            id: "pay_001",
-            student_id: "student_001",
-            student_name: "Alice Brown",
-            amount: 2500,
-            payment_date: new Date().toISOString(),
-            payment_status: "completed",
-            payment_method: "online",
-            course_name: "Martial Arts"
-          },
-          {
-            id: "pay_002",
-            student_id: "student_002", 
-            student_name: "Bob Wilson",
-            amount: 3000,
-            payment_date: new Date().toISOString(),
-            payment_status: "pending",
-            payment_method: "cash",
-            course_name: "Yoga"
-          }
-        ]
-        
-        setPaymentStats(mockPaymentStats)
-        setRecentPayments(mockRecentPayments)
+
+        const token = BranchManagerAuth.getToken()
+        if (!token) {
+          setPaymentsError('Authentication token not found. Please login again.')
+          return
+        }
+
+        // Get payment statistics from API
+        const paymentStatsResponse = await paymentAPI.getPaymentStats(token)
+
+        // Get recent payments from API
+        const recentPaymentsResponse = await paymentAPI.getRecentPayments(10, token)
+
+        setPaymentStats(paymentStatsResponse)
+        setRecentPayments(recentPaymentsResponse)
       } catch (err) {
         console.error('Error loading payment data:', err)
         setPaymentsError('Failed to load payment data')
