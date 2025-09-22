@@ -13,10 +13,9 @@ import { Switch } from "@/components/ui/switch"
 import { Badge } from "@/components/ui/badge"
 import { ArrowLeft, Building, MapPin, Users, Clock, CreditCard, AlertCircle, Loader2, X } from "lucide-react"
 import { useRouter, useParams } from "next/navigation"
-import { useAuth } from "@/contexts/AuthContext"
 import { useToast } from "@/hooks/use-toast"
-import DashboardHeader from "@/components/dashboard-header"
-import { TokenManager } from "@/lib/tokenManager"
+import BranchManagerDashboardHeader from "@/components/branch-manager-dashboard-header"
+import { BranchManagerAuth } from "@/lib/branchManagerAuth"
 
 interface FormData {
   branch: {
@@ -33,7 +32,7 @@ interface FormData {
       country: string
     }
   }
-  location_id: string  // Add location_id field
+  location_id: string
   manager_id: string
   operational_details: {
     courses_offered: string[]
@@ -64,7 +63,6 @@ export default function EditBranch() {
   const router = useRouter()
   const params = useParams()
   const branchId = params.id as string
-  const { user } = useAuth()
   const { toast } = useToast()
 
   // Loading states
@@ -95,6 +93,7 @@ export default function EditBranch() {
         country: "India"
       }
     },
+    location_id: "",
     manager_id: "",
     operational_details: {
       courses_offered: [],
@@ -113,384 +112,203 @@ export default function EditBranch() {
     }
   })
 
-  // Dynamic data from APIs
-  const [availableManagers, setAvailableManagers] = useState<any[]>([])
+  // Available options
   const [availableCourses, setAvailableCourses] = useState<any[]>([])
+  const [availableManagers, setAvailableManagers] = useState<any[]>([])
   const [availableAdmins, setAvailableAdmins] = useState<any[]>([])
-  const [states, setStates] = useState<{ state: string; location_count: number }[]>([])
+  const [availableStates, setAvailableStates] = useState<any[]>([])
+  const [isLoadingCourses, setIsLoadingCourses] = useState(false)
+  const [isLoadingAdmins, setIsLoadingAdmins] = useState(false)
 
-  // Loading states for dynamic data
-  const [isLoadingManagers, setIsLoadingManagers] = useState(true)
-  const [isLoadingCourses, setIsLoadingCourses] = useState(true)
-  const [isLoadingAdmins, setIsLoadingAdmins] = useState(true)
-  const [isLoadingStates, setIsLoadingStates] = useState(true)
+  const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
 
-  const daysOfWeek = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
-
-  // Fetch branch data and dynamic options on component mount
+  // Fetch initial data
   useEffect(() => {
-    const fetchAllData = async () => {
+    const fetchData = async () => {
       try {
         setIsLoading(true)
+        const token = BranchManagerAuth.getToken()
 
-        const token = TokenManager.getToken()
-        if (!token) {
-          throw new Error("Authentication token not found. Please login again.")
-        }
-
-        // Fetch branch data and dynamic options in parallel
-        const [branchResponse, managersResponse, coursesResponse, adminsResponse, statesResponse] = await Promise.allSettled([
-          // Fetch branch data
+        // Fetch branch data and other required data in parallel
+        const [branchResponse, coursesResponse, managersResponse, adminsResponse, statesResponse] = await Promise.allSettled([
           fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/branches/${branchId}`, {
             headers: {
               'Authorization': `Bearer ${token}`,
               'Content-Type': 'application/json'
             }
           }),
-          // Fetch branch managers from branch-managers collection
-          fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/branch-managers?active_only=true&limit=100`, {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            }
-          }),
-          // Fetch courses
           fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/courses?active_only=true&limit=100`, {
             headers: {
               'Authorization': `Bearer ${token}`,
               'Content-Type': 'application/json'
             }
           }),
-          // Fetch admins (users with admin role)
-          fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/users?role=admin&limit=100`, {
+          fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/branch-managers?active_only=true&limit=100`, {
             headers: {
               'Authorization': `Bearer ${token}`,
               'Content-Type': 'application/json'
             }
           }),
-          // Fetch states (public endpoint)
-          fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/locations/public/states?active_only=true`)
+          fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/coaches?active_only=true&limit=100`, {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          }),
+          fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/locations`, {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          })
         ])
 
         // Handle branch data
         if (branchResponse.status === 'fulfilled' && branchResponse.value.ok) {
           const branchData = await branchResponse.value.json()
-
-          // Map API data to form structure
-          setFormData({
-            branch: {
-              name: branchData.branch?.name || "",
-              code: branchData.branch?.code || "",
-              email: branchData.branch?.email || "",
-              phone: branchData.branch?.phone || "",
-              address: {
-                line1: branchData.branch?.address?.line1 || "",
-                area: branchData.branch?.address?.area || "",
-                city: branchData.branch?.address?.city || "",
-                state: branchData.branch?.address?.state || "",
-                pincode: branchData.branch?.address?.pincode || "",
-                country: branchData.branch?.address?.country || "India"
-              }
-            },
-            manager_id: branchData.manager_id || "",
-            operational_details: {
-              courses_offered: branchData.operational_details?.courses_offered || [],
-              timings: branchData.operational_details?.timings || [],
-              holidays: branchData.operational_details?.holidays || []
-            },
-            assignments: {
-              accessories_available: branchData.assignments?.accessories_available || false,
-              courses: branchData.assignments?.courses || [],
-              branch_admins: branchData.assignments?.branch_admins || []
-            },
-            bank_details: {
-              bank_name: branchData.bank_details?.bank_name || "",
-              account_number: branchData.bank_details?.account_number || "",
-              upi_id: branchData.bank_details?.upi_id || ""
-            }
-          })
+          console.log('Branch data received:', branchData)
+          setFormData(branchData)
         } else {
-          if (branchResponse.status === 'fulfilled' && branchResponse.value.status === 404) {
-            throw new Error("Branch not found")
-          }
-          throw new Error("Failed to fetch branch data")
+          console.error('Failed to fetch branch data:', branchResponse)
+          toast({
+            title: "Error",
+            description: "Failed to load branch data. Please try again.",
+            variant: "destructive",
+          })
         }
-
-        // Handle branch managers data
-        if (managersResponse.status === 'fulfilled' && managersResponse.value.ok) {
-          const managersData = await managersResponse.value.json()
-          const managers = (managersData.branch_managers || []).map((manager: any) => ({
-            id: manager.id,
-            name: manager.full_name || `${manager.personal_info?.first_name || ''} ${manager.personal_info?.last_name || ''}`.trim(),
-            email: manager.email || manager.contact_info?.email || ''
-          }))
-          setAvailableManagers(managers)
-        }
-        setIsLoadingManagers(false)
 
         // Handle courses data
         if (coursesResponse.status === 'fulfilled' && coursesResponse.value.ok) {
           const coursesData = await coursesResponse.value.json()
-          const courses = (coursesData.courses || []).map((course: any) => ({
-            id: course.id,
-            name: course.title || course.name
-          }))
-          setAvailableCourses(courses)
+          setAvailableCourses(coursesData.courses || [])
+        } else {
+          console.warn('Failed to fetch courses data')
+          setAvailableCourses([])
         }
-        setIsLoadingCourses(false)
 
-        // Handle admins data
+        // Handle managers data
+        if (managersResponse.status === 'fulfilled' && managersResponse.value.ok) {
+          const managersData = await managersResponse.value.json()
+          const managers = managersData.branch_managers || []
+          setAvailableManagers(managers.map((manager: any) => ({
+            id: manager.id,
+            name: manager.full_name || `${manager.personal_info?.first_name || ''} ${manager.personal_info?.last_name || ''}`.trim()
+          })))
+        } else {
+          console.warn('Failed to fetch managers data')
+          setAvailableManagers([])
+        }
+
+        // Handle admins data (coaches)
         if (adminsResponse.status === 'fulfilled' && adminsResponse.value.ok) {
           const adminsData = await adminsResponse.value.json()
-          const admins = (adminsData.users || []).map((admin: any) => ({
-            id: admin.id,
-            name: admin.full_name || `${admin.first_name || ''} ${admin.last_name || ''}`.trim()
-          }))
-          setAvailableAdmins(admins)
+          const coaches = adminsData.coaches || []
+          setAvailableAdmins(coaches.map((coach: any) => ({
+            id: coach.id,
+            name: coach.full_name || `${coach.personal_info?.first_name || ''} ${coach.personal_info?.last_name || ''}`.trim()
+          })))
+        } else {
+          console.warn('Failed to fetch coaches data')
+          setAvailableAdmins([])
         }
-        setIsLoadingAdmins(false)
 
-        // Handle states data
+        // Handle states data (locations)
         if (statesResponse.status === 'fulfilled' && statesResponse.value.ok) {
           const statesData = await statesResponse.value.json()
-          setStates(statesData.states || [])
+          const locations = statesData.locations || []
+          setAvailableStates(locations.map((location: any) => ({
+            id: location.id,
+            name: location.state
+          })))
         } else {
-          // Fallback to some common states
-          setStates([
-            { state: "Telangana", location_count: 1 },
-            { state: "Maharashtra", location_count: 1 },
-            { state: "Karnataka", location_count: 1 },
-            { state: "Tamil Nadu", location_count: 1 }
-          ])
+          console.warn('Failed to fetch locations data')
+          setAvailableStates([])
         }
-        setIsLoadingStates(false)
 
       } catch (error) {
-        console.error("Error fetching data:", error)
-        setErrors({ general: error instanceof Error ? error.message : 'Failed to load data' })
-        setIsLoadingManagers(false)
-        setIsLoadingCourses(false)
-        setIsLoadingAdmins(false)
-        setIsLoadingStates(false)
+        console.error('Error fetching data:', error)
+        toast({
+          title: "Error",
+          description: "Failed to load branch data. Please try again.",
+          variant: "destructive",
+        })
       } finally {
         setIsLoading(false)
       }
     }
 
     if (branchId) {
-      fetchAllData()
+      fetchData()
     }
-  }, [branchId])
+  }, [branchId, toast])
 
-  // Helper functions
-  const handleTimingChange = (dayIndex: number, field: 'open' | 'close', value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      operational_details: {
-        ...prev.operational_details,
-        timings: prev.operational_details.timings.map((timing, index) =>
-          index === dayIndex ? { ...timing, [field]: value } : timing
-        )
+  const handleInputChange = (path: string, value: any) => {
+    setFormData(prev => {
+      const keys = path.split('.')
+      const newData = { ...prev }
+      let current: any = newData
+
+      for (let i = 0; i < keys.length - 1; i++) {
+        current[keys[i]] = { ...current[keys[i]] }
+        current = current[keys[i]]
       }
-    }))
+
+      current[keys[keys.length - 1]] = value
+      return newData
+    })
   }
 
   const addTiming = () => {
-    if (newTiming.day && newTiming.open && newTiming.close) {
-      // Check if day already exists
-      const existingTimingIndex = formData.operational_details.timings.findIndex(t => t.day === newTiming.day)
+    if (!newTiming.day) return
 
-      if (existingTimingIndex >= 0) {
-        // Update existing timing
-        setFormData(prev => ({
-          ...prev,
-          operational_details: {
-            ...prev.operational_details,
-            timings: prev.operational_details.timings.map((timing, index) =>
-              index === existingTimingIndex ? { ...newTiming } : timing
-            )
-          }
-        }))
-      } else {
-        // Add new timing
-        setFormData(prev => ({
-          ...prev,
-          operational_details: {
-            ...prev.operational_details,
-            timings: [...prev.operational_details.timings, { ...newTiming }]
-          }
-        }))
-      }
+    const existingIndex = formData.operational_details.timings.findIndex(t => t.day === newTiming.day)
 
-      // Reset form
-      setNewTiming({
-        day: "",
-        open: "07:00",
-        close: "19:00"
-      })
+    if (existingIndex >= 0) {
+      // Update existing timing
+      const updatedTimings = formData.operational_details.timings.map((timing, index) =>
+        index === existingIndex ? { ...newTiming } : timing
+      )
+      handleInputChange('operational_details.timings', updatedTimings)
+    } else {
+      // Add new timing
+      handleInputChange('operational_details.timings', [...formData.operational_details.timings, { ...newTiming }])
     }
+
+    setNewTiming({ day: "", open: "07:00", close: "19:00" })
   }
 
-  const removeTiming = (dayIndex: number) => {
-    setFormData(prev => ({
-      ...prev,
-      operational_details: {
-        ...prev.operational_details,
-        timings: prev.operational_details.timings.filter((_, index) => index !== dayIndex)
-      }
-    }))
+  const removeTiming = (index: number) => {
+    const updatedTimings = formData.operational_details.timings.filter((_, i) => i !== index)
+    handleInputChange('operational_details.timings', updatedTimings)
   }
 
   const addHoliday = (date: string) => {
-    if (date && !formData.operational_details.holidays.includes(date)) {
-      setFormData(prev => ({
-        ...prev,
-        operational_details: {
-          ...prev.operational_details,
-          holidays: [...prev.operational_details.holidays, date]
-        }
-      }))
-      // Clear the input
-      const input = document.getElementById('holidayDate') as HTMLInputElement
-      if (input) input.value = ''
-    }
+    if (!date || formData.operational_details.holidays.includes(date)) return
+
+    handleInputChange('operational_details.holidays', [...formData.operational_details.holidays, date])
   }
 
   const removeHoliday = (holidayIndex: number) => {
-    setFormData(prev => ({
-      ...prev,
-      operational_details: {
-        ...prev.operational_details,
-        holidays: prev.operational_details.holidays.filter((_, index) => index !== holidayIndex)
-      }
-    }))
+    const updatedHolidays = formData.operational_details.holidays.filter((_, index) => index !== holidayIndex)
+    handleInputChange('operational_details.holidays', updatedHolidays)
   }
 
-  const validateForm = (): boolean => {
-    const newErrors: FormErrors = {}
-
-    if (!formData.branch.name.trim()) {
-      newErrors.branchName = "Branch name is required"
-    }
-
-    if (!formData.branch.code.trim()) {
-      newErrors.branchCode = "Branch code is required"
-    }
-
-    if (!formData.branch.email.trim()) {
-      newErrors.branchEmail = "Email is required"
-    } else if (!/\S+@\S+\.\S+/.test(formData.branch.email)) {
-      newErrors.branchEmail = "Please enter a valid email address"
-    }
-
-    if (!formData.branch.phone.trim()) {
-      newErrors.branchPhone = "Phone number is required"
-    }
-
-    if (!formData.branch.address.line1.trim()) {
-      newErrors.addressLine1 = "Address line 1 is required"
-    }
-
-    if (!formData.branch.address.city.trim()) {
-      newErrors.city = "City is required"
-    }
-
-    if (!formData.branch.address.state.trim()) {
-      newErrors.state = "State is required"
-    }
-
-    if (!formData.branch.address.pincode.trim()) {
-      newErrors.pincode = "Pincode is required"
-    }
-
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-
-    if (!validateForm()) {
-      return
-    }
-
-    setIsSubmitting(true)
-
-    try {
-      const token = TokenManager.getToken()
-      if (!token) {
-        toast({
-          title: "Authentication Error",
-          description: "No authentication token available. Please login again.",
-          variant: "destructive"
-        })
-        return
-      }
-
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/branches/${branchId}`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(formData)
-      })
-
-      const result = await response.json()
-
-      if (!response.ok) {
-        throw new Error(result.detail || result.message || `Failed to update branch (${response.status})`)
-      }
-
-      console.log("Branch updated successfully:", result)
-      setShowSuccessPopup(true)
-
-      setTimeout(() => {
-        setShowSuccessPopup(false)
-        router.push("/dashboard/branches")
-      }, 2000)
-
-    } catch (error) {
-      console.error("Error updating branch:", error)
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : 'Failed to update branch',
-        variant: "destructive"
-      })
-    } finally {
-      setIsSubmitting(false)
-    }
+  const handleTimingChange = (index: number, field: 'open' | 'close', value: string) => {
+    const updatedTimings = formData.operational_details.timings.map((timing, i) =>
+      i === index ? { ...timing, [field]: value } : timing
+    )
+    handleInputChange('operational_details.timings', updatedTimings)
   }
 
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <DashboardHeader currentPage="Edit Branch" />
-        <main className="w-full p-4 lg:p-6">
+        <BranchManagerDashboardHeader currentPage="Edit Branch" />
+        <main className="w-full xl:px-12 mx-auto p-4 sm:p-6 lg:p-8">
           <div className="flex items-center justify-center min-h-[400px]">
             <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-600 mx-auto mb-4"></div>
+              <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
               <p className="text-gray-600">Loading branch data...</p>
-            </div>
-          </div>
-        </main>
-      </div>
-    )
-  }
-
-  if (errors.general) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <DashboardHeader currentPage="Edit Branch" />
-        <main className="w-full p-4 lg:p-6">
-          <div className="flex items-center justify-center min-h-[400px]">
-            <div className="text-center">
-              <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-              <h2 className="text-xl font-semibold text-gray-900 mb-2">Error Loading Branch</h2>
-              <p className="text-gray-600 mb-4">{errors.general}</p>
-              <Button onClick={() => router.push("/dashboard/branches")} variant="outline">
-                Back to Branches
-              </Button>
             </div>
           </div>
         </main>
@@ -500,276 +318,226 @@ export default function EditBranch() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <DashboardHeader currentPage="Edit Branch" />
+      <BranchManagerDashboardHeader currentPage="Edit Branch" />
 
-      <main className="w-full p-4 lg:p-6 xl:px-12">
+      <main className="w-full xl:px-12 mx-auto p-4 sm:p-6 lg:p-8">
         {/* Header */}
-        <div className="mb-8">
+        <div className="flex items-center justify-between mb-6">
           <div className="flex items-center space-x-4">
             <Button
-              variant="ghost"
-              onClick={() => router.push("/dashboard/branches")}
-              className="flex items-center space-x-2 hover:bg-gray-100 text-[#4F5077]"
+              variant="outline"
+              size="sm"
+              onClick={() => router.push("/branch-manager-dashboard/branches")}
+              className="flex items-center space-x-2"
             >
               <ArrowLeft className="w-4 h-4" />
               <span>Back to Branches</span>
             </Button>
-            <div className="w-px h-6 bg-gray-300"></div>
-            <h1 className="text-2xl font-bold text-[#4F5077]">Edit Branch</h1>
+            <div>
+              <h1 className="text-2xl font-bold text-[#4F5077]">Edit Branch</h1>
+              <p className="text-[#7D8592]">Update branch information and settings</p>
+            </div>
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* 2x2 Card Grid Layout */}
+        <form onSubmit={async (e) => {
+          e.preventDefault()
+          setIsSubmitting(true)
+
+          try {
+            const token = BranchManagerAuth.getToken()
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/branches/${branchId}`, {
+              method: 'PUT',
+              headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify(formData)
+            })
+
+            if (!response.ok) {
+              const errorData = await response.json().catch(() => ({}))
+              throw new Error(errorData.detail || 'Failed to update branch')
+            }
+
+            const result = await response.json()
+            console.log('Branch updated successfully:', result)
+
+            setShowSuccessPopup(true)
+            setTimeout(() => {
+              setShowSuccessPopup(false)
+              router.push('/branch-manager-dashboard/branches')
+            }, 2000)
+
+          } catch (error) {
+            console.error('Error updating branch:', error)
+            toast({
+              title: "Error",
+              description: error instanceof Error ? error.message : "Failed to update branch. Please try again.",
+              variant: "destructive",
+            })
+          } finally {
+            setIsSubmitting(false)
+          }
+        }}>
           <div className="flex flex-row gap-6">
             <div className="flex flex-col gap-6 w-full">
-              {/* Top Left Card - Branch & Address Information */}
+              {/* Branch & Address Information */}
               <Card className="h-fit">
                 <CardHeader>
                   <CardTitle className="flex items-center space-x-2 text-[#4F5077]">
+                    <Building className="w-5 h-5" />
                     <span>Branch & Address Information</span>
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4 text-[#7D8592]">
-                  {/* Branch Basic Info */}
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="branchName">Branch Name *</Label>
-                        <Input
-                          id="branchName"
-                          value={formData.branch.name}
-                          onChange={(e) => setFormData({
-                            ...formData,
-                            branch: { ...formData.branch, name: e.target.value }
-                          })}
-                          placeholder="Enter branch name"
-                          className={errors.branchName ? "border-red-500" : ""}
-                        />
-                        {errors.branchName && <p className="text-red-500 text-sm">{errors.branchName}</p>}
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="branchCode">Branch Code *</Label>
-                        <Input
-                          id="branchCode"
-                          value={formData.branch.code}
-                          onChange={(e) => setFormData({
-                            ...formData,
-                            branch: { ...formData.branch, code: e.target.value }
-                          })}
-                          placeholder="Enter branch code (e.g., RMA01)"
-                          className={errors.branchCode ? "border-red-500" : ""}
-                        />
-                        {errors.branchCode && <p className="text-red-500 text-sm">{errors.branchCode}</p>}
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="branchEmail">Email *</Label>
-                        <Input
-                          id="branchEmail"
-                          type="email"
-                          value={formData.branch.email}
-                          onChange={(e) => setFormData({
-                            ...formData,
-                            branch: { ...formData.branch, email: e.target.value }
-                          })}
-                          placeholder="Enter branch email"
-                          className={errors.branchEmail ? "border-red-500" : ""}
-                        />
-                        {errors.branchEmail && <p className="text-red-500 text-sm">{errors.branchEmail}</p>}
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="branchPhone">Phone *</Label>
-                        <Input
-                          id="branchPhone"
-                          value={formData.branch.phone}
-                          onChange={(e) => setFormData({
-                            ...formData,
-                            branch: { ...formData.branch, phone: e.target.value }
-                          })}
-                          placeholder="Enter phone number"
-                          className={errors.branchPhone ? "border-red-500" : ""}
-                        />
-                        {errors.branchPhone && <p className="text-red-500 text-sm">{errors.branchPhone}</p>}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Address Section */}
-                  <div className="pt-4 border-t">
-                    <div className="flex items-center space-x-2 mb-4">
-                      <span className="font-medium">Address Details</span>
-                    </div>
-
-                    <div className="space-y-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="addressLine1">Address Line 1 *</Label>
-                        <Input
-                          id="addressLine1"
-                          value={formData.branch.address.line1}
-                          onChange={(e) => setFormData({
-                            ...formData,
-                            branch: {
-                              ...formData.branch,
-                              address: { ...formData.branch.address, line1: e.target.value }
-                            }
-                          })}
-                          placeholder="Enter street address"
-                          className={errors.addressLine1 ? "border-red-500" : ""}
-                        />
-                        {errors.addressLine1 && <p className="text-red-500 text-sm">{errors.addressLine1}</p>}
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="area">Area/Locality</Label>
-                        <Input
-                          id="area"
-                          value={formData.branch.address.area}
-                          onChange={(e) => setFormData({
-                            ...formData,
-                            branch: {
-                              ...formData.branch,
-                              address: { ...formData.branch.address, area: e.target.value }
-                            }
-                          })}
-                          placeholder="Enter area or locality"
-                        />
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="city">City *</Label>
-                          <Input
-                            id="city"
-                            value={formData.branch.address.city}
-                            onChange={(e) => setFormData({
-                              ...formData,
-                              branch: {
-                                ...formData.branch,
-                                address: { ...formData.branch.address, city: e.target.value }
-                              }
-                            })}
-                            placeholder="Enter city"
-                            className={errors.city ? "border-red-500" : ""}
-                          />
-                          {errors.city && <p className="text-red-500 text-sm">{errors.city}</p>}
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label htmlFor="state">State *</Label>
-                          <Select
-                            value={formData.branch.address.state}
-                            onValueChange={(value) => setFormData({
-                              ...formData,
-                              branch: {
-                                ...formData.branch,
-                                address: { ...formData.branch.address, state: value }
-                              }
-                            })}
-                            disabled={isLoadingStates}
-                          >
-                            <SelectTrigger className={errors.state ? "border-red-500" : ""}>
-                              <SelectValue placeholder={isLoadingStates ? "Loading states..." : "Select state"} />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {states.map((stateData) => (
-                                <SelectItem key={stateData.state} value={stateData.state}>
-                                  {stateData.state} ({stateData.location_count} location{stateData.location_count !== 1 ? 's' : ''})
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          {errors.state && <p className="text-red-500 text-sm">{errors.state}</p>}
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="pincode">Pincode *</Label>
-                          <Input
-                            id="pincode"
-                            value={formData.branch.address.pincode}
-                            onChange={(e) => setFormData({
-                              ...formData,
-                              branch: {
-                                ...formData.branch,
-                                address: { ...formData.branch.address, pincode: e.target.value }
-                              }
-                            })}
-                            placeholder="Enter pincode"
-                            className={errors.pincode ? "border-red-500" : ""}
-                          />
-                          {errors.pincode && <p className="text-red-500 text-sm">{errors.pincode}</p>}
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label htmlFor="country">Country</Label>
-                          <Select
-                            value={formData.branch.address.country}
-                            onValueChange={(value) => setFormData({
-                              ...formData,
-                              branch: {
-                                ...formData.branch,
-                                address: { ...formData.branch.address, country: value }
-                              }
-                            })}
-                          >
-                            <SelectTrigger>
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="India">India</SelectItem>
-                              <SelectItem value="USA">USA</SelectItem>
-                              <SelectItem value="UK">UK</SelectItem>
-                              <SelectItem value="Canada">Canada</SelectItem>
-                              <SelectItem value="Australia">Australia</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  {/* Branch Manager */}
-                  <div className="pt-4 border-t">
-                    <div className="flex items-center space-x-2 mb-4">
-                      <span className="font-medium">Branch Manager</span>
+                <CardContent className="space-y-6 text-[#7D8592]">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="branchName">Branch Name *</Label>
+                      <Input
+                        id="branchName"
+                        value={formData.branch.name}
+                        onChange={(e) => handleInputChange('branch.name', e.target.value)}
+                        placeholder="Enter branch name"
+                        required
+                      />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="managerId">Select Branch Manager</Label>
+                      <Label htmlFor="branchCode">Branch Code *</Label>
+                      <Input
+                        id="branchCode"
+                        value={formData.branch.code}
+                        onChange={(e) => handleInputChange('branch.code', e.target.value)}
+                        placeholder="Enter branch code"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="branchEmail">Email *</Label>
+                      <Input
+                        id="branchEmail"
+                        type="email"
+                        value={formData.branch.email}
+                        onChange={(e) => handleInputChange('branch.email', e.target.value)}
+                        placeholder="Enter email address"
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="branchPhone">Phone *</Label>
+                      <Input
+                        id="branchPhone"
+                        value={formData.branch.phone}
+                        onChange={(e) => handleInputChange('branch.phone', e.target.value)}
+                        placeholder="Enter phone number"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="addressLine1">Address Line 1 *</Label>
+                    <Input
+                      id="addressLine1"
+                      value={formData.branch.address.line1}
+                      onChange={(e) => handleInputChange('branch.address.line1', e.target.value)}
+                      placeholder="Enter address line 1"
+                      required
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="area">Area</Label>
+                      <Input
+                        id="area"
+                        value={formData.branch.address.area}
+                        onChange={(e) => handleInputChange('branch.address.area', e.target.value)}
+                        placeholder="Enter area"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="city">City *</Label>
+                      <Input
+                        id="city"
+                        value={formData.branch.address.city}
+                        onChange={(e) => handleInputChange('branch.address.city', e.target.value)}
+                        placeholder="Enter city"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="state">State *</Label>
                       <Select
-                        value={formData.manager_id}
-                        onValueChange={(value) => setFormData({ ...formData, manager_id: value })}
-                        disabled={isLoadingManagers}
+                        value={formData.branch.address.state}
+                        onValueChange={(value) => handleInputChange('branch.address.state', value)}
                       >
                         <SelectTrigger>
-                          <SelectValue placeholder={isLoadingManagers ? "Loading branch managers..." : "Select a branch manager"} />
+                          <SelectValue placeholder="Select state" />
                         </SelectTrigger>
                         <SelectContent>
-                          {availableManagers.length > 0 ? (
-                            availableManagers.map((manager) => (
-                              <SelectItem key={manager.id} value={manager.id}>
-                                {manager.name}
-                              </SelectItem>
-                            ))
-                          ) : (
-                            <div className="p-4 text-center text-gray-500">
-                              <p className="text-sm">No branch managers available</p>
-                            </div>
-                          )}
+                          {availableStates.map((state) => (
+                            <SelectItem key={state.id || state.name} value={state.name}>
+                              {state.name}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="pincode">Pincode *</Label>
+                      <Input
+                        id="pincode"
+                        value={formData.branch.address.pincode}
+                        onChange={(e) => handleInputChange('branch.address.pincode', e.target.value)}
+                        placeholder="Enter pincode"
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="country">Country</Label>
+                      <Input
+                        id="country"
+                        value={formData.branch.address.country}
+                        onChange={(e) => handleInputChange('branch.address.country', e.target.value)}
+                        placeholder="Enter country"
+                        disabled
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="manager">Branch Manager</Label>
+                    <Select
+                      value={formData.manager_id}
+                      onValueChange={(value) => handleInputChange('manager_id', value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select branch manager" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {availableManagers.map((manager) => (
+                          <SelectItem key={manager.id} value={manager.id}>
+                            {manager.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                 </CardContent>
               </Card>
-              {/* Bottom Left Card - Course & Staff Assignments */}
+
+              {/* Course & Staff Assignments */}
               <Card className="h-fit">
                 <CardHeader>
                   <CardTitle className="flex items-center space-x-2 text-[#4F5077]">
+                    <Users className="w-5 h-5" />
                     <span>Course & Staff Assignments</span>
                   </CardTitle>
                 </CardHeader>
@@ -779,10 +547,7 @@ export default function EditBranch() {
                     <Checkbox
                       id="accessoriesAvailable"
                       checked={formData.assignments.accessories_available}
-                      onCheckedChange={(checked) => setFormData({
-                        ...formData,
-                        assignments: { ...formData.assignments, accessories_available: checked }
-                      })}
+                      onCheckedChange={(checked) => handleInputChange('assignments.accessories_available', checked)}
                     />
                     <Label htmlFor="accessoriesAvailable">Accessories Available at Branch</Label>
                   </div>
@@ -808,13 +573,7 @@ export default function EditBranch() {
                                     ? formData.assignments.courses.filter(c => c !== course.id)
                                     : [...formData.assignments.courses, course.id]
 
-                                  setFormData({
-                                    ...formData,
-                                    assignments: {
-                                      ...formData.assignments,
-                                      courses: updatedCourses
-                                    }
-                                  })
+                                  handleInputChange('assignments.courses', updatedCourses)
                                 }}
                               />
                               <Label htmlFor={`course-assign-${course.id}`} className="text-sm cursor-pointer">
@@ -841,13 +600,7 @@ export default function EditBranch() {
                                 type="button"
                                 onClick={() => {
                                   const updatedCourses = formData.assignments.courses.filter(c => c !== courseId)
-                                  setFormData({
-                                    ...formData,
-                                    assignments: {
-                                      ...formData.assignments,
-                                      courses: updatedCourses
-                                    }
-                                  })
+                                  handleInputChange('assignments.courses', updatedCourses)
                                 }}
                                 className="ml-2 hover:text-red-600"
                               >
@@ -881,13 +634,7 @@ export default function EditBranch() {
                                     ? formData.assignments.branch_admins.filter(a => a !== admin.id)
                                     : [...formData.assignments.branch_admins, admin.id]
 
-                                  setFormData({
-                                    ...formData,
-                                    assignments: {
-                                      ...formData.assignments,
-                                      branch_admins: updatedAdmins
-                                    }
-                                  })
+                                  handleInputChange('assignments.branch_admins', updatedAdmins)
                                 }}
                               />
                               <Label htmlFor={`admin-${admin.id}`} className="text-sm cursor-pointer">
@@ -914,13 +661,7 @@ export default function EditBranch() {
                                 type="button"
                                 onClick={() => {
                                   const updatedAdmins = formData.assignments.branch_admins.filter(a => a !== adminId)
-                                  setFormData({
-                                    ...formData,
-                                    assignments: {
-                                      ...formData.assignments,
-                                      branch_admins: updatedAdmins
-                                    }
-                                  })
+                                  handleInputChange('assignments.branch_admins', updatedAdmins)
                                 }}
                                 className="ml-2 hover:text-red-600"
                               >
@@ -965,13 +706,7 @@ export default function EditBranch() {
                                     ? formData.operational_details.courses_offered.filter(c => c !== course.name)
                                     : [...formData.operational_details.courses_offered, course.name]
 
-                                  setFormData({
-                                    ...formData,
-                                    operational_details: {
-                                      ...formData.operational_details,
-                                      courses_offered: updatedCourses
-                                    }
-                                  })
+                                  handleInputChange('operational_details.courses_offered', updatedCourses)
                                 }}
                               />
                               <Label htmlFor={`course-offered-${course.id}`} className="text-sm cursor-pointer">
@@ -997,13 +732,7 @@ export default function EditBranch() {
                               type="button"
                               onClick={() => {
                                 const updatedCourses = formData.operational_details.courses_offered.filter(c => c !== course)
-                                setFormData({
-                                  ...formData,
-                                  operational_details: {
-                                    ...formData.operational_details,
-                                    courses_offered: updatedCourses
-                                  }
-                                })
+                                handleInputChange('operational_details.courses_offered', updatedCourses)
                               }}
                               className="ml-2 hover:text-red-600"
                             >
@@ -1172,36 +901,25 @@ export default function EditBranch() {
                     <Input
                       id="bankName"
                       value={formData.bank_details.bank_name}
-                      onChange={(e) => setFormData({
-                        ...formData,
-                        bank_details: { ...formData.bank_details, bank_name: e.target.value }
-                      })}
+                      onChange={(e) => handleInputChange('bank_details.bank_name', e.target.value)}
                       placeholder="Enter bank name"
                     />
                   </div>
-
                   <div className="space-y-2">
                     <Label htmlFor="accountNumber">Account Number</Label>
                     <Input
                       id="accountNumber"
                       value={formData.bank_details.account_number}
-                      onChange={(e) => setFormData({
-                        ...formData,
-                        bank_details: { ...formData.bank_details, account_number: e.target.value }
-                      })}
+                      onChange={(e) => handleInputChange('bank_details.account_number', e.target.value)}
                       placeholder="Enter account number"
                     />
                   </div>
-
                   <div className="space-y-2">
                     <Label htmlFor="upiId">UPI ID</Label>
                     <Input
                       id="upiId"
                       value={formData.bank_details.upi_id}
-                      onChange={(e) => setFormData({
-                        ...formData,
-                        bank_details: { ...formData.bank_details, upi_id: e.target.value }
-                      })}
+                      onChange={(e) => handleInputChange('bank_details.upi_id', e.target.value)}
                       placeholder="Enter UPI ID"
                     />
                   </div>
@@ -1212,7 +930,7 @@ export default function EditBranch() {
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => router.push("/dashboard/branches")}
+                  onClick={() => router.push("/branch-manager-dashboard/branches")}
                   className="px-6 py-2"
                 >
                   Cancel

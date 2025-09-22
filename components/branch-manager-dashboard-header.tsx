@@ -11,12 +11,13 @@ import { useState, useEffect, useRef } from "react"
 import { searchAPI, SearchResult, GlobalSearchResponse } from "@/lib/searchAPI"
 import SearchResults from "@/components/search-results"
 import NotificationDropdown from "@/components/notification-dropdown"
+import { BranchManagerAuth } from "@/lib/branchManagerAuth"
 
-interface DashboardHeaderProps {
+interface BranchManagerDashboardHeaderProps {
   currentPage?: string;
 }
 
-export default function DashboardHeader({ currentPage = "Dashboard" }: DashboardHeaderProps) {
+export default function BranchManagerDashboardHeader({ currentPage = "Dashboard" }: BranchManagerDashboardHeaderProps) {
   const router = useRouter();
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -120,13 +121,13 @@ export default function DashboardHeader({ currentPage = "Dashboard" }: Dashboard
     };
   }, []);
 
-  // Logout handler
+  // Get current branch manager
+  const currentUser = BranchManagerAuth.getCurrentUser();
+
+  // Handle logout
   const handleLogout = () => {
-    if (typeof window !== "undefined") {
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
-      router.replace("/login");
-    }
+    BranchManagerAuth.logout();
+    router.push('/branch-manager/login');
   };
 
   // Mobile navigation handler
@@ -179,50 +180,40 @@ export default function DashboardHeader({ currentPage = "Dashboard" }: Dashboard
                   <nav className="flex-1 p-6">
                     <div className="space-y-3">
                       <button
-                        onClick={() => handleMobileNavigation("/dashboard")}
+                        onClick={() => handleMobileNavigation("/branch-manager-dashboard")}
                         className={`w-full text-left px-4 py-3 rounded-lg hover:bg-gray-100/80 text-sm font-medium  transition-all duration-200 ${
-                          isActivePath("/dashboard") && pathname === "/dashboard"
-                            ? "bg-gradient-to-r from-yellow-50 to-yellow-100/50 text-yellow-800 border-l-3 border-yellow-400 shadow-sm"
+                          isActivePath("/branch-manager-dashboard") && pathname === "/branch-manager-dashboard"
+                            ? "bg-gradient-to-r from-blue-50 to-blue-100/50 text-blue-800 border-l-3 border-blue-400 shadow-sm"
                             : "text-gray-700 hover:text-gray-900"
                         }`}
                       >
                         Dashboard
                       </button>
                       <button
-                        onClick={() => handleMobileNavigation("/dashboard/branches")}
+                        onClick={() => handleMobileNavigation("/branch-manager-dashboard/branches")}
                         className={`w-full text-left px-4 py-3 rounded-lg hover:bg-gray-100/80 text-sm font-medium transition-all duration-200 ${
-                          isActivePath("/dashboard/branches")
-                            ? "bg-gradient-to-r from-yellow-50 to-yellow-100/50 text-yellow-800 border-l-3 border-yellow-400 shadow-sm"
+                          isActivePath("/branch-manager-dashboard/branches")
+                            ? "bg-gradient-to-r from-blue-50 to-blue-100/50 text-blue-800 border-l-3 border-blue-400 shadow-sm"
                             : "text-gray-700 hover:text-gray-900"
                         }`}
                       >
-                        Branches
+                        Branch Info
                       </button>
                       <button
-                        onClick={() => handleMobileNavigation("/dashboard/coaches")}
+                        onClick={() => handleMobileNavigation("/branch-manager-dashboard/coaches")}
                         className={`w-full text-left px-4 py-3 rounded-lg hover:bg-gray-100/80 text-sm font-medium transition-all duration-200 ${
-                          isActivePath("/dashboard/coaches")
-                            ? "bg-gradient-to-r from-yellow-50 to-yellow-100/50 text-yellow-800 border-l-3 border-yellow-400 shadow-sm"
+                          isActivePath("/branch-manager-dashboard/coaches")
+                            ? "bg-gradient-to-r from-blue-50 to-blue-100/50 text-blue-800 border-l-3 border-blue-400 shadow-sm"
                             : "text-gray-700 hover:text-gray-900"
                         }`}
                       >
                         Masters
                       </button>
                       <button
-                        onClick={() => handleMobileNavigation("/dashboard/branch-managers")}
+                        onClick={() => handleMobileNavigation("/branch-manager-dashboard/students")}
                         className={`w-full text-left px-4 py-3 rounded-lg hover:bg-gray-100/80 text-sm font-medium transition-all duration-200 ${
-                          isActivePath("/dashboard/branch-managers")
-                            ? "bg-gradient-to-r from-yellow-50 to-yellow-100/50 text-yellow-800 border-l-3 border-yellow-400 shadow-sm"
-                            : "text-gray-700 hover:text-gray-900"
-                        }`}
-                      >
-                        Branch Managers
-                      </button>
-                      <button
-                        onClick={() => handleMobileNavigation("/dashboard/students")}
-                        className={`w-full text-left px-4 py-3 rounded-lg hover:bg-gray-100/80 text-sm font-medium transition-all duration-200 ${
-                          isActivePath("/dashboard/students")
-                            ? "bg-gradient-to-r from-yellow-50 to-yellow-100/50 text-yellow-800 border-l-3 border-yellow-400 shadow-sm"
+                          isActivePath("/branch-manager-dashboard/students")
+                            ? "bg-gradient-to-r from-blue-50 to-blue-100/50 text-blue-800 border-l-3 border-blue-400 shadow-sm"
                             : "text-gray-700 hover:text-gray-900"
                         }`}
                       >
@@ -230,10 +221,10 @@ export default function DashboardHeader({ currentPage = "Dashboard" }: Dashboard
                       </button>
 
                       <button
-                        onClick={() => handleMobileNavigation("/dashboard/courses")}
+                        onClick={() => handleMobileNavigation("/branch-manager-dashboard/courses")}
                         className={`w-full text-left px-4 py-3 rounded-lg hover:bg-gray-100/80 text-sm font-medium transition-all duration-200 ${
-                          isActivePath("/dashboard/courses")
-                            ? "bg-gradient-to-r from-yellow-50 to-yellow-100/50 text-yellow-800 border-l-3 border-yellow-400 shadow-sm"
+                          isActivePath("/branch-manager-dashboard/courses")
+                            ? "bg-gradient-to-r from-blue-50 to-blue-100/50 text-blue-800 border-l-3 border-blue-400 shadow-sm"
                             : "text-gray-700 hover:text-gray-900"
                         }`}
                       >
@@ -243,26 +234,26 @@ export default function DashboardHeader({ currentPage = "Dashboard" }: Dashboard
                       <div className="px-3 py-2">
                         <p className="text-sm font-medium text-gray-500 mb-2">Attendance</p>
                         <button
-                          onClick={() => handleMobileNavigation("/dashboard/attendance/students")}
+                          onClick={() => handleMobileNavigation("/branch-manager-dashboard/attendance/students")}
                           className={`w-full text-left px-3 py-1 rounded-md hover:bg-gray-100 text-sm text-gray-600 ${
-                            isActivePath("/dashboard/attendance/students") ? "bg-yellow-50 text-yellow-700" : ""
+                            isActivePath("/branch-manager-dashboard/attendance/students") ? "bg-blue-50 text-blue-700" : ""
                           }`}
                         >
                           Student Attendance
                         </button>
                         <button
-                          onClick={() => handleMobileNavigation("/dashboard/attendance/coaches")}
+                          onClick={() => handleMobileNavigation("/branch-manager-dashboard/attendance/coaches")}
                           className={`w-full text-left px-3 py-1 rounded-md hover:bg-gray-100 text-sm text-gray-600 ${
-                            isActivePath("/dashboard/attendance/coaches") ? "bg-yellow-50 text-yellow-700" : ""
+                            isActivePath("/branch-manager-dashboard/attendance/coaches") ? "bg-blue-50 text-blue-700" : ""
                           }`}
                         >
                           Coach Attendance
                         </button>
                       </div>
                       <button
-                        onClick={() => handleMobileNavigation("/dashboard/reports")}
+                        onClick={() => handleMobileNavigation("/branch-manager-dashboard/reports")}
                         className={`w-full text-left px-3 py-2 rounded-md hover:bg-gray-100 text-sm ${
-                          isActivePath("/dashboard/reports") ? "bg-yellow-50 text-yellow-700" : ""
+                          isActivePath("/branch-manager-dashboard/reports") ? "bg-blue-50 text-blue-700" : ""
                         }`}
                       >
                         Reports
@@ -270,9 +261,9 @@ export default function DashboardHeader({ currentPage = "Dashboard" }: Dashboard
                       <div className="px-3 py-2">
                         <p className="text-sm font-medium text-gray-500 mb-2">More</p>
                         <button
-                          onClick={() => handleMobileNavigation("/dashboard/payment-tracking")}
+                          onClick={() => handleMobileNavigation("/branch-manager-dashboard/payment-tracking")}
                           className={`w-full text-left px-3 py-1 rounded-md hover:bg-gray-100 text-sm text-gray-600 ${
-                            isActivePath("/dashboard/payment-tracking") ? "bg-yellow-50 text-yellow-700" : ""
+                            isActivePath("/branch-manager-dashboard/payment-tracking") ? "bg-blue-50 text-blue-700" : ""
                           }`}
                         >
                           Payment Tracking
@@ -287,151 +278,131 @@ export default function DashboardHeader({ currentPage = "Dashboard" }: Dashboard
 
             <nav className="hidden lg:flex items-center space-x-5 xl:space-x-4">
               <button
-                onClick={() => router.push("/dashboard")}
+                onClick={() => router.push("/branch-manager-dashboard")}
                 className={`pb-2 px-1 text-sm font-semibold whitespace-nowrap cursor-pointer border-b-2 transition-all duration-300 hover:scale-105 ${
-                  pathname === "/dashboard"
-                    ? "text-gray-900 border-yellow-400 shadow-sm items-center"
+                  pathname === "/branch-manager-dashboard"
+                    ? "text-gray-900 border-blue-400 shadow-sm items-center"
                     : "text-gray-600 hover:text-gray-900 border-transparent hover:border-gray-300"
                 }`}
               >
                 Dashboard
               </button>
               <button
-                onClick={() => router.push("/dashboard/branches")}
+                onClick={() => router.push("/branch-manager-dashboard/branches")}
                 className={`pb-2 px-1 text-sm font-semibold whitespace-nowrap cursor-pointer border-b-2 transition-all duration-300 hover:scale-105 ${
-                  isActivePath("/dashboard/branches")
-                    ? "text-gray-900 border-yellow-400 shadow-sm"
+                  isActivePath("/branch-manager-dashboard/branches")
+                    ? "text-gray-900 border-blue-400 shadow-sm"
                     : "text-gray-600 hover:text-gray-900 border-transparent hover:border-gray-300"
                 }`}
               >
-                Branches
+                Branch Info
               </button>
               <button
-                onClick={() => router.push("/dashboard/coaches")}
+                onClick={() => router.push("/branch-manager-dashboard/coaches")}
                 className={`pb-2 px-1 text-sm font-semibold whitespace-nowrap cursor-pointer border-b-2 transition-all duration-300 hover:scale-105 ${
-                  isActivePath("/dashboard/coaches")
-                    ? "text-gray-900 border-yellow-400 shadow-sm"
+                  isActivePath("/branch-manager-dashboard/coaches")
+                    ? "text-gray-900 border-blue-400 shadow-sm"
                     : "text-gray-600 hover:text-gray-900 border-transparent hover:border-gray-300"
                 }`}
               >
                 Masters
               </button>
               <button
-                onClick={() => router.push("/dashboard/branch-managers")}
+                onClick={() => router.push("/branch-manager-dashboard/students")}
                 className={`pb-2 px-1 text-sm font-semibold whitespace-nowrap cursor-pointer border-b-2 transition-all duration-300 hover:scale-105 ${
-                  isActivePath("/dashboard/branch-managers")
-                    ? "text-gray-900 border-yellow-400 shadow-sm"
-                    : "text-gray-600 hover:text-gray-900 border-transparent hover:border-gray-300"
-                }`}
-              >
-                Branch Managers
-              </button>
-              <button
-                onClick={() => router.push("/dashboard/students")}
-                className={`pb-2 px-1 text-sm font-semibold whitespace-nowrap cursor-pointer border-b-2 transition-all duration-300 hover:scale-105 ${
-                  isActivePath("/dashboard/students")
-                    ? "text-gray-900 border-yellow-400 shadow-sm"
+                  isActivePath("/branch-manager-dashboard/students")
+                    ? "text-gray-900 border-blue-400 shadow-sm"
                     : "text-gray-600 hover:text-gray-900 border-transparent hover:border-gray-300"
                 }`}
               >
                 Students
               </button>
-
               <button
-                onClick={() => router.push("/dashboard/courses")}
+                onClick={() => router.push("/branch-manager-dashboard/courses")}
                 className={`pb-2 px-1 text-sm font-semibold whitespace-nowrap cursor-pointer border-b-2 transition-all duration-300 hover:scale-105 ${
-                  isActivePath("/dashboard/courses")
-                    ? "text-gray-900 border-yellow-400 shadow-sm"
+                  isActivePath("/branch-manager-dashboard/courses")
+                    ? "text-gray-900 border-blue-400 shadow-sm"
                     : "text-gray-600 hover:text-gray-900 border-transparent hover:border-gray-300"
                 }`}
               >
                 Courses
               </button>
 
+              {/* More Dropdown */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className={`pb-2 px-1 text-sm font-semibold whitespace-nowrap flex items-center cursor-pointer border-b-2 transition-all duration-300 hover:scale-105 ${
-                    isActivePath("/dashboard/attendance")
-                      ? "text-gray-900 border-yellow-400 shadow-sm"
-                      : "text-gray-600 hover:text-gray-900 border-transparent hover:border-gray-300"
-                  }`}>
-                    Attendance
-                    <ChevronDown className="w-3 h-3 ml-1 transition-transform duration-200 group-hover:rotate-180" />
-                  </button>
+                  <Button
+                    variant="ghost"
+                    className="pb-2 px-1 text-sm font-semibold whitespace-nowrap cursor-pointer border-b-2 border-transparent hover:border-gray-300 text-gray-600 hover:text-gray-900 transition-all duration-300 hover:scale-105"
+                  >
+                    More
+                    <ChevronDown className="w-3 h-3 ml-1" />
+                  </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent className="bg-white/95 backdrop-blur-md border border-gray-200/50 shadow-xl rounded-lg p-1 overflow-hidden">
-                  <DropdownMenuItem
-                    onClick={() => router.push("/dashboard/attendance/students")}
-                    className="hover:bg-gray-100/80 rounded-md transition-colors duration-200 font-medium text-gray-700 hover:text-gray-900"
-                  >
-                    Student Attendance
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => router.push("/dashboard/attendance/coaches")}
-                    className="hover:bg-gray-100/80 rounded-md transition-colors duration-200 font-medium text-gray-700 hover:text-gray-900"
-                  >
-                    Coach Attendance
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-              <button
-                onClick={() => router.push("/dashboard/reports")}
-                className={`pb-2 px-1 text-sm font-semibold whitespace-nowrap cursor-pointer border-b-2 transition-all duration-300 hover:scale-105 ${
-                  isActivePath("/dashboard/reports")
-                    ? "text-gray-900 border-yellow-400 shadow-sm"
-                    : "text-gray-600 hover:text-gray-900 border-transparent hover:border-gray-300"
-                }`}
-              >
-                Reports
-              </button>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <button className="mb-3 text-gray-600 hover:text-gray-800 p-2 cursor-pointer rounded-lg hover:bg-gray-100/80 transition-all duration-200 hover:shadow-sm">
-                    <MoreVertical className="w-5 h-5" />
-                  </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="bg-white/95 backdrop-blur-md border border-gray-200/50 shadow-xl rounded-lg p-1 overflow-hidden">
-                  <DropdownMenuItem
-                    onClick={() => router.push("/dashboard/categories")}
-                    className="hover:bg-gray-100/80 rounded-md transition-colors duration-200 font-medium text-gray-700 hover:text-gray-900"
-                  >
-                    Categories Management
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => router.push("/dashboard/payment-tracking")}
-                    className="hover:bg-gray-100/80 rounded-md transition-colors duration-200 font-medium text-gray-700 hover:text-gray-900"
-                  >
-                    Payment Tracking
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
+                <DropdownMenuPortal>
+                  <DropdownMenuContent align="start" className="w-48 bg-white/95 backdrop-blur-md border border-gray-200/50 shadow-lg">
+                    <DropdownMenuItem
+                      onClick={() => router.push("/branch-manager-dashboard/attendance/students")}
+                      className="cursor-pointer hover:bg-gray-100/80 transition-colors"
+                    >
+                      Student Attendance
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => router.push("/branch-manager-dashboard/attendance/coaches")}
+                      className="cursor-pointer hover:bg-gray-100/80 transition-colors"
+                    >
+                      Coach Attendance
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => router.push("/branch-manager-dashboard/reports")}
+                      className="cursor-pointer hover:bg-gray-100/80 transition-colors"
+                    >
+                      Reports
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => router.push("/branch-manager-dashboard/payment-tracking")}
+                      className="cursor-pointer hover:bg-gray-100/80 transition-colors"
+                    >
+                      Payment Tracking
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenuPortal>
               </DropdownMenu>
             </nav>
           </div>
 
-          {/* Search and User Controls */}
-          <div className="flex items-center space-x-3 lg:space-x-2 flex-shrink-0">
-            <div className="relative hidden xl:block" ref={searchContainerRef}>
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-4 h-4" />
-              <Input
-                placeholder="Try searching: User Name, Course Name, User ID"
-                className="pl-10 w-64 xl:w-80 bg-gray-50/80 border-gray-200/60 focus:bg-white focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400/20 transition-all duration-200 rounded-lg shadow-sm"
-                value={searchQuery}
-                onChange={handleSearchChange}
-                onKeyDown={handleSearchKeyPress}
-              />
+          {/* Search and Actions */}
+          <div className="flex items-center space-x-3 lg:space-x-4 min-w-0">
+            {/* Search */}
+            <div className="relative hidden lg:block" ref={searchContainerRef}>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <Input
+                  type="text"
+                  placeholder="Search students, coaches, courses..."
+                  className="pl-10 pr-4 py-2 w-64 xl:w-80 bg-gray-50/80 border-gray-200/60 focus:bg-white focus:border-blue-300 transition-all duration-200 rounded-lg text-sm"
+                  value={searchQuery}
+                  onChange={handleSearchChange}
+                  onKeyDown={handleSearchKeyPress}
+                />
+              </div>
+
+              {/* Search Results */}
               {showSearchResults && (
                 <SearchResults
                   results={searchResults}
                   isLoading={isSearching}
-                  query={searchQuery}
                   totalResults={totalResults}
                   onClose={handleCloseSearch}
+                  searchQuery={searchQuery}
                 />
               )}
             </div>
 
+            {/* Notifications */}
             <NotificationDropdown />
 
+            {/* User Profile Dropdown */}
             <div className="relative z-[1000]">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -439,38 +410,38 @@ export default function DashboardHeader({ currentPage = "Dashboard" }: Dashboard
                     variant="ghost"
                     className="flex border border-gray-200 items-center space-x-2 hover:bg-gray-100/80 rounded-lg px-2 py-2 transition-all duration-200 hover:shadow-sm"
                   >
-                    <Avatar className="w-6 h-6 ring-2 ring-gray-200/50 hover:ring-yellow-400/30 transition-all duration-200">
+                    <Avatar className="w-6 h-6 ring-2 ring-gray-200/50 hover:ring-blue-400/30 transition-all duration-200">
                       <AvatarImage src="/placeholder.svg" />
-                      <AvatarFallback className="bg-gradient-to-br from-yellow-400 to-yellow-500 text-white font-semibold text-xs">SA</AvatarFallback>
+                      <AvatarFallback className="bg-gradient-to-br from-blue-400 to-blue-500 text-white font-semibold text-xs">BM</AvatarFallback>
                     </Avatar>
-                    <span className="text-xs font-semibold text-gray-800 hidden xl:inline">Super admin</span>
+                    <span className="text-xs font-semibold text-gray-800 hidden xl:inline">Branch Manager</span>
                     <ChevronDown className="w-3 h-3 text-gray-600 transition-transform duration-200 group-hover:rotate-180" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuPortal>
-                  <DropdownMenuContent
-                    align="end"
-                    className="w-56 z-[1000] bg-white/95 backdrop-blur-md border border-gray-200/50 shadow-xl rounded-lg p-2 overflow-hidden"
-                    sideOffset={8}
-                  >
+                  <DropdownMenuContent align="end" className="w-56 bg-white/95 backdrop-blur-md border border-gray-200/50 shadow-lg">
+                    <div className="px-3 py-2 border-b border-gray-100">
+                      <p className="text-sm font-medium text-gray-900">{currentUser?.full_name || 'Branch Manager'}</p>
+                      <p className="text-xs text-gray-500">{currentUser?.email || 'manager@branch.com'}</p>
+                      <p className="text-xs text-blue-600">{currentUser?.branch_name || 'Main Branch'}</p>
+                    </div>
                     <DropdownMenuItem
-                      onClick={() => router.push("/dashboard/profile")}
-                      className="cursor-pointer hover:bg-gray-100/80 rounded-md px-4 py-3 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors duration-200"
+                      onClick={() => router.push("/branch-manager-dashboard/profile")}
+                      className="cursor-pointer hover:bg-gray-100/80 transition-colors"
                     >
-                      Profile
+                      Profile Settings
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                      onClick={() => router.push("/dashboard/settings")}
-                      className="cursor-pointer hover:bg-gray-100/80 rounded-md px-4 py-3 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors duration-200"
+                      onClick={() => router.push("/branch-manager-dashboard/settings")}
+                      className="cursor-pointer hover:bg-gray-100/80 transition-colors"
                     >
-                      Settings
+                      Branch Settings
                     </DropdownMenuItem>
-                    <div className="h-px bg-gray-200/60 my-2"></div>
                     <DropdownMenuItem
                       onClick={handleLogout}
-                      className="cursor-pointer hover:bg-red-50/80 rounded-md px-4 py-3 text-sm font-medium text-red-600 hover:text-red-700 transition-colors duration-200"
+                      className="cursor-pointer hover:bg-red-50 text-red-600 transition-colors"
                     >
-                      Logout
+                      Sign Out
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenuPortal>
@@ -480,5 +451,5 @@ export default function DashboardHeader({ currentPage = "Dashboard" }: Dashboard
         </div>
       </div>
     </header>
-  );
+  )
 }

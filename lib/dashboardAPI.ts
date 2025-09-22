@@ -11,6 +11,16 @@ export interface DashboardStats {
   monthly_revenue: number
   pending_payments: number
   today_attendance: number
+  // Additional fields for branch manager dashboard
+  total_students?: number
+  total_coaches?: number
+  active_coaches?: number
+  total_branches?: number
+  active_branches?: number
+  total_courses?: number
+  total_enrollments?: number
+  this_month_enrollments?: number
+  last_month_enrollments?: number
 }
 
 export interface DashboardStatsResponse {
@@ -32,10 +42,27 @@ export interface Coach {
   }
   contact_info: {
     email: string
-    country_code: string
+    country_code?: string
     phone: string
   }
+  address_info?: {
+    line1: string
+    area: string
+    city: string
+    state: string
+    pincode: string
+    country: string
+  }
+  professional_info?: {
+    designation: string
+    education_qualification: string
+    professional_experience: string
+    certifications: string[]
+  }
   areas_of_expertise: string[]
+  branch_id?: string
+  assignment_details?: any
+  emergency_contact?: any
   full_name: string
   is_active: boolean
   created_at: string
@@ -44,7 +71,10 @@ export interface Coach {
 
 export interface CoachesResponse {
   coaches: Coach[]
-  total: number
+  total_count: number
+  skip: number
+  limit: number
+  message?: string
 }
 
 class DashboardAPI extends BaseAPI {
@@ -56,8 +86,18 @@ class DashboardAPI extends BaseAPI {
     if (branchId) {
       endpoint += `?branch_id=${branchId}`
     }
-    
+
     return await this.makeRequest(endpoint, {
+      method: 'GET',
+      token
+    })
+  }
+
+  /**
+   * Get dashboard statistics for branch manager (automatically filters by their branch)
+   */
+  async getBranchManagerDashboardStats(token: string): Promise<DashboardStatsResponse> {
+    return await this.makeRequest('/api/dashboard/stats', {
       method: 'GET',
       token
     })
@@ -83,7 +123,35 @@ class DashboardAPI extends BaseAPI {
     area_of_expertise?: string
   }): Promise<CoachesResponse> {
     let endpoint = '/api/coaches'
-    
+
+    if (params) {
+      const searchParams = new URLSearchParams()
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined) {
+          searchParams.append(key, value.toString())
+        }
+      })
+      if (searchParams.toString()) {
+        endpoint += `?${searchParams.toString()}`
+      }
+    }
+
+    return await this.makeRequest(endpoint, {
+      method: 'GET',
+      token
+    })
+  }
+
+  /**
+   * Get coaches for branch manager (automatically filters by their branch)
+   */
+  async getBranchManagerCoaches(token: string, params?: {
+    skip?: number
+    limit?: number
+    active_only?: boolean
+  }): Promise<CoachesResponse> {
+    let endpoint = '/api/coaches'
+
     if (params) {
       const searchParams = new URLSearchParams()
       Object.entries(params).forEach(([key, value]) => {

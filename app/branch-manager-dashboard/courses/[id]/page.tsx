@@ -27,8 +27,8 @@ import {
   AlertCircle,
   DollarSign
 } from "lucide-react"
-import DashboardHeader from "@/components/dashboard-header"
-import { TokenManager } from "@/lib/tokenManager"
+import BranchManagerDashboardHeader from "@/components/branch-manager-dashboard-header"
+import { BranchManagerAuth } from "@/lib/branchManagerAuth"
 
 interface CourseDetails {
   id: string
@@ -89,7 +89,7 @@ interface CourseReview {
   date: string
 }
 
-export default function CourseDetailPage() {
+export default function BranchManagerCourseDetailPage() {
   const params = useParams()
   const router = useRouter()
   const courseId = params.id as string
@@ -110,20 +110,20 @@ export default function CourseDetailPage() {
       setLoading(true)
       setError(null)
 
-      let token = TokenManager.getToken()
+      let token = BranchManagerAuth.getToken()
 
       // For development: if no token found, try to get one from the backend
       if (!token) {
         console.log("No token found, attempting to get development token...")
         try {
-          const loginResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/superadmin/login`, {
+          const loginResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/branch-manager/login`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-              email: 'admin@marshalats.com',
-              password: 'admin123'
+              email: 'manager@marshalats.com',
+              password: 'manager123'
             })
           })
 
@@ -133,7 +133,7 @@ export default function CourseDetailPage() {
             console.log("✅ Development token obtained")
 
             // Store the token for future use
-            TokenManager.storeAuthData({
+            BranchManagerAuth.storeAuthData({
               access_token: token,
               token_type: 'bearer',
               expires_in: loginData.data.expires_in,
@@ -141,7 +141,7 @@ export default function CourseDetailPage() {
                 id: loginData.data.id,
                 full_name: loginData.data.full_name,
                 email: loginData.data.email,
-                role: 'superadmin'
+                role: 'branch_manager'
               }
             })
           } else {
@@ -317,11 +317,11 @@ export default function CourseDetailPage() {
   }
 
   const handleEdit = () => {
-    router.push(`/dashboard/courses/edit/${courseId}`)
+    router.push(`/branch-manager-dashboard/courses/edit/${courseId}`)
   }
 
   const handleBack = () => {
-    router.push('/dashboard/courses')
+    router.push('/branch-manager-dashboard/courses')
   }
 
   const getStatusColor = (status: string) => {
@@ -368,13 +368,13 @@ export default function CourseDetailPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <DashboardHeader />
+        <BranchManagerDashboardHeader />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="mb-6">
             <Skeleton className="h-8 w-48 mb-2" />
             <Skeleton className="h-4 w-96" />
           </div>
-          
+
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2 space-y-6">
               <Card>
@@ -388,7 +388,7 @@ export default function CourseDetailPage() {
                 </CardContent>
               </Card>
             </div>
-            
+
             <div className="space-y-6">
               <Card>
                 <CardHeader>
@@ -408,7 +408,7 @@ export default function CourseDetailPage() {
   if (error) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <DashboardHeader />
+        <BranchManagerDashboardHeader />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="text-center py-12">
             <BookOpen className="w-16 h-16 text-gray-400 mx-auto mb-4" />
@@ -435,8 +435,8 @@ export default function CourseDetailPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <DashboardHeader />
-      
+      <BranchManagerDashboardHeader />
+
       <div className="xl:px-12 mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
@@ -460,7 +460,7 @@ export default function CourseDetailPage() {
                 <h1 className="text-3xl font-bold text-[#4f5077]">
                   {course.name}
                 </h1>
-                <Badge 
+                <Badge
                   variant={course.is_active ? "default" : "secondary"}
                   className={course.is_active ? "bg-green-100 text-green-800 rounded" : "bg-red-100 text-red-800 rounded"}
                 >
@@ -476,7 +476,7 @@ export default function CourseDetailPage() {
                 )}
               </div>
             </div>
-            
+
             <Button onClick={handleEdit} className="bg-yellow-400 hover:bg-yellow-500 text-[#fff] text-sm">
               <Edit className="w-4 h-4 mr-2" />
               Edit Course
@@ -491,8 +491,8 @@ export default function CourseDetailPage() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center">
-                  
-                  <span className="text-[#4f5077]">Course Information</span> 
+
+                  <span className="text-[#4f5077]">Course Information</span>
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
@@ -648,8 +648,8 @@ export default function CourseDetailPage() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center">
-                  
-                 <span className="text-[#4f5077]">Course Curriculum ({courseModules.length} modules)</span> 
+
+                 <span className="text-[#4f5077]">Course Curriculum ({courseModules.length} modules)</span>
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -723,7 +723,7 @@ export default function CourseDetailPage() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center">
-                
+
                   <span className="text-[#4f5077]">Enrolled Students ({enrolledStudents.length})</span>
                 </CardTitle>
               </CardHeader>
@@ -793,7 +793,7 @@ export default function CourseDetailPage() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center">
-                  
+
                   <span className="text-[#4f5077]"> Student Reviews ({courseReviews.length})</span>
                 </CardTitle>
               </CardHeader>
@@ -946,7 +946,7 @@ export default function CourseDetailPage() {
                 <Button
                   variant="outline"
                   className="w-full justify-start text-[#7D8592]"
-                  onClick={() => router.push(`/dashboard/courses/edit/${courseId}`)}
+                  onClick={() => router.push(`/branch-manager-dashboard/courses/edit/${courseId}`)}
                 >
                   <Edit className="w-4 h-4 mr-2 text-[#7D8592]" />
                   Edit Course Details
@@ -955,7 +955,7 @@ export default function CourseDetailPage() {
                 <Button
                   variant="outline"
                   className="w-full justify-start text-[#7D8592]"
-                  onClick={() => router.push(`/dashboard/students?course_id=${courseId}`)}
+                  onClick={() => router.push(`/branch-manager-dashboard/students?course_id=${courseId}`)}
                 >
                   <Users className="w-4 h-4 mr-2 text-[#7D8592]" />
                   View Enrolled Students
@@ -964,7 +964,7 @@ export default function CourseDetailPage() {
                 <Button
                   variant="outline"
                   className="w-full justify-start text-[#7D8592]"
-                  onClick={() => router.push(`/dashboard/enrollments?course_id=${courseId}`)}
+                  onClick={() => router.push(`/branch-manager-dashboard/enrollments?course_id=${courseId}`)}
                 >
                   <BookOpen className="w-4 h-4 mr-2 text-[#7D8592]" />
                   Manage Enrollments
@@ -973,7 +973,7 @@ export default function CourseDetailPage() {
                 <Button
                   variant="outline"
                   className="w-full justify-start text-[#7D8592]"
-                  onClick={() => router.push(`/dashboard/curriculum?course_id=${courseId}`)}
+                  onClick={() => router.push(`/branch-manager-dashboard/curriculum?course_id=${courseId}`)}
                 >
                   <FileText className="w-4 h-4 mr-2 text-[#7D8592]" />
                   Edit Curriculum
@@ -982,7 +982,7 @@ export default function CourseDetailPage() {
                 <Button
                   variant="outline"
                   className="w-full justify-start text-[#7D8592]"
-                  onClick={() => router.push(`/dashboard/analytics?course_id=${courseId}`)}
+                  onClick={() => router.push(`/branch-manager-dashboard/analytics?course_id=${courseId}`)}
                 >
                   <TrendingUp className="w-4 h-4 mr-2 text-[#7D8592]"/>
                   View Analytics

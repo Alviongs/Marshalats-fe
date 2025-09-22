@@ -9,13 +9,20 @@ body {
   margin: 0;
   overflow-x: hidden;;
 }
-.roboto {
+.roboto{
   font-family: var(--font-roboto), sans-serif;
 }
-
+.inter{
+  font-family: var(--font-inter), sans-serif;
+}
+.bebasNeue{
+  font-family: var(--font-bebas);
+}
 :root {
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
+  font-family:var(--font-roboto), sans-serif;
+  font-family: var(--font-bebas), sans-serif;
   --card: oklch(1 0 0);
     font-family: var(--font-roboto), sans-serif;
   --card-foreground: oklch(0.145 0 0);
@@ -87,7 +94,6 @@ body {
 
 @theme inline {
   --font-sans: var(--font-poppins);
-  --font-mono: var(--font-geist-mono);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);

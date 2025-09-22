@@ -209,7 +209,7 @@ export default function SuperAdminDashboard() {
         {/* Dashboard Header with Action Buttons */}
         <div className="flex flex-col lg:flex-row justify-between items-start py-8 mb-4 lg:items-center  gap-4">
           <h1 className="text-2xl font-medium text-gray-600">Dashboard</h1>
-          <div className="flex flex-wrap gap-2 lg:gap-3 text-[#6B7A99]">
+          <div className="flex flex-wrap gap-2 lg:gap-3 text-[#6B7A99] roboto">
             <Button
               variant="outline"
               className="flex items-center space-x-1 bg-transparent text-sm"
@@ -236,6 +236,15 @@ export default function SuperAdminDashboard() {
               <img src={add_icon.src} alt="" className="w-8 h-8" />
               <span className="hidden sm:inline">Add Coach</span>
               <span className="sm:hidden">Coach</span>
+            </Button>
+            <Button
+              variant="outline"
+              className="flex items-center space-x-1 bg-transparent text-sm"
+              onClick={() => router.push("/dashboard/branch-managers/create")}
+            >
+              <img src={add_icon.src} alt="" className="w-8 h-8" />
+              <span className="hidden sm:inline">Add Branch Manager</span>
+              <span className="sm:hidden">Manager</span>
             </Button>
             <Button
               variant="outline"

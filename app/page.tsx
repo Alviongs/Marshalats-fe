@@ -17,7 +17,7 @@ export default function HomePage() {
       />
 
       {/* Content Overlay - centered */}
-      <div className="relative z-20 min-h-screen flex flex-col items-center justify-center xl:justify-start xl:mt-[60px] px-4 text-center">
+      <div className="relative z-20 min-h-screen flex  flex-col items-center justify-center xl:justify-start xl:mt-[60px] px-4 text-center">
         <div className="mb-[15px]">
           <Image src={footer_logo} alt="Logo" height={200} width={200} className="w-[100px] h-[100px] md:w-[200px] md:h-[200px]" />
         </div>
@@ -26,7 +26,7 @@ export default function HomePage() {
           {"TRAIN LIKE A WARRIOR, CONQUER LIKE A CHAMPION."}
         </h1>
 
-        <p className="text-[14px] md:text-xl font-semibold text-black mb-5 max-w-3xl">
+        <p className="text-[14px] md:text-xl font-semibold text-black mb-5 max-w-3xl leading-tight">
           {"STRENGTH OF THE BODY, DISCIPLINE OF THE MIND, SPIRIT OF A WARRIOR."}
         </p>
 
