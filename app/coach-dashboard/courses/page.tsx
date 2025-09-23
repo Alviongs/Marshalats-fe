@@ -13,14 +13,56 @@ interface Course {
   id: string
   course_name: string
   course_code?: string
+  name?: string // For compatibility
+  title?: string // For compatibility
   description?: string
   difficulty_level?: string
   status: string
   assigned_date: string
   total_students?: number
   active_students?: number
+  enrolled_students?: number // For compatibility
   branch_name?: string
+  branch_id?: string
   category?: string
+  pricing_amount?: number
+  currency?: string
+  offers_certification?: boolean
+  is_instructor?: boolean
+  is_assigned?: boolean
+  // Additional fields from enhanced API response
+  martial_art_style_id?: string
+  category_id?: string
+  instructor_id?: string
+  student_requirements?: {
+    max_students: number
+    min_age: number
+    max_age: number
+    prerequisites: string[]
+  }
+  course_content?: {
+    syllabus: string
+    equipment_required: string[]
+  }
+  media_resources?: {
+    course_image_url?: string
+    promo_video_url?: string
+  }
+  pricing?: {
+    currency: string
+    amount: number
+    branch_specific_pricing: boolean
+  }
+  settings?: {
+    offers_certification: boolean
+    active: boolean
+  }
+  branch_assignments?: Array<{
+    branch_id: string
+    branch_name: string
+  }>
+  created_at?: string
+  updated_at?: string
 }
 
 export default function AssignedCoursesPage() {
@@ -210,17 +252,29 @@ export default function AssignedCoursesPage() {
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
                             <CardTitle className="text-lg font-semibold text-gray-900 mb-2">
-                              {course.course_name}
+                              {course.course_name || course.name || course.title || "Unknown Course"}
                             </CardTitle>
                             {course.course_code && (
                               <p className="text-sm text-gray-500 mb-2">Code: {course.course_code}</p>
                             )}
+                            {course.pricing_amount && (
+                              <p className="text-sm font-medium text-green-600 mb-2">
+                                {course.currency || "INR"} {course.pricing_amount.toLocaleString()}
+                              </p>
+                            )}
                           </div>
-                          <Badge className={getStatusColor(course.status)}>
-                            {course.status}
-                          </Badge>
+                          <div className="flex flex-col items-end space-y-1">
+                            <Badge className={getStatusColor(course.status)}>
+                              {course.status}
+                            </Badge>
+                            {course.offers_certification && (
+                              <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                                Certified
+                              </Badge>
+                            )}
+                          </div>
                         </div>
-                        
+
                         {course.description && (
                           <p className="text-sm text-gray-600 line-clamp-2">{course.description}</p>
                         )}
@@ -252,12 +306,28 @@ export default function AssignedCoursesPage() {
                             </div>
                           )}
 
+                          {/* Role Information */}
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="text-gray-500">Role:</span>
+                            <span className="font-medium">
+                              {course.is_instructor ? "Instructor" : "Assigned"}
+                            </span>
+                          </div>
+
+                          {/* Student Requirements */}
+                          {course.student_requirements && (
+                            <div className="flex items-center justify-between text-sm">
+                              <span className="text-gray-500">Max Students:</span>
+                              <span className="font-medium">{course.student_requirements.max_students}</span>
+                            </div>
+                          )}
+
                           {/* Student Stats */}
                           <div className="flex items-center space-x-4 text-sm pt-2 border-t">
                             <div className="flex items-center space-x-1">
                               <Users className="w-4 h-4 text-blue-500" />
                               <span className="text-gray-600">
-                                {course.active_students || course.total_students || 0} students
+                                {course.active_students || course.total_students || course.enrolled_students || 0} students
                               </span>
                             </div>
                             <div className="flex items-center space-x-1">
