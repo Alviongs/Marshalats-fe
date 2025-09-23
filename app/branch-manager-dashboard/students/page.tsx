@@ -445,7 +445,7 @@ export default function BranchManagerStudentList() {
           throw new Error("Authentication token not found. Please login again.")
         }
 
-        const response = await fetch(`http://31.97.224.169:8003/api/users/${studentToDelete}`, {
+        const response = await fetch(`http://localhost:8003/api/users/${studentToDelete}`, {
           method: 'DELETE',
           headers: authHeaders
         })
