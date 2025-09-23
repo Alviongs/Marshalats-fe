@@ -61,7 +61,6 @@ export default function StudentDashboardLayout({
           studentName={studentName}
           onLogout={onLogout}
           isLoading={isLoading}
-          notificationCount={notificationCount}
         />
 
         {/* Main Content Area */}

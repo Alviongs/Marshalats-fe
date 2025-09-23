@@ -171,7 +171,6 @@ export default function StudentDashboard() {
     <StudentDashboardLayout
       studentName={studentData?.name || "Student"}
       onLogout={handleLogout}
-      notificationCount={3}
       pageTitle="Dashboard"
       pageDescription={`Welcome back, ${studentData?.name || "Student"}! Here's your training overview.`}
     >
