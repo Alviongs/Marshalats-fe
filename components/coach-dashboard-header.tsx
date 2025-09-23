@@ -3,8 +3,10 @@
 import { useState } from "react"
 import { useRouter, usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
-import { Menu, Home, BookOpen, User, Users, LogOut } from "lucide-react"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuPortal } from "@/components/ui/dropdown-menu"
+import { Menu, Home, BookOpen, User, Users, LogOut, Calendar, ClipboardList, TrendingUp, MessageSquare, Clock, ChevronDown, MoreVertical } from "lucide-react"
 
 interface CoachDashboardHeaderProps {
   currentPage?: string
@@ -21,13 +23,33 @@ export default function CoachDashboardHeader({
 
   // Mobile navigation handler
   const handleMobileNavigation = (path: string) => {
-    router.push(path)
-    setIsMobileMenuOpen(false)
+    try {
+      router.push(path)
+      setIsMobileMenuOpen(false)
+    } catch (error) {
+      console.error("Navigation error:", error)
+    }
+  }
+
+  // Desktop navigation handler
+  const handleDesktopNavigation = (path: string) => {
+    try {
+      router.push(path)
+    } catch (error) {
+      console.error("Navigation error:", error)
+    }
   }
 
   // Check if current path is active
-  const isActivePath = (path: string) => {
-    return pathname === path || pathname.startsWith(path)
+  const isActivePath = (path: string, exact: boolean = false) => {
+    if (exact) {
+      return pathname === path
+    }
+    // For non-exact matches, ensure we don't match partial paths incorrectly
+    if (path === "/coach-dashboard") {
+      return pathname === path
+    }
+    return pathname.startsWith(path + "/") || pathname === path
   }
 
   const handleLogout = () => {
@@ -50,108 +72,117 @@ export default function CoachDashboardHeader({
       name: "Dashboard",
       path: "/coach-dashboard",
       icon: Home,
-      exact: true
+      exact: true,
+      description: "Overview and statistics"
     },
     {
-      name: "Assigned Courses",
+      name: "My Courses",
       path: "/coach-dashboard/courses",
       icon: BookOpen,
-      exact: false
+      exact: false,
+      description: "Assigned courses"
     },
     {
       name: "Students",
       path: "/coach-dashboard/students",
       icon: Users,
-      exact: false
+      exact: false,
+      description: "Manage students"
+    },
+    {
+      name: "Attendance",
+      path: "/coach-dashboard/attendance",
+      icon: Calendar,
+      exact: false,
+      description: "Track attendance"
+    },
+    {
+      name: "Schedule",
+      path: "/coach-dashboard/schedule",
+      icon: Clock,
+      exact: false,
+      description: "Class schedule"
+    },
+    {
+      name: "Assessments",
+      path: "/coach-dashboard/assessments",
+      icon: ClipboardList,
+      exact: false,
+      description: "Student assessments"
+    },
+    {
+      name: "Reports",
+      path: "/coach-dashboard/reports",
+      icon: TrendingUp,
+      exact: false,
+      description: "Performance reports"
+    },
+    {
+      name: "Messages",
+      path: "/coach-dashboard/messages",
+      icon: MessageSquare,
+      exact: false,
+      description: "Communication"
     },
     {
       name: "Profile",
       path: "/coach-dashboard/profile",
       icon: User,
-      exact: false
+      exact: false,
+      description: "My profile"
     }
   ]
 
   return (
-    <header className="bg-white shadow-sm border-b sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
-          {/* Left side - Logo and Navigation */}
-          <div className="flex items-center space-x-8">
-            <div className="flex items-center">
-              <h1 className="text-2xl font-bold text-gray-900">Coach Dashboard</h1>
+    <header className="bg-white shadow-sm border border-gray-200/80 backdrop-blur-sm mx-4 xl:mx-12 mt-6 rounded-lg">
+      <div className="w-full px-4 lg:px-6 py-2">
+        <div className="flex justify-between items-center h-auto roboto">
+          {/* Logo and Navigation */}
+          <div className="flex items-center space-x-2 min-w-0">
+            <div className="flex-shrink-0">
+              <img
+                src="/footer_logo.png"
+                alt="Logo"
+                className="xl:w-[95px] w-[80px] h-auto"
+              />
             </div>
 
-            {/* Desktop Navigation */}
-            <nav className="hidden lg:flex items-center space-x-6 xl:space-x-8">
-              {navigationItems.map((item) => {
-                const Icon = item.icon
-                const isActive = item.exact 
-                  ? pathname === item.path 
-                  : isActivePath(item.path)
-                
-                return (
-                  <button
-                    key={item.path}
-                    onClick={() => router.push(item.path)}
-                    className={`pb-4 px-1 text-sm font-semibold whitespace-nowrap cursor-pointer border-b-2 transition-all duration-300 hover:scale-105 flex items-center space-x-2 ${
-                      isActive
-                        ? "text-gray-900 border-yellow-400 shadow-sm"
-                        : "text-gray-600 hover:text-gray-900 border-transparent hover:border-gray-300"
-                    }`}
-                  >
-                    <Icon className="w-4 h-4" />
-                    <span>{item.name}</span>
-                  </button>
-                )
-              })}
-            </nav>
-          </div>
-
-          {/* Right side - User info and actions */}
-          <div className="flex items-center space-x-4">
-            <span className="text-sm text-gray-500 hidden sm:inline">Welcome, {coachName}</span>
-            
-            {/* Desktop Logout */}
-            <Button 
-              onClick={handleLogout}
-              variant="outline"
-              className="text-red-600 border-red-600 hover:bg-red-50 hidden sm:flex"
-            >
-              <LogOut className="w-4 h-4 mr-2" />
-              Logout
-            </Button>
-
-            {/* Mobile Menu */}
+            {/* Mobile Menu Button */}
             <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="lg:hidden">
-                  <Menu className="h-6 w-6" />
-                  <span className="sr-only">Open menu</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="lg:hidden hover:bg-gray-100/80 transition-colors duration-200 rounded-lg"
+                >
+                  <Menu className="w-5 h-5 text-gray-700" />
                 </Button>
               </SheetTrigger>
-              <SheetContent side="right" className="w-80">
+              <SheetContent side="left" className="w-64 p-0 bg-white/95 backdrop-blur-md border-r border-gray-200/50">
                 <div className="flex flex-col h-full">
-                  <div className="flex items-center justify-between p-4 border-b">
-                    <h2 className="text-lg font-semibold">Coach Menu</h2>
+                  <div className="p-4 border-b border-gray-200/60">
+                    <div className="flex items-center space-x-3">
+                      <img
+                        src="/footer_logo.png"
+                        alt="Logo"
+                        className="w-8 h-8"
+                      />
+                    </div>
                   </div>
-                  
-                  <nav className="flex-1 p-4">
-                    <div className="space-y-2">
+                  <nav className="flex-1 p-6">
+                    <div className="space-y-3">
                       {navigationItems.map((item) => {
                         const Icon = item.icon
-                        const isActive = item.exact 
-                          ? pathname === item.path 
-                          : isActivePath(item.path)
-                        
+                        const isActive = isActivePath(item.path, item.exact)
+
                         return (
                           <button
                             key={item.path}
                             onClick={() => handleMobileNavigation(item.path)}
-                            className={`w-full text-left px-4 py-3 rounded-lg hover:bg-gray-100/80 text-sm font-medium transition-all duration-200 flex items-center space-x-3 ${
+                            className={`w-full text-left px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 flex items-center space-x-3 ${
                               isActive
-                                ? "bg-gradient-to-r from-yellow-50 to-yellow-100/50 text-yellow-800 border-l-3 border-yellow-400 shadow-sm"
-                                : "text-gray-700 hover:text-gray-900"
+                                ? "bg-gradient-to-r from-yellow-50 to-yellow-100/50 text-yellow-800 border-l-4 border-yellow-400 shadow-sm"
+                                : "text-gray-700 hover:text-gray-900 hover:bg-gray-100/80"
                             }`}
                           >
                             <Icon className="w-5 h-5" />
@@ -163,12 +194,12 @@ export default function CoachDashboardHeader({
                   </nav>
 
                   {/* Mobile User Info and Logout */}
-                  <div className="p-4 border-t">
+                  <div className="p-4 border-t border-gray-200/60">
                     <div className="mb-4">
                       <p className="text-sm text-gray-500">Logged in as</p>
                       <p className="font-medium text-gray-900">{coachName}</p>
                     </div>
-                    <Button 
+                    <Button
                       onClick={handleLogout}
                       variant="outline"
                       className="w-full text-red-600 border-red-600 hover:bg-red-50"
@@ -180,6 +211,99 @@ export default function CoachDashboardHeader({
                 </div>
               </SheetContent>
             </Sheet>
+
+            <nav className="hidden lg:flex items-center space-x-5 xl:space-x-4">
+              {navigationItems.map((item) => {
+                const isActive = isActivePath(item.path, item.exact)
+
+                return (
+                  <button
+                    key={item.path}
+                    onClick={() => handleDesktopNavigation(item.path)}
+                    className={`pb-2 px-1 text-sm font-semibold whitespace-nowrap cursor-pointer border-b-2 transition-all duration-300 hover:scale-105 ${
+                      isActive
+                        ? "text-gray-900 border-yellow-400 shadow-sm items-center"
+                        : "text-gray-600 hover:text-gray-900 border-transparent hover:border-gray-300"
+                    }`}
+                  >
+                    {item.name}
+                  </button>
+                )
+              })}
+
+              {/* More Menu Dropdown */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="mb-3 text-gray-600 hover:text-gray-800 p-2 cursor-pointer rounded-lg hover:bg-gray-100/80 transition-all duration-200 hover:shadow-sm">
+                    <MoreVertical className="w-5 h-5" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="bg-white/95 backdrop-blur-md border border-gray-200/50 shadow-xl rounded-lg p-1 overflow-hidden">
+                  <DropdownMenuItem
+                    onClick={() => handleDesktopNavigation("/coach-dashboard/settings")}
+                    className="hover:bg-gray-100/80 rounded-md transition-colors duration-200 font-medium text-gray-700 hover:text-gray-900"
+                  >
+                    Settings
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => handleDesktopNavigation("/coach-dashboard/help")}
+                    className="hover:bg-gray-100/80 rounded-md transition-colors duration-200 font-medium text-gray-700 hover:text-gray-900"
+                  >
+                    Help & Support
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </nav>
+          </div>
+
+          {/* Right side - User Profile */}
+          <div className="flex items-center space-x-4">
+            <div className="relative z-[1000]">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    className="flex border border-gray-200 items-center space-x-2 hover:bg-gray-100/80 rounded-lg px-2 py-2 transition-all duration-200 hover:shadow-sm"
+                  >
+                    <Avatar className="w-6 h-6 ring-2 ring-gray-200/50 hover:ring-yellow-400/30 transition-all duration-200">
+                      <AvatarImage src="/placeholder.svg" />
+                      <AvatarFallback className="bg-gradient-to-br from-yellow-400 to-yellow-500 text-white font-semibold text-xs">
+                        {coachName.split(' ').map(n => n[0]).join('').toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="text-xs font-semibold text-gray-800 hidden xl:inline">{coachName}</span>
+                    <ChevronDown className="w-3 h-3 text-gray-600 transition-transform duration-200 group-hover:rotate-180" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuPortal>
+                  <DropdownMenuContent
+                    align="end"
+                    className="w-56 z-[1000] bg-white/95 backdrop-blur-md border border-gray-200/50 shadow-xl rounded-lg p-2 overflow-hidden"
+                    sideOffset={8}
+                  >
+                    <DropdownMenuItem
+                      onClick={() => handleDesktopNavigation("/coach-dashboard/profile")}
+                      className="cursor-pointer hover:bg-gray-100/80 rounded-md px-4 py-3 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors duration-200"
+                    >
+                      Profile
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => handleDesktopNavigation("/coach-dashboard/settings")}
+                      className="cursor-pointer hover:bg-gray-100/80 rounded-md px-4 py-3 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors duration-200"
+                    >
+                      Settings
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={handleLogout}
+                      className="cursor-pointer hover:bg-red-50 rounded-md px-4 py-3 text-sm font-medium text-red-600 hover:text-red-700 transition-colors duration-200"
+                    >
+                      <LogOut className="w-4 h-4 mr-2" />
+                      Logout
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenuPortal>
+              </DropdownMenu>
+            </div>
           </div>
         </div>
       </div>

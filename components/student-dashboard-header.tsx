@@ -15,7 +15,6 @@ import {
   TrendingUp,
   CreditCard,
   MessageSquare,
-  Settings,
   User,
   Edit,
   UserCog,
@@ -144,13 +143,6 @@ export default function StudentDashboardHeader({
       icon: MessageSquare,
       exact: false,
       description: "Communication center"
-    },
-    {
-      name: "Settings",
-      path: "/student-dashboard/settings",
-      icon: Settings,
-      exact: false,
-      description: "Account preferences"
     }
   ]
 
@@ -318,16 +310,7 @@ export default function StudentDashboardHeader({
                       </div>
                     </DropdownMenuItem>
 
-                    <DropdownMenuItem
-                      onClick={() => handleNavigation("/student-dashboard/settings")}
-                      className="cursor-pointer hover:bg-gradient-to-r hover:from-purple-50 hover:to-purple-100/50 rounded-lg px-4 py-3 text-sm font-medium text-gray-700 hover:text-purple-700 transition-all duration-200 flex items-center space-x-3 group focus:outline-none focus:ring-2 focus:ring-purple-400/50"
-                    >
-                      <UserCog className="w-4 h-4 group-hover:scale-110 transition-transform duration-200" />
-                      <div className="flex-1">
-                        <span>Account Settings</span>
-                        <p className="text-xs text-gray-500 group-hover:text-purple-600">Preferences & security</p>
-                      </div>
-                    </DropdownMenuItem>
+
 
                     <DropdownMenuSeparator className="my-3 bg-gradient-to-r from-transparent via-gray-200 to-transparent" />
 
@@ -458,15 +441,6 @@ export default function StudentDashboardHeader({
                         >
                           <User className="w-3 h-3 mr-1" />
                           Profile
-                        </Button>
-                        <Button
-                          onClick={() => handleMobileNavigation("/student-dashboard/settings")}
-                          variant="outline"
-                          size="sm"
-                          className="flex-1 text-xs border-gray-300 hover:bg-gray-50"
-                        >
-                          <Settings className="w-3 h-3 mr-1" />
-                          Settings
                         </Button>
                       </div>
 
