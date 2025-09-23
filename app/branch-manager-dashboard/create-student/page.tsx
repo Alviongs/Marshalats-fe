@@ -477,7 +477,7 @@ export default function CreateStudent() {
 
         console.log("Creating student with payment processing:", paymentData)
 
-        // Use payment processing endpoint
+        // Use payment processing endpoint - same as superadmin version
         const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/payments/process-registration`, {
           method: 'POST',
           headers: {

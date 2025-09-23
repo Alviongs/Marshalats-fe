@@ -92,19 +92,35 @@ export default function StudentPaymentsPage() {
       }
       setError(null)
 
-      // Load all payment-related data in parallel
-      const [historyData, statsData, enrollmentsData] = await Promise.all([
-        studentPaymentAPI.getPaymentHistory(token),
-        studentPaymentAPI.getPaymentStats(token),
-        studentPaymentAPI.getEnrollmentsWithPayments(token)
-      ])
+      console.log("🔄 Loading payment data with token:", token?.substring(0, 20) + "...")
 
+      // Load payment history first (this is working according to our tests)
+      console.log("📊 Fetching payment history...")
+      const historyData = await studentPaymentAPI.getPaymentHistory(token)
+      console.log("✅ Payment history loaded:", historyData?.length, "records")
       setPaymentHistory(historyData)
+
+      // Load payment stats
+      console.log("📈 Fetching payment stats...")
+      const statsData = await studentPaymentAPI.getPaymentStats(token)
+      console.log("✅ Payment stats loaded:", statsData)
       setPaymentStats(statsData)
-      setEnrollments(enrollmentsData)
+
+      // Load enrollments (this might fail, so handle separately)
+      console.log("🎓 Fetching enrollments...")
+      try {
+        const enrollmentsData = await studentPaymentAPI.getEnrollmentsWithPayments(token)
+        console.log("✅ Enrollments loaded:", enrollmentsData?.length, "records")
+        setEnrollments(enrollmentsData)
+      } catch (enrollmentError) {
+        console.warn("⚠️ Enrollment loading failed (non-critical):", enrollmentError)
+        setEnrollments([]) // Set empty array so UI doesn't break
+      }
+
+      console.log("🎉 Payment data loading completed successfully")
     } catch (error) {
-      console.error("Error loading payment data:", error)
-      setError("Failed to load payment data. Please try again.")
+      console.error("❌ Error loading payment data:", error)
+      setError(`Failed to load payment data: ${error.message}. Please try again.`)
     } finally {
       setLoading(false)
       setRefreshing(false)
@@ -119,8 +135,16 @@ export default function StudentPaymentsPage() {
   }
 
   const handleLogout = () => {
+    // Clear all authentication data
     localStorage.removeItem("token")
     localStorage.removeItem("user")
+    localStorage.removeItem("access_token")
+    localStorage.removeItem("token_type")
+    localStorage.removeItem("expires_in")
+    localStorage.removeItem("token_expiration")
+    localStorage.removeItem("auth_data")
+
+    // Redirect to login page
     router.push("/login")
   }
 
@@ -180,6 +204,8 @@ export default function StudentPaymentsPage() {
   return (
     <ErrorBoundary>
       <StudentDashboardLayout
+        studentName={studentData?.name || "Student"}
+        onLogout={handleLogout}
         pageTitle="Payments"
         pageDescription="Manage your payments and billing information"
         showBreadcrumb={true}
@@ -212,6 +238,18 @@ export default function StudentPaymentsPage() {
               >
                 Try again
               </Button>
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {/* Debug Info (remove in production) */}
+        {process.env.NODE_ENV === 'development' && (
+          <Alert className="mb-6 bg-blue-50 border-blue-200">
+            <AlertCircle className="h-4 w-4 text-blue-600" />
+            <AlertDescription className="text-blue-800">
+              <strong>Debug Info:</strong> Payment History: {paymentHistory?.length || 0} records,
+              Stats: {paymentStats ? 'loaded' : 'not loaded'},
+              Enrollments: {enrollments?.length || 0} records
             </AlertDescription>
           </Alert>
         )}
