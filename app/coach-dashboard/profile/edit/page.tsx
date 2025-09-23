@@ -54,7 +54,9 @@ interface CoachProfile {
   }
   professional_info?: {
     specialization?: string
+    designation_id?: string
     years_of_experience?: string
+    professional_experience?: string
     education_qualification?: string
     certifications?: string[]
     bio?: string
@@ -76,6 +78,7 @@ export default function CoachProfileEditPage() {
   const [error, setError] = useState<string | null>(null)
   const [showPassword, setShowPassword] = useState(false)
   const [errors, setErrors] = useState<{ [key: string]: string }>({})
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false)
 
   const [formData, setFormData] = useState({
     firstName: "",
@@ -108,9 +111,17 @@ export default function CoachProfileEditPage() {
     "10+ years"
   ]
 
+  const designationOptions = [
+    { value: "senior-coach", label: "Senior Coach" },
+    { value: "junior-coach", label: "Junior Coach" },
+    { value: "head-coach", label: "Head Coach" },
+    { value: "assistant-coach", label: "Assistant Coach" },
+    { value: "trainee-coach", label: "Trainee Coach" }
+  ]
+
   const availableSpecializations = [
     "Karate",
-    "Taekwondo", 
+    "Taekwondo",
     "Judo",
     "Boxing",
     "Kickboxing",
@@ -122,26 +133,63 @@ export default function CoachProfileEditPage() {
   ]
 
   useEffect(() => {
-    // Use the robust coach authentication check
-    const authResult = checkCoachAuth()
+    const fetchCoachProfile = async () => {
+      try {
+        // Use the robust coach authentication check
+        const authResult = checkCoachAuth()
 
-    if (!authResult.isAuthenticated) {
-      console.log("Coach not authenticated:", authResult.error)
-      router.push("/coach/login")
-      return
+        if (!authResult.isAuthenticated) {
+          console.log("Coach not authenticated:", authResult.error)
+          router.push("/coach/login")
+          return
+        }
+
+        if (!authResult.token) {
+          setError("Authentication token not found")
+          setLoading(false)
+          return
+        }
+
+        // Fetch fresh profile data from API
+        const response = await fetch('/api/coaches/me', {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${authResult.token}`,
+            'Content-Type': 'application/json'
+          }
+        })
+
+        if (!response.ok) {
+          if (response.status === 401) {
+            console.log("Token expired, redirecting to login")
+            router.push("/coach/login")
+            return
+          }
+          throw new Error(`Failed to fetch profile: ${response.status}`)
+        }
+
+        const profileData = await response.json()
+
+        // The API returns data wrapped in a 'coach' object
+        const coachData = profileData.coach || profileData
+
+        setProfile(coachData)
+        populateFormData(coachData)
+        setLoading(false)
+
+      } catch (error) {
+        console.error("Error fetching coach profile:", error)
+        setError(error instanceof Error ? error.message : "Failed to load profile")
+        setLoading(false)
+      }
     }
 
-    if (authResult.coach) {
-      setProfile(authResult.coach)
-      populateFormData(authResult.coach)
-      setLoading(false)
-    } else {
-      setError("Profile information not found")
-      setLoading(false)
-    }
+    fetchCoachProfile()
   }, [router])
 
   const populateFormData = (profileData: CoachProfile) => {
+    console.log("Populating form with profile data:", profileData)
+
     setFormData({
       firstName: profileData.personal_info?.first_name || "",
       lastName: profileData.personal_info?.last_name || "",
@@ -156,10 +204,12 @@ export default function CoachProfileEditPage() {
       state: profileData.address_info?.state || "",
       zipCode: profileData.address_info?.zip_code || "",
       country: profileData.address_info?.country || "India",
-      specialization: profileData.professional_info?.specialization || "",
-      experience: profileData.professional_info?.years_of_experience || "",
+      specialization: profileData.professional_info?.designation_id || "",
+      experience: profileData.professional_info?.years_of_experience || profileData.professional_info?.professional_experience || "",
       qualifications: profileData.professional_info?.education_qualification || "",
-      certifications: (profileData.professional_info?.certifications || []).join(', '),
+      certifications: Array.isArray(profileData.professional_info?.certifications)
+        ? profileData.professional_info.certifications.join(', ')
+        : (profileData.professional_info?.certifications || ""),
       bio: profileData.professional_info?.bio || "",
       areasOfExpertise: profileData.areas_of_expertise || []
     })
@@ -293,15 +343,17 @@ export default function CoachProfileEditPage() {
       }
 
       const result = await response.json()
-      console.log("Profile update successful:", result)
+      console.log("✅ Profile update successful:", result)
 
+      // Show success toast
       toast({
-        title: "Success",
-        description: "Profile updated successfully",
+        title: "Success!",
+        description: "Your profile has been updated successfully.",
+        variant: "default",
       })
 
-      // Redirect back to profile page
-      router.push("/coach-dashboard/profile")
+      // Show success popup instead of immediate redirect
+      setShowSuccessPopup(true)
 
     } catch (error) {
       console.error("Error updating profile:", error)
@@ -350,7 +402,7 @@ export default function CoachProfileEditPage() {
   if (error || !profile) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <CoachDashboardHeader 
+        <CoachDashboardHeader
           currentPage="Edit Profile"
           coachName="Coach"
         />
@@ -358,9 +410,34 @@ export default function CoachProfileEditPage() {
           <div className="px-4 py-6 sm:px-0">
             <Card>
               <CardContent className="pt-6">
-                <div className="text-center text-red-600">
-                  <p className="font-medium">Error loading profile</p>
-                  <p className="text-sm mt-1">{error}</p>
+                <div className="text-center">
+                  <div className="text-red-600 mb-4">
+                    <p className="font-medium text-lg">Error loading profile</p>
+                    <p className="text-sm mt-1">{error}</p>
+                  </div>
+                  <div className="space-y-3">
+                    <Button
+                      onClick={() => window.location.reload()}
+                      variant="outline"
+                      className="mr-2"
+                    >
+                      Try Again
+                    </Button>
+                    <Button
+                      onClick={() => router.push("/coach-dashboard/profile")}
+                      variant="default"
+                    >
+                      Back to Profile
+                    </Button>
+                  </div>
+                  <div className="mt-4 text-sm text-gray-600">
+                    <p>If this problem persists, please:</p>
+                    <ul className="list-disc list-inside mt-2 space-y-1">
+                      <li>Check your internet connection</li>
+                      <li>Try logging out and logging back in</li>
+                      <li>Contact support if the issue continues</li>
+                    </ul>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -636,13 +713,16 @@ export default function CoachProfileEditPage() {
                         <SelectValue placeholder="Select specialization" />
                       </SelectTrigger>
                       <SelectContent>
-                        {availableSpecializations.map((spec) => (
-                          <SelectItem key={spec} value={spec} className="py-3">
-                            {spec}
+                        {designationOptions.map((option) => (
+                          <SelectItem key={option.value} value={option.value} className="py-3">
+                            {option.label}
                           </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
+                    {errors.specialization && (
+                      <p className="text-sm text-red-600">{errors.specialization}</p>
+                    )}
                   </div>
 
                   <div className="space-y-2">
@@ -662,6 +742,9 @@ export default function CoachProfileEditPage() {
                         ))}
                       </SelectContent>
                     </Select>
+                    {errors.experience && (
+                      <p className="text-sm text-red-600">{errors.experience}</p>
+                    )}
                   </div>
                 </div>
 
@@ -675,6 +758,9 @@ export default function CoachProfileEditPage() {
                     rows={3}
                     className="resize-none"
                   />
+                  {errors.qualifications && (
+                    <p className="text-sm text-red-600">{errors.qualifications}</p>
+                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -721,38 +807,62 @@ export default function CoachProfileEditPage() {
             </Card>
 
             {/* Form Actions */}
-            <div className="flex flex-col sm:flex-row justify-end gap-3 sm:gap-4 pt-6 sm:pt-8">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handleCancel}
-                disabled={saving}
-                className="w-full sm:w-auto h-11 order-2 sm:order-1"
-              >
-                <X className="w-4 h-4 mr-2" />
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                disabled={saving}
-                className="w-full sm:w-auto h-11 bg-yellow-600 hover:bg-yellow-700 order-1 sm:order-2"
-              >
-                {saving ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Saving...
-                  </>
-                ) : (
-                  <>
-                    <Save className="w-4 h-4 mr-2" />
-                    Save Changes
-                  </>
-                )}
-              </Button>
+            <div className="pt-6 border-t border-gray-200">
+              <div className="flex flex-col sm:flex-row gap-4 justify-center sm:justify-start">
+                <Button
+                  type="submit"
+                  disabled={saving}
+                  className="w-full sm:w-auto h-12 bg-yellow-400 hover:bg-yellow-500 text-white font-semibold px-8 rounded-xl"
+                >
+                  {saving ? (
+                    <div className="flex items-center">
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-black mr-3"></div>
+                      Updating Profile...
+                    </div>
+                  ) : (
+                    "Save Changes"
+                  )}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleCancel}
+                  disabled={saving}
+                  className="w-full sm:w-auto h-12 px-8 rounded-xl font-medium border-gray-300"
+                >
+                  Cancel
+                </Button>
+              </div>
             </div>
           </form>
         </div>
       </main>
+
+      {/* Success Popup */}
+      {showSuccessPopup && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">Profile Updated Successfully!</h3>
+              <p className="text-gray-600 mb-6">Your profile information has been updated successfully.</p>
+              <Button
+                onClick={() => {
+                  setShowSuccessPopup(false)
+                  router.push("/coach-dashboard/profile")
+                }}
+                className="w-full bg-yellow-400 hover:bg-yellow-500 text-white font-semibold py-3 rounded-xl"
+              >
+                Continue
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
