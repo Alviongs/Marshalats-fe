@@ -168,11 +168,26 @@ export default function CoachProfileEditPage() {
   const validateForm = () => {
     const newErrors: { [key: string]: string } = {}
 
+    // Personal info validation
     if (!formData.firstName.trim()) newErrors.firstName = "First name is required"
     if (!formData.lastName.trim()) newErrors.lastName = "Last name is required"
+    if (!formData.gender) newErrors.gender = "Gender is required"
+    if (!formData.dateOfBirth) newErrors.dateOfBirth = "Date of birth is required"
+
+    // Contact info validation
     if (!formData.email.trim()) newErrors.email = "Email is required"
     if (!formData.phone.trim()) newErrors.phone = "Phone number is required"
-    if (!formData.gender) newErrors.gender = "Gender is required"
+
+    // Address info validation
+    if (!formData.address.trim()) newErrors.address = "Address is required"
+    if (!formData.city.trim()) newErrors.city = "City is required"
+    if (!formData.state.trim()) newErrors.state = "State is required"
+    if (!formData.zipCode.trim()) newErrors.zipCode = "Zip code is required"
+
+    // Professional info validation
+    if (!formData.specialization.trim()) newErrors.specialization = "Specialization is required"
+    if (!formData.experience.trim()) newErrors.experience = "Experience is required"
+    if (!formData.qualifications.trim()) newErrors.qualifications = "Qualifications are required"
 
     // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -222,36 +237,36 @@ export default function CoachProfileEditPage() {
       // Prepare coach data for update
       const updateData = {
         personal_info: {
-          first_name: formData.firstName,
-          last_name: formData.lastName,
-          gender: formData.gender,
-          date_of_birth: formData.dateOfBirth
+          first_name: formData.firstName || "Unknown",
+          last_name: formData.lastName || "User",
+          gender: formData.gender || "other",
+          date_of_birth: formData.dateOfBirth || "1990-01-01"
         },
         contact_info: {
-          email: formData.email,
+          email: formData.email || "unknown@example.com",
           country_code: "+91",
-          phone: formData.phone,
+          phone: formData.phone || "0000000000",
           ...(formData.password.trim() && { password: formData.password })
         },
         address_info: {
-          address: formData.address,
-          area: formData.area || formData.city,
-          city: formData.city,
-          state: formData.state,
-          zip_code: formData.zipCode,
-          country: formData.country
+          address: formData.address || "Not provided",
+          area: formData.area || formData.city || "Not provided",
+          city: formData.city || "Not provided",
+          state: formData.state || "Not provided",
+          zip_code: formData.zipCode || "000000",
+          country: formData.country || "India"
         },
         professional_info: {
-          specialization: formData.specialization,
-          years_of_experience: formData.experience,
-          education_qualification: formData.qualifications,
-          certifications: formData.certifications.split(',').map(cert => cert.trim()).filter(cert => cert),
-          bio: formData.bio
+          designation_id: formData.specialization || "general",
+          professional_experience: formData.experience || "0-1 years",
+          education_qualification: formData.qualifications || "Not provided",
+          certifications: formData.certifications ? formData.certifications.split(',').map(cert => cert.trim()).filter(cert => cert) : []
         },
         areas_of_expertise: formData.areasOfExpertise
       }
 
       console.log("Updating coach profile with data:", updateData)
+      console.log("Update data structure:", JSON.stringify(updateData, null, 2))
 
       // Get coach token from localStorage using the correct key
       const coachToken = localStorage.getItem("access_token") ||
@@ -261,8 +276,8 @@ export default function CoachProfileEditPage() {
         throw new Error("Authentication token not found. Please login again.")
       }
 
-      // Use the coach self-update endpoint
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/coaches/me`, {
+      // Use the local API route that proxies to backend
+      const response = await fetch('/api/coaches/me', {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${coachToken}`,
@@ -272,8 +287,9 @@ export default function CoachProfileEditPage() {
       })
 
       if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.detail || `HTTP error! status: ${response.status}`)
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
+        console.error("API Error Details:", errorData)
+        throw new Error(errorData.detail || errorData.error || errorData.message || `HTTP error! status: ${response.status}`)
       }
 
       const result = await response.json()
