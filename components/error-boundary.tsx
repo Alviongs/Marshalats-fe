@@ -24,7 +24,7 @@ interface State {
   retryCount: number
 }
 
-class ErrorBoundary extends Component<Props, State> {
+export class ErrorBoundary extends Component<Props, State> {
   private maxRetries = 3
 
   constructor(props: Props) {
