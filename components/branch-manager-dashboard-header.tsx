@@ -333,7 +333,7 @@ export default function BranchManagerDashboardHeader({ currentPage = "Dashboard"
                 <DropdownMenuTrigger asChild>
                   <Button
                     variant="ghost"
-                    className="pb-2 px-1 text-sm font-semibold whitespace-nowrap cursor-pointer border-b-2 border-transparent hover:border-gray-300 text-gray-600 hover:text-gray-900 transition-all duration-300 hover:scale-105"
+                    className="mb-2 pb-2 px-1 text-sm font-semibold whitespace-nowrap cursor-pointer border-b-2 border-transparent hover:border-gray-300 text-gray-600 hover:text-gray-900 transition-all duration-300 hover:scale-105"
                   >
                     More
                     <ChevronDown className="w-3 h-3 ml-1" />

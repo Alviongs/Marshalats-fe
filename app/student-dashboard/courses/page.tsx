@@ -407,7 +407,7 @@ export default function StudentCoursesPage() {
                 </div>
                 <h3 className="text-xl font-semibold text-gray-900 mb-2">No courses enrolled</h3>
                 <p className="text-gray-600 mb-6">You haven't enrolled in any courses yet. Start your martial arts journey today!</p>
-                <Button onClick={() => router.push('/courses')}>
+                <Button onClick={() => router.push('/courses')} className="bg-[#FFC403] hover:bg-[#FFC403]/90 text-white">
                   Browse Courses
                 </Button>
                 <Button onClick={handleRetry} variant="outline" className="ml-2">

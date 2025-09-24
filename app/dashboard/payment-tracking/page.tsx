@@ -153,7 +153,7 @@ export default function PaymentTrackingPage() {
       <DashboardHeader currentPage="Payment Tracking" />
 
       <main className="w-full p-4 lg:p-6 xl:px-12">
-        <h1 className="text-2xl font-bold text-gray-900 mb-6">Payment Tracking</h1>
+        <h1 className="text-2xl font-bold text-[#4D5077] mb-6">Payment Tracking</h1>
 
        {/* Filter Bar */}
         <div className="flex  items-center justify-between border-1 shadow overflow-x-auto p-6 gap-6 mb-0">

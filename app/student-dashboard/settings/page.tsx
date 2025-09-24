@@ -111,8 +111,8 @@ export default function StudentSettingsPage() {
         <div className="px-4 py-6 sm:px-0">
           {/* Page Header */}
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Settings</h1>
-            <p className="text-gray-600">Manage your account preferences and notifications</p>
+            <h1 className="text-3xl font-bold text-[#4F5077] mb-2">Settings</h1>
+            <p className="text-[#7D8592]">Manage your account preferences and notifications</p>
           </div>
 
           <div className="space-y-6">
@@ -120,12 +120,11 @@ export default function StudentSettingsPage() {
             <Card>
               <CardHeader>
                 <div className="flex items-center space-x-2">
-                  <User className="w-5 h-5 text-blue-600" />
-                  <CardTitle>Account Settings</CardTitle>
+                  <CardTitle className="text-[#6B7A99]">Account Settings</CardTitle>
                 </div>
-                <CardDescription>Update your personal information and account details</CardDescription>
+                <CardDescription className="text-[#6B7A99]">Update your personal information and account details</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-4 text-[#7D8592]">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="fullName">Full Name</Label>
@@ -170,15 +169,14 @@ export default function StudentSettingsPage() {
             <Card>
               <CardHeader>
                 <div className="flex items-center space-x-2">
-                  <Bell className="w-5 h-5 text-green-600" />
-                  <CardTitle>Notification Preferences</CardTitle>
+                  <CardTitle className="text-[#6B7A99]">Notification Preferences</CardTitle>
                 </div>
-                <CardDescription>Choose how you want to receive notifications</CardDescription>
+                <CardDescription className="text-[#6B7A99]">Choose how you want to receive notifications</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-6">
+              <CardContent className="space-y-6 text-[#7D8592]">
                 {/* Notification Channels */}
                 <div>
-                  <h4 className="font-semibold text-gray-900 mb-3">Notification Channels</h4>
+                  <h4 className="font-semibold text-[#6B7A99]">Notification Channels</h4>
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
                       <div>
@@ -224,7 +222,7 @@ export default function StudentSettingsPage() {
 
                 {/* Notification Types */}
                 <div>
-                  <h4 className="font-semibold text-gray-900 mb-3">Notification Types</h4>
+                  <h4 className="font-semibold text-[#6B7A99] mb-3">Notification Types</h4>
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
                       <div>
@@ -274,12 +272,11 @@ export default function StudentSettingsPage() {
             <Card>
               <CardHeader>
                 <div className="flex items-center space-x-2">
-                  <Globe className="w-5 h-5 text-purple-600" />
-                  <CardTitle>Preferences</CardTitle>
+                  <CardTitle className="text-[#6B7A99]">Preferences</CardTitle>
                 </div>
-                <CardDescription>Customize your experience</CardDescription>
+                <CardDescription className="text-[#6B7A99]">Customize your experience</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-4 text-[#7D8592]">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="language">Language</Label>
@@ -326,12 +323,11 @@ export default function StudentSettingsPage() {
             <Card>
               <CardHeader>
                 <div className="flex items-center space-x-2">
-                  <Shield className="w-5 h-5 text-red-600" />
-                  <CardTitle>Security</CardTitle>
+                  <CardTitle className="text-[#6B7A99]">Security</CardTitle>
                 </div>
-                <CardDescription>Manage your account security</CardDescription>
+                <CardDescription className="text-[#6B7A99]">Manage your account security</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-4 text-[#333333]">
                 <div className="space-y-4">
                   <Button variant="outline" className="w-full md:w-auto">
                     Change Password
@@ -349,7 +345,7 @@ export default function StudentSettingsPage() {
             {/* Save Button */}
             <div className="flex justify-end space-x-4">
               <Button variant="outline">Cancel</Button>
-              <Button onClick={handleSaveSettings} className="bg-blue-600 hover:bg-blue-700">
+              <Button onClick={handleSaveSettings} className="bg-[#F1CF10] hover:bg-[#F1CF10]/90">
                 Save Changes
               </Button>
             </div>

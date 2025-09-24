@@ -208,7 +208,7 @@ export default function SuperAdminDashboard() {
       <main className="w-full p-4 lg:py-4 px-19">
         {/* Dashboard Header with Action Buttons */}
         <div className="flex flex-col lg:flex-row justify-between items-start py-8 mb-4 lg:items-center  gap-4">
-          <h1 className="text-2xl font-medium text-gray-600">Dashboard</h1>
+          <h1 className="text-2xl font-medium text-[#4F5077]">Dashboard</h1>
           <div className="flex flex-wrap gap-2 lg:gap-3 text-[#6B7A99] roboto">
             <Button
               variant="outline"

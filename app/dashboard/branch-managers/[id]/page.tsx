@@ -195,7 +195,7 @@ export default function BranchManagerDetailPage() {
             <div className="flex space-x-3">
               <Button
                 onClick={() => router.push(`/dashboard/branch-managers/edit/${managerId}`)}
-                className="bg-yellow-400 hover:bg-yellow-500 text-black"
+                className="bg-yellow-400 hover:bg-yellow-500 text-white"
               >
                 <Edit className="w-4 h-4 mr-2" />
                 Edit Manager
@@ -215,7 +215,6 @@ export default function BranchManagerDetailPage() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
-                  <User className="w-5 h-5 text-yellow-600" />
                   <span>Personal Information</span>
                 </CardTitle>
               </CardHeader>
@@ -290,7 +289,6 @@ export default function BranchManagerDetailPage() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
-                  <Briefcase className="w-5 h-5 text-yellow-600" />
                   <span>Professional Information</span>
                 </CardTitle>
               </CardHeader>
@@ -339,7 +337,7 @@ export default function BranchManagerDetailPage() {
                     <ul className="text-sm text-gray-600 space-y-1">
                       {manager.professional_info.certifications.map((certification, index) => (
                         <li key={index} className="flex items-center space-x-2">
-                          <Award className="w-4 h-4 text-yellow-500" />
+                          <Award className="w-4 h-4" />
                           <span>{certification}</span>
                         </li>
                       ))}
@@ -356,7 +354,6 @@ export default function BranchManagerDetailPage() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
-                  <Phone className="w-5 h-5 text-yellow-600" />
                   <span>Emergency Contact</span>
                 </CardTitle>
               </CardHeader>

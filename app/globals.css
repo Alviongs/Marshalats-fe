@@ -24,6 +24,7 @@ body {
   font-family:var(--font-roboto), sans-serif;
   font-family: var(--font-bebas), sans-serif;
   --card: oklch(1 0 0);
+    font-family: var(--font-roboto), sans-serif;
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);

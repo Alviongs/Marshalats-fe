@@ -320,9 +320,9 @@ function ReportsPageContent() {
         {/* Page Header - Enhanced with loading states */}
         <div className="flex justify-between items-center mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Reports</h1>
+            <h1 className="text-2xl font-bold text-[#4D5077]">Reports</h1>
             <p className="text-gray-600">
-              Comprehensive system reports and analytics
+              
               {loading && <InlineLoader size="sm" className="ml-2" />}
             </p>
           </div>
