@@ -144,8 +144,8 @@ export default function StudentMessagesPage() {
         <div className="px-4 py-6 sm:px-0">
           {/* Page Header */}
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Messages</h1>
-            <p className="text-gray-600">Communication with instructors and administration</p>
+            <h1 className="text-3xl font-bold text-[#4f5077] mb-2">Messages</h1>
+            <p className="text-[#4f5077]">Communication with instructors and administration</p>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

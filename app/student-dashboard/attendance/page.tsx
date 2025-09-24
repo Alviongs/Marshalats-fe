@@ -213,7 +213,7 @@ export default function StudentAttendancePage() {
           {/* Attendance Records */}
           <Card>
             <CardHeader>
-              <CardTitle>Recent Attendance</CardTitle>
+              <CardTitle className="text-[#0A1629]">Attendance</CardTitle>
               <CardDescription>Your attendance history for the past classes</CardDescription>
             </CardHeader>
             <CardContent>
@@ -221,23 +221,23 @@ export default function StudentAttendancePage() {
                 <table className="w-full">
                   <thead>
                     <tr className="border-b">
-                      <th className="text-left py-3 px-4 font-semibold text-gray-700">Date</th>
-                      <th className="text-left py-3 px-4 font-semibold text-gray-700">Course</th>
-                      <th className="text-left py-3 px-4 font-semibold text-gray-700">Status</th>
-                      <th className="text-left py-3 px-4 font-semibold text-gray-700">Check In</th>
-                      <th className="text-left py-3 px-4 font-semibold text-gray-700">Check Out</th>
+                      <th className="text-left py-3 px-4 font-semibold  text-[#6B7A99]">Date</th>
+                      <th className="text-left py-3 px-4 font-semibold text-[#6B7A99]">Course</th>
+                      <th className="text-left py-3 px-4 font-semibold text-[#6B7A99]">Status</th>
+                      <th className="text-left py-3 px-4 font-semibold  text-[#6B7A99]">Check In</th>
+                      <th className="text-left py-3 px-4 font-semibold text-[#6B7A99]">Check Out</th>
                     </tr>
                   </thead>
                   <tbody>
                     {attendanceRecords.map((record) => (
                       <tr key={record.id} className="border-b hover:bg-gray-50">
-                        <td className="py-3 px-4 text-gray-900">
+                        <td className="py-3 px-4 text-[#000000] font-normal text-xs">
                           {new Date(record.date).toLocaleDateString()}
                         </td>
-                        <td className="py-3 px-4 text-gray-900">{record.course}</td>
-                        <td className="py-3 px-4">{getStatusBadge(record.status)}</td>
-                        <td className="py-3 px-4 text-gray-600">{record.checkIn}</td>
-                        <td className="py-3 px-4 text-gray-600">{record.checkOut}</td>
+                        <td className="py-3 px-4 text-[#000000] font-normal text-xs">{record.course}</td>
+                        <td className="py-3 px-4  text-xs">{getStatusBadge(record.status)}</td>
+                        <td className="py-3 px-4 text-[#000000] font-normal text-xs">{record.checkIn}</td>
+                        <td className="py-3 px-4 text-[#000000] font-normal text-xs">{record.checkOut}</td>
                       </tr>
                     ))}
                   </tbody>

@@ -129,8 +129,8 @@ export default function StudentProgressPage() {
         <div className="px-4 py-6 sm:px-0">
           {/* Page Header */}
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Training Progress</h1>
-            <p className="text-gray-600">Track your martial arts journey and achievements</p>
+            <h1 className="text-3xl font-bold text-[#4f5077] mb-2">Training Progress</h1>
+            <p className="text-[#4f5077]">Track your martial arts journey and achievements</p>
           </div>
 
           {/* Overall Statistics */}

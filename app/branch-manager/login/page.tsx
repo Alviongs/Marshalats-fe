@@ -116,19 +116,19 @@ function BranchManagerLoginFormContent() {
       setLoading(false);
     }
   };
-
+ 
   return (
     <div className="min-h-screen flex">
       {/* Left Side - Illustration */}
-      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-blue-400 via-blue-500 to-blue-600 items-center justify-center relative overflow-hidden">
+      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-yellow-400 via-yellow-500 to-yellow-600 items-center justify-center relative overflow-hidden">
         <div className="absolute inset-0 bg-black opacity-20"></div>
         <div className="relative z-10 text-center text-white space-y-6 p-8">
          
           <h1 className="text-4xl font-bold">Branch Manager Portal</h1>
-          <p className="text-xl text-blue-100">
+          <p className="text-xl text-yellow-100">
             Manage your branch operations and oversee local activities
           </p>
-          <div className="space-y-2 text-blue-200">
+          <div className="space-y-2 text-yellow-200">
             <p>• Branch-specific management</p>
             <p>• Local staff oversight</p>
             <p>• Operational control</p>
@@ -142,7 +142,7 @@ function BranchManagerLoginFormContent() {
           {/* Header */}
           <div className="text-center space-y-4">
             <div className="flex items-center justify-center space-x-2">
-              <Building2 className="w-8 h-8 text-blue-600" />
+              <Building2 className="w-8 h-8 text-yellow-600" />
               <h1 className="text-3xl font-bold text-gray-900">Branch Manager</h1>
             </div>
             <div>
@@ -151,32 +151,32 @@ function BranchManagerLoginFormContent() {
             </div>
           </div>
 
-          {/* Login Info */}
+          {/* Login Info 
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <h3 className="font-medium text-blue-800 mb-2 text-sm">Branch Manager Login</h3>
             <div className="space-y-1 text-xs text-blue-700">
               <p>Use your branch manager credentials provided by the administrator.</p>
               <p>If you don't have credentials, contact your system administrator.</p>
             </div>
-          </div>
+          </div>*/}
 
           {/* Login Form */}
           <form onSubmit={handleLogin} className="space-y-6">
             {/* Email Field */}
             <div className="space-y-2">
-              <label htmlFor="email" className="text-sm font-medium text-gray-700">
+              <label htmlFor="email" className="text-sm font-medium ml-[10px] text-gray-700">
                 Email Address
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Mail className="h-5 w-5 text-gray-400" />
+                  <Mail className="h-5 w-5 text-[#000]" />
                 </div>
                 <Input
                   id="email"
                   name="email"
                   type="email"
                   autoComplete="email"
-                  className="pl-10 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                  className="pl-14 py-4 text-base bg-[#F0EDFFCC] border-0 rounded-xl h-14 placeholder:text-gray-500"
                   placeholder="Enter your email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -187,19 +187,19 @@ function BranchManagerLoginFormContent() {
 
             {/* Password Field */}
             <div className="space-y-2">
-              <label htmlFor="password" className="text-sm font-medium text-gray-700">
-                Password
+              <label htmlFor="password" className="text-sm font-medium ml-[10px] text-gray-700">
+                password
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Lock className="h-5 w-5 text-gray-400" />
+                  <Lock className="h-5 w-5 text-[#000]" />
                 </div>
                 <Input
                   id="password"
                   name="password"
                   type="password"
                   autoComplete="current-password"
-                  className="pl-10 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                   className="pl-14 py-4 text-base bg-[#F0EDFFCC] border-0 rounded-xl h-14 placeholder:text-gray-500"
                   placeholder="Enter your password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -243,7 +243,7 @@ function BranchManagerLoginFormContent() {
             <Button
               type="submit"
               disabled={loading}
-              className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-all duration-200 transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+             className="w-full bg-yellow-400 hover:bg-yellow-500 text-[#fff] font-bold py-3 px-6 rounded-lg text-sm h-12 transition-all duration-200 shadow-lg hover:shadow-xl"
             >
               {loading ? (
                 <div className="flex items-center space-x-2">

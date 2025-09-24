@@ -369,7 +369,6 @@ export default function StudentPaymentsPage() {
             <div className="flex justify-between items-center">
               <div>
                 <CardTitle className="flex items-center">
-                  <Receipt className="h-5 w-5 mr-2" />
                   Payment History
                 </CardTitle>
                 <CardDescription>Your complete payment transaction history</CardDescription>
@@ -392,34 +391,34 @@ export default function StudentPaymentsPage() {
                 <table className="w-full">
                   <thead>
                     <tr className="border-b">
-                      <th className="text-left py-3 px-4 font-semibold text-gray-700">Transaction ID</th>
-                      <th className="text-left py-3 px-4 font-semibold text-gray-700">Date</th>
-                      <th className="text-left py-3 px-4 font-semibold text-gray-700">Type</th>
-                      <th className="text-left py-3 px-4 font-semibold text-gray-700">Course</th>
-                      <th className="text-left py-3 px-4 font-semibold text-gray-700">Amount</th>
-                      <th className="text-left py-3 px-4 font-semibold text-gray-700">Method</th>
-                      <th className="text-left py-3 px-4 font-semibold text-gray-700">Status</th>
+                      <th className="text-left py-3 px-4 font-semibold text-[#000000]">Transaction ID</th>
+                      <th className="text-left py-3 px-4 font-semibold text-[#000000]">Date</th>
+                      <th className="text-left py-3 px-4 font-semibold text-[#000000]">Type</th>
+                      <th className="text-left py-3 px-4 font-semibold text-[#000000]">Course</th>
+                      <th className="text-left py-3 px-4 font-semibold text-[#000000]">Amount</th>
+                      <th className="text-left py-3 px-4 font-semibold text-[#000000]">Method</th>
+                      <th className="text-left py-3 px-4 font-semibold text-[#000000]">Status</th>
                     </tr>
                   </thead>
                   <tbody>
                     {paymentHistory.map((payment) => (
                       <tr key={payment.id} className="border-b hover:bg-gray-50 transition-colors">
-                        <td className="py-3 px-4 text-gray-900 font-medium">
+                        <td className="py-3 px-4 text-[#8D8D8D] font-medium">
                           {payment.transaction_id || payment.id.slice(0, 8)}
                         </td>
-                        <td className="py-3 px-4 text-gray-600">
+                        <td className="py-3 px-4 text-[#8D8D8D]">
                           {payment.payment_date ? formatDate(payment.payment_date) : formatDate(payment.created_at)}
                         </td>
-                        <td className="py-3 px-4 text-gray-900">
+                        <td className="py-3 px-4 text-[#8D8D8D]">
                           {studentPaymentAPI.formatPaymentType(payment.payment_type)}
                         </td>
-                        <td className="py-3 px-4 text-gray-600">
+                        <td className="py-3 px-4 text-[#8D8D8D]">
                           {payment.course_details?.course_name || 'N/A'}
                         </td>
-                        <td className="py-3 px-4 text-gray-900 font-semibold">
+                        <td className="py-3 px-4 text-[#8D8D8D] font-semibold">
                           {formatCurrency(payment.amount)}
                         </td>
-                        <td className="py-3 px-4 text-gray-600 capitalize">
+                        <td className="py-3 px-4 text-[#8D8D8D] capitalize">
                           {payment.payment_method.replace('_', ' ')}
                         </td>
                         <td className="py-3 px-4">{getStatusBadge(payment.payment_status)}</td>
@@ -500,7 +499,6 @@ export default function StudentPaymentsPage() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center">
-                <CreditCard className="h-5 w-5 mr-2" />
                 Available Payment Methods
               </CardTitle>
               <CardDescription>Choose from various payment options</CardDescription>
@@ -508,9 +506,9 @@ export default function StudentPaymentsPage() {
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {studentPaymentAPI.getAvailablePaymentMethods().map((method) => (
-                  <div key={method.value} className="flex items-center p-3 border rounded-lg hover:bg-gray-50 transition-colors">
+                  <div key={method.value} className="flex items-center p-3 border rounded-lg hover:bg-gray-50  transition-colors">
                     <span className="text-2xl mr-3">{method.icon}</span>
-                    <span className="font-medium">{method.label}</span>
+                    <span className="font-normal text-sm text-[#8D8D8D]">{method.label}</span>
                   </div>
                 ))}
               </div>

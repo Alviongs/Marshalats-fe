@@ -261,8 +261,8 @@ export default function StudentDashboard() {
             {/* Progress Overview */}
             <Card className="overflow-hidden">
               <CardHeader className="bg-gradient-to-r from-yellow-50 to-orange-50 border-b border-yellow-100">
-                <CardTitle className="flex items-center space-x-2">
-                  <TrendingUp className="w-5 h-5 text-yellow-600" />
+                <CardTitle className="flex items-center space-x-2 mt-4">
+                 
                   <span>Training Progress</span>
                 </CardTitle>
                 <CardDescription>Your martial arts journey to {studentData?.nextBelt}</CardDescription>
@@ -353,7 +353,7 @@ export default function StudentDashboard() {
             <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border-green-200/60">
               <CardHeader className="pb-3">
                 <CardTitle className="flex items-center space-x-2 text-green-800">
-                  <Clock className="w-5 h-5" />
+                  
                   <span>Next Class</span>
                 </CardTitle>
               </CardHeader>
@@ -377,7 +377,7 @@ export default function StudentDashboard() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
-                  <Calendar className="w-5 h-5 text-blue-600" />
+                 
                   <span>Upcoming Events</span>
                 </CardTitle>
               </CardHeader>
@@ -425,7 +425,7 @@ export default function StudentDashboard() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
-                  <Bell className="w-5 h-5 text-purple-600" />
+                  
                   <span>Recent Activity</span>
                 </CardTitle>
               </CardHeader>
