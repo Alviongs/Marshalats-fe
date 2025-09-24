@@ -351,7 +351,7 @@ export default function EditStudentProfilePage() {
         <Button
           variant="outline"
           onClick={() => router.push("/student-dashboard/profile")}
-          className="flex items-center space-x-2"
+          className="flex items-center space-x-2 text-[#4F5077]"
         >
           <ArrowLeft className="w-4 h-4" />
           <span>Back to Profile</span>
@@ -380,8 +380,8 @@ export default function EditStudentProfilePage() {
         <div className="space-y-6">
           {/* Profile Picture */}
           <Card>
-            <CardHeader>
-              <CardTitle>Profile Picture</CardTitle>
+            <CardHeader className="text-[#7D8592]">
+              <CardTitle className="text-[#4F5077]">Profile Picture</CardTitle>
               <CardDescription>Update your profile photo</CardDescription>
             </CardHeader>
             <CardContent>
@@ -393,11 +393,11 @@ export default function EditStudentProfilePage() {
                     </AvatarFallback>
                   </Avatar>
                   <div>
-                    <Button variant="outline" className="flex items-center space-x-2">
+                    <Button variant="outline" className="flex items-center space-x-2 text-[#7D8592]">
                       <Upload className="w-4 h-4" />
-                      <span>Upload New Photo</span>
+                      <span className="">Upload New Photo</span>
                     </Button>
-                    <p className="text-sm text-gray-500 mt-2">JPG, PNG or GIF. Max size 2MB.</p>
+                    <p className="text-sm text-gray-400 mt-2">JPG, PNG or GIF. Max size 2MB.</p>
                   </div>
                 </div>
               </CardContent>
@@ -406,10 +406,10 @@ export default function EditStudentProfilePage() {
             {/* Personal Information */}
             <Card>
               <CardHeader>
-                <CardTitle>Personal Information</CardTitle>
-                <CardDescription>Update your basic personal details</CardDescription>
+                <CardTitle className="text-[#4F5077]">Personal Information</CardTitle>
+                <CardDescription className="text-[#7D8592]">Update your basic personal details</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-4 text-[#7D8592]">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="firstName">First Name</Label>
@@ -484,10 +484,10 @@ export default function EditStudentProfilePage() {
             {/* Address Information */}
             <Card>
               <CardHeader>
-                <CardTitle>Address Information</CardTitle>
-                <CardDescription>Update your residential address</CardDescription>
+                <CardTitle className="text-[#4F5077]">Address Information</CardTitle>
+                <CardDescription className="text-[#7D8592]">Update your residential address</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-4 text-[#7D8592]">
                 <div>
                   <Label htmlFor="street">Street Address</Label>
                   <Input
@@ -532,10 +532,10 @@ export default function EditStudentProfilePage() {
             {/* Emergency Contact */}
             <Card>
               <CardHeader>
-                <CardTitle>Emergency Contact</CardTitle>
-                <CardDescription>Person to contact in case of emergency</CardDescription>
+                <CardTitle className="text-[#4F5077]">Emergency Contact</CardTitle>
+                <CardDescription className="text-[#7D8592]">Person to contact in case of emergency</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-4 text-[#7D8592]">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
                     <Label htmlFor="emergencyName">Contact Name</Label>
@@ -581,10 +581,10 @@ export default function EditStudentProfilePage() {
             {/* Medical Information */}
             <Card>
               <CardHeader>
-                <CardTitle>Medical Information</CardTitle>
-                <CardDescription>Important medical details for training safety</CardDescription>
+                <CardTitle className="text-[#4F5077]">Medical Information</CardTitle>
+                <CardDescription className="text-[#7D8592]">Important medical details for training safety</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-4 text-[#7D8592]">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="allergies">Allergies</Label>
@@ -647,13 +647,14 @@ export default function EditStudentProfilePage() {
               variant="outline"
               onClick={() => router.push("/student-dashboard/profile")}
               disabled={saving}
+              className="text-[#7D8592]"
             >
               Cancel
             </Button>
             <Button
               onClick={handleSave}
               disabled={saving}
-              className="bg-blue-600 hover:bg-blue-700"
+              className="bg-[#F1CF10] hover:bg-[#F1CF10]/90 text-white"
             >
               {saving ? (
                 <>

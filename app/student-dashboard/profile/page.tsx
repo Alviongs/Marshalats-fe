@@ -166,7 +166,7 @@ export default function StudentProfilePage() {
       headerActions={
         <Button
           onClick={handleEditProfile}
-          className="bg-blue-600 hover:bg-blue-700"
+          className="bg-[#F1CF10] hover:bg-[#F1CF10]/90 text-white"
         >
           <Edit className="w-4 h-4 mr-2" />
           Edit Profile
@@ -194,25 +194,25 @@ export default function StudentProfilePage() {
                     {studentProfile.first_name?.charAt(0)?.toUpperCase() || "S"}
                     </AvatarFallback>
                   </Avatar>
-                  <CardTitle className="text-xl">{studentProfile.full_name}</CardTitle>
-                  <CardDescription>Student ID: {studentProfile.id.slice(-8)}</CardDescription>
-                  <Badge className="bg-yellow-100 text-yellow-800 mt-2">
+                  <CardTitle className="text-xl text-[#4F5077]">{studentProfile.full_name}</CardTitle>
+                  <CardDescription className="text-[#6B7A99]">Student ID: {studentProfile.id.slice(-8)}</CardDescription>
+                  <Badge className="bg-yellow-100 text-yellow-800 mt-2 rounded p-1">
                     {profileStats.currentBelt}
                   </Badge>
                 </CardHeader>
-                <CardContent className="space-y-4">
+                <CardContent className="space-y-4 text-[#333333]">
                   <div className="flex items-center space-x-3 text-sm">
-                    <Mail className="w-4 h-4 text-gray-400" />
-                    <span className="text-gray-600">{studentProfile.email}</span>
+                    <Mail className="w-4 h-4" />
+                    <span className="">{studentProfile.email}</span>
                   </div>
                   <div className="flex items-center space-x-3 text-sm">
-                    <Phone className="w-4 h-4 text-gray-400" />
-                    <span className="text-gray-600">{studentProfile.phone}</span>
+                    <Phone className="w-4 h-4" />
+                    <span className="">{studentProfile.phone}</span>
                   </div>
                   {studentProfile.address && (
                     <div className="flex items-center space-x-3 text-sm">
-                      <MapPin className="w-4 h-4 text-gray-400" />
-                      <span className="text-gray-600">
+                      <MapPin className="w-4 h-4" />
+                      <span className="">
                         {[
                           studentProfile.address.street,
                           studentProfile.address.city,
@@ -225,21 +225,21 @@ export default function StudentProfilePage() {
                   {studentProfile.date_of_birth && (
                     <div className="flex items-center space-x-3 text-sm">
                       <Calendar className="w-4 h-4 text-gray-400" />
-                      <span className="text-gray-600">
+                      <span className="">
                         Born: {new Date(studentProfile.date_of_birth).toLocaleDateString()}
                       </span>
                     </div>
                   )}
                   <div className="flex items-center space-x-3 text-sm">
                     <Clock className="w-4 h-4 text-gray-400" />
-                    <span className="text-gray-600">
+                    <span className="">
                       Joined: {new Date(studentProfile.created_at).toLocaleDateString()}
                     </span>
                   </div>
                   {studentProfile.gender && (
                     <div className="flex items-center space-x-3 text-sm">
                       <User className="w-4 h-4 text-gray-400" />
-                      <span className="text-gray-600">Gender: {studentProfile.gender}</span>
+                      <span className="">Gender: {studentProfile.gender}</span>
                     </div>
                   )}
                 </CardContent>
@@ -248,19 +248,19 @@ export default function StudentProfilePage() {
               {/* Quick Stats */}
               <Card className="mt-6">
                 <CardHeader>
-                  <CardTitle className="text-lg">Quick Stats</CardTitle>
+                  <CardTitle className="text-lg text-[#6B7A99]">Quick Stats</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4">
+                <CardContent className="space-y-4 text-[#333333]">
                   <div className="flex justify-between items-center">
-                    <span className="text-gray-600">Courses Enrolled</span>
+                    <span className="">Courses Enrolled</span>
                     <span className="font-semibold">{profileStats.coursesEnrolled}</span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-gray-600">Total Hours</span>
+                    <span className="">Total Hours</span>
                     <span className="font-semibold">{profileStats.totalHours}</span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-gray-600">Attendance Rate</span>
+                    <span className="">Attendance Rate</span>
                     <span className="font-semibold">{profileStats.attendanceRate}%</span>
                   </div>
                 </CardContent>
@@ -272,31 +272,31 @@ export default function StudentProfilePage() {
             {/* Enrolled Courses */}
             <Card>
               <CardHeader>
-                <CardTitle>Enrolled Courses</CardTitle>
-                <CardDescription>Your current training programs</CardDescription>
+                <CardTitle className="text-[#6B7A99]">Enrolled Courses</CardTitle>
+                <CardDescription className="text-[#6B7A99]">Your current training programs</CardDescription>
               </CardHeader>
               <CardContent>
                 {studentProfile.enrollments && studentProfile.enrollments.length > 0 ? (
                   <div className="space-y-4">
                     {studentProfile.enrollments.map((enrollment, index) => (
-                      <div key={index} className="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
+                      <div key={index} className="flex justify-between items-center p-4 bg-gray-50 rounded-lg text-[#333333]">
                         <div>
-                          <h4 className="font-semibold text-gray-900">{enrollment.course_name}</h4>
-                          <p className="text-sm text-gray-600">Branch: {enrollment.branch_name}</p>
+                          <h4 className="font-semibold text-[#333333]">{enrollment.course_name}</h4>
+                          <p className="text-sm">Branch: {enrollment.branch_name}</p>
                           <div className="flex items-center space-x-2 mt-1">
-                            <Badge variant="outline" className="text-xs">
+                            <Badge variant="outline" className="text-xs text-[#333333] rounded">
                               {enrollment.payment_status}
                             </Badge>
                             {enrollment.is_active && (
-                              <Badge className="bg-green-100 text-green-800 text-xs">
+                              <Badge className="bg-green-100 text-green-800 text-xs rounded">
                                 Active
                               </Badge>
                             )}
                           </div>
                         </div>
                         <div className="text-right">
-                          <p className="text-sm text-gray-600">Enrolled</p>
-                          <p className="text-sm font-semibold text-blue-600">
+                          <p className="text-sm">Enrolled</p>
+                          <p className="text-sm font-semibold">
                             {enrollment.enrollment_date ?
                               new Date(enrollment.enrollment_date).toLocaleDateString() :
                               'N/A'
@@ -315,29 +315,29 @@ export default function StudentProfilePage() {
             {/* Emergency Contact */}
             {studentProfile.emergency_contact && (
               <Card>
-                <CardHeader>
+                <CardHeader className="text-[#6B7A99]">
                   <CardTitle className="flex items-center space-x-2">
-                    <Heart className="w-5 h-5 text-red-500" />
+                    {/* <Heart className="w-5 h-5 text-red-500" /> */}
                     <span>Emergency Contact</span>
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-3">
+                <CardContent className="space-y-3 text-[#333333]">
                   {studentProfile.emergency_contact.name && (
                     <div className="flex items-center space-x-3 text-sm">
-                      <User className="w-4 h-4 text-gray-400" />
-                      <span className="text-gray-600">{studentProfile.emergency_contact.name}</span>
+                      <User className="w-4 h-4" />
+                      <span className="">{studentProfile.emergency_contact.name}</span>
                     </div>
                   )}
                   {studentProfile.emergency_contact.phone && (
                     <div className="flex items-center space-x-3 text-sm">
-                      <Phone className="w-4 h-4 text-gray-400" />
-                      <span className="text-gray-600">{studentProfile.emergency_contact.phone}</span>
+                      <Phone className="w-4 h-4" />
+                      <span className="">{studentProfile.emergency_contact.phone}</span>
                     </div>
                   )}
                   {studentProfile.emergency_contact.relationship && (
                     <div className="flex items-center space-x-3 text-sm">
-                      <Heart className="w-4 h-4 text-gray-400" />
-                      <span className="text-gray-600">Relationship: {studentProfile.emergency_contact.relationship}</span>
+                      <Heart className="w-4 h-4" />
+                      <span className="">Relationship: {studentProfile.emergency_contact.relationship}</span>
                     </div>
                   )}
                 </CardContent>
@@ -348,34 +348,34 @@ export default function StudentProfilePage() {
             {studentProfile.medical_info && (
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <AlertCircle className="w-5 h-5 text-blue-500" />
+                  <CardTitle className="flex items-center space-x-2 text-[#6B7A99]">
+                    {/* <AlertCircle className="w-5 h-5 text-blue-500" /> */}
                     <span>Medical Information</span>
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-3">
+                <CardContent className="space-y-3 text-[#333333]">
                   {studentProfile.medical_info.allergies && (
                     <div>
-                      <p className="text-sm font-medium text-gray-700">Allergies:</p>
+                      <p className="text-sm font-medium">Allergies:</p>
                       <p className="text-sm text-gray-600">{studentProfile.medical_info.allergies}</p>
                     </div>
                   )}
                   {studentProfile.medical_info.medications && (
                     <div>
-                      <p className="text-sm font-medium text-gray-700">Medications:</p>
-                      <p className="text-sm text-gray-600">{studentProfile.medical_info.medications}</p>
+                      <p className="text-sm font-medium">Medications:</p>
+                      <p className="text-sm ">{studentProfile.medical_info.medications}</p>
                     </div>
                   )}
                   {studentProfile.medical_info.conditions && (
                     <div>
-                      <p className="text-sm font-medium text-gray-700">Medical Conditions:</p>
-                      <p className="text-sm text-gray-600">{studentProfile.medical_info.conditions}</p>
+                      <p className="text-sm font-medium">Medical Conditions:</p>
+                      <p className="text-sm ">{studentProfile.medical_info.conditions}</p>
                     </div>
                   )}
                   {studentProfile.medical_info.blood_type && (
                     <div>
-                      <p className="text-sm font-medium text-gray-700">Blood Type:</p>
-                      <p className="text-sm text-gray-600">{studentProfile.medical_info.blood_type}</p>
+                      <p className="text-sm font-medium">Blood Type:</p>
+                      <p className="text-sm ">{studentProfile.medical_info.blood_type}</p>
                     </div>
                   )}
                 </CardContent>

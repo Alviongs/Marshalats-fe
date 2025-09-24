@@ -121,7 +121,7 @@ export default function StudentDashboardLayout({
                   <div className="flex-1">
                     {pageTitle && (
                       <h1
-                        className="text-3xl font-bold text-gray-900 mb-2"
+                        className="text-3xl font-bold text-[#4F5077] mb-2"
                         id="page-title"
                         tabIndex={-1}
                       >
@@ -130,7 +130,7 @@ export default function StudentDashboardLayout({
                     )}
                     {pageDescription && (
                       <p
-                        className="text-gray-600 text-lg leading-relaxed"
+                        className="text-[#4F5077] text-lg leading-relaxed"
                         id="page-description"
                         aria-describedby="page-title"
                       >
@@ -177,26 +177,26 @@ export default function StudentDashboardLayout({
           <div className={cn("mx-auto py-6", maxWidthClasses[maxWidth], paddingClasses[padding])}>
             <div className="flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0">
               <div className="flex items-center space-x-4">
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-[#4F5077]">
                   © 2024 Martial Arts Academy. All rights reserved.
                 </p>
               </div>
               <div className="flex items-center space-x-6">
                 <a
                   href="/help"
-                  className="text-sm text-gray-600 hover:text-yellow-600 transition-colors duration-200"
+                  className="text-sm text-[#4F5077] hover:text-yellow-600 transition-colors duration-200"
                 >
                   Help & Support
                 </a>
                 <a
                   href="/privacy"
-                  className="text-sm text-gray-600 hover:text-yellow-600 transition-colors duration-200"
+                  className="text-sm text-[#4F5077] hover:text-yellow-600 transition-colors duration-200"
                 >
                   Privacy Policy
                 </a>
                 <a
                   href="/terms"
-                  className="text-sm text-gray-600 hover:text-yellow-600 transition-colors duration-200"
+                  className="text-sm text-[#4F5077] hover:text-yellow-600 transition-colors duration-200"
                 >
                   Terms of Service
                 </a>

@@ -441,7 +441,7 @@ Rock Martial Arts Academy - Attendance Management System
 
       <main className="w-full p-4 lg:p-6 overflow-x-hidden xl:px-12">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold text-[#0A1629]">Attendance Tracker</h1>
+          <h1 className="text-2xl font-bold text-[#4D5077]">Attendance Tracker</h1>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">

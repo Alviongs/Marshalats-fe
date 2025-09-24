@@ -349,8 +349,7 @@ export default function CategoriesManagementPage() {
           {/* Header */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Categories Management</h1>
-              <p className="text-gray-600">Manage course categories and their organization</p>
+              <h1 className="text-2xl font-bold text-[#4D5077]">Categories Management</h1>
             </div>
 
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>

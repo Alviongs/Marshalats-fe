@@ -115,7 +115,7 @@ export default function CoachAttendancePage() {
       <main className="w-full p-4 lg:p-6 overflow-x-hidden xl:px-12">
         {/* Page Header */}
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4">
-          <h1 className="text-2xl font-bold text-[#0A1629]">Attendance</h1>
+          <h1 className="text-2xl font-bold text-[#4D5077]">Attendance</h1>
           <div className="flex flex-wrap gap-2 lg:gap-3">
             <Button className="bg-yellow-400 hover:bg-yellow-500 text-white text-sm">Send Alerts</Button>
             <Button variant="outline" className="text-sm bg-transparent text-[#5A6ACF]">

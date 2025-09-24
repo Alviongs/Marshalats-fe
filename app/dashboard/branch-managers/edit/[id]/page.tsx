@@ -723,7 +723,7 @@ export default function EditBranchManagerPage() {
               <Button
                 type="submit"
                 disabled={isSubmitting}
-                className="bg-yellow-400 hover:bg-yellow-500 text-black"
+                className="bg-yellow-400 hover:bg-yellow-500 text-white"
               >
                 {isSubmitting ? (
                   <>
@@ -752,7 +752,7 @@ export default function EditBranchManagerPage() {
                 <p className="text-gray-600 mb-4">The branch manager information has been updated successfully.</p>
                 <Button
                   onClick={() => router.push(`/dashboard/branch-managers/${managerId}`)}
-                  className="bg-yellow-400 hover:bg-yellow-500 text-black"
+                  className="bg-yellow-400 hover:bg-yellow-500 text-white"
                 >
                   View Manager Details
                 </Button>

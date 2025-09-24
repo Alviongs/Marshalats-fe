@@ -430,17 +430,16 @@ export default function BranchManagersListPage() {
     <div className="min-h-screen bg-gray-50">
       <DashboardHeader currentPage="Branch Managers" />
       
-      <main className="w-full p-4 lg:py-4 px-19">
-        <div className="max-w-7xl mx-auto">
+      <main className="w-full p-4 lg:py-4 xl:px-12">
+        <div className=" mx-auto">
           {/* Header */}
           <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Branch Managers</h1>
-              <p className="text-gray-600">Manage branch managers and their assignments</p>
+              <h1 className="text-2xl font-bold text-[#4F5077]">Branch Managers</h1>
             </div>
             <Button
               onClick={() => router.push("/dashboard/branch-managers/create")}
-              className="bg-yellow-400 hover:bg-yellow-500 text-black font-medium"
+              className="bg-yellow-400 hover:bg-yellow-500 text-white font-medium"
             >
               <Plus className="w-4 h-4 mr-2" />
               Add Branch Manager
