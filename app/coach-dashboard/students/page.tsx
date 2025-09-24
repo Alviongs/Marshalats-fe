@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Search, Users, Mail, Phone, Loader2, Eye } from "lucide-react"
+import { Search, Users, Mail, Phone, Loader2, Eye, Plus, RefreshCw } from "lucide-react"
 import CoachDashboardHeader from "@/components/coach-dashboard-header"
 import { checkCoachAuth } from "@/lib/coachAuth"
 
@@ -38,6 +38,7 @@ export default function StudentsListPage() {
   const [error, setError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState("")
   const [coachData, setCoachData] = useState<any>(null)
+  const [refreshing, setRefreshing] = useState(false)
 
   useEffect(() => {
     // Use the robust coach authentication check
@@ -50,8 +51,16 @@ export default function StudentsListPage() {
     }
 
     if (authResult.coach && authResult.token) {
+      console.log("✅ Coach authenticated:", {
+        id: authResult.coach.id,
+        name: authResult.coach.full_name,
+        branch_id: authResult.coach.branch_id
+      })
+
       setCoachData(authResult.coach)
-      fetchStudents(authResult.token, authResult.coach.id)
+
+      // Fetch students with coach data
+      fetchStudents(authResult.token, authResult.coach)
     } else {
       setError("Coach information not found")
       setLoading(false)
@@ -76,17 +85,44 @@ export default function StudentsListPage() {
     }
   }, [searchTerm, students])
 
-  const fetchStudents = async (token: string, coachId: string) => {
+  // Refresh function
+  const handleRefresh = async () => {
+    if (!coachData) return
+
+    setRefreshing(true)
+    try {
+      const token = localStorage.getItem("access_token") || localStorage.getItem("token")
+      if (token) {
+        await fetchStudents(token, coachData)
+      }
+    } catch (error) {
+      console.error('Error refreshing students:', error)
+    } finally {
+      setRefreshing(false)
+    }
+  }
+
+  const fetchStudents = async (token: string, coach: any) => {
     try {
       setLoading(true)
       setError(null)
 
-      // Optional: Keep minimal logging for debugging
-      if (process.env.NODE_ENV === 'development') {
-        console.log("🔑 Fetching students for coach:", coachId)
+      console.log("🔑 Fetching students for coach:", coach.id)
+      console.log("👤 Coach data:", coach)
+
+      // Get the coach's branch ID for filtering
+      const branchId = coach?.branch_id
+      if (!branchId) {
+        console.error("❌ No branch ID found for coach")
+        setError("Coach is not assigned to any branch")
+        setLoading(false)
+        return
       }
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/coaches/${coachId}/students`, {
+      console.log("🏢 Filtering students by branch:", branchId)
+
+      // Use the search students endpoint with branch filtering
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/search/students?branch_id=${branchId}&limit=100`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -103,13 +139,11 @@ export default function StudentsListPage() {
           errorDetails = await response.text()
         }
 
-        if (process.env.NODE_ENV === 'development') {
-          console.error("❌ API Error:", {
-            status: response.status,
-            statusText: response.statusText,
-            errorDetails
-          })
-        }
+        console.error("❌ API Error:", {
+          status: response.status,
+          statusText: response.statusText,
+          errorDetails
+        })
 
         if (response.status === 401) {
           // Token expired or invalid
@@ -121,11 +155,31 @@ export default function StudentsListPage() {
       }
 
       const data = await response.json()
-      console.log("Fetched coach students:", data)
-      
+      console.log("✅ Fetched students for branch:", data)
+
       // Handle different response formats
-      const studentsData = data.students || data.enrolled_students || []
-      setStudents(studentsData)
+      const studentsData = data.students || []
+      console.log(`📊 Found ${studentsData.length} students in branch ${branchId}`)
+
+      // Transform the data to match the expected format
+      const transformedStudents = studentsData.map((student: any) => ({
+        id: student.id,
+        student_id: student.id,
+        full_name: student.full_name,
+        student_name: student.full_name,
+        email: student.email,
+        phone: student.phone,
+        date_of_birth: student.date_of_birth,
+        gender: student.gender,
+        is_active: student.is_active,
+        enrollment_date: student.courses?.[0]?.enrollment_date,
+        course_name: student.courses?.[0]?.name,
+        course_id: student.courses?.[0]?.id,
+        branch_name: student.branches?.[0]?.name,
+        status: student.is_active ? 'active' : 'inactive'
+      }))
+
+      setStudents(transformedStudents)
 
     } catch (err: any) {
       console.error('Error fetching students:', err)
@@ -199,11 +253,27 @@ export default function StudentsListPage() {
               <h1 className="text-2xl font-bold text-gray-900 mb-2">My Students</h1>
               <p className="text-gray-600">Students enrolled in your courses</p>
             </div>
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-4">
               <Badge variant="outline" className="text-sm">
                 <Users className="w-4 h-4 mr-1" />
                 {filteredStudents.length} students
               </Badge>
+              <Button
+                onClick={handleRefresh}
+                disabled={refreshing}
+                variant="outline"
+                className="text-gray-600 hover:text-gray-800"
+              >
+                <RefreshCw className={`w-4 h-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+                Refresh
+              </Button>
+              <Button
+                onClick={() => router.push("/coach-dashboard/students/create")}
+                className="bg-yellow-600 hover:bg-yellow-700 text-white"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Add Student
+              </Button>
             </div>
           </div>
 
@@ -229,8 +299,8 @@ export default function StudentsListPage() {
                 <div className="text-center text-red-600">
                   <p className="font-medium">Error loading students</p>
                   <p className="text-sm mt-1">{error}</p>
-                  <Button 
-                    onClick={() => coachData && fetchStudents(localStorage.getItem("access_token")!, coachData.id)}
+                  <Button
+                    onClick={() => coachData && fetchStudents(localStorage.getItem("access_token")!, coachData)}
                     className="mt-4"
                     variant="outline"
                   >

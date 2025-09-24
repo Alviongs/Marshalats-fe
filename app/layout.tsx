@@ -4,6 +4,7 @@ import { Analytics } from '@vercel/analytics/next'
 import { RegistrationProvider } from '@/contexts/RegistrationContext'
 import { AuthProvider } from '@/contexts/AuthContext'
 import { Toaster } from '@/components/ui/toaster'
+import AccessibilityProvider from '@/components/accessibility-provider'
 import './globals.css'
 
 // Load Poppins for general text
@@ -33,8 +34,9 @@ const bebasNeue = Bebas_Neue({
   variable: '--font-bebas',
 })
 export const metadata: Metadata = {
-  title: 'v0 App',
-  description: 'Created with v0',
+  title: 'Martial Arts Academy - Student Portal',
+  description: 'Student dashboard for martial arts training, progress tracking, and course management',
+  keywords: 'martial arts, karate, training, student portal, academy',
   generator: 'v0.app',
 }
 
@@ -46,13 +48,19 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={`${roboto.variable} ${inter.variable} ${bebasNeue.variable}`}>
+      <head>
+        <meta name="color-scheme" content="light" />
+        <meta name="theme-color" content="#f59e0b" />
+      </head>
       <body className={`font-sans ${poppins.variable}`}>
-        <AuthProvider>
-          <RegistrationProvider>
-            {children}
-          </RegistrationProvider>
-        </AuthProvider>
-        <Toaster />
+        <AccessibilityProvider>
+          <AuthProvider>
+            <RegistrationProvider>
+              {children}
+            </RegistrationProvider>
+          </AuthProvider>
+          <Toaster />
+        </AccessibilityProvider>
         <Analytics />
       </body>
     </html>

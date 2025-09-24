@@ -166,7 +166,11 @@ export default function CoachProfilePage() {
               <h1 className="text-2xl font-bold text-gray-900 mb-2">My Profile</h1>
               <p className="text-gray-600">View and manage your profile information</p>
             </div>
-            <Button variant="outline" className="flex items-center space-x-2">
+            <Button
+              variant="outline"
+              className="flex items-center space-x-2"
+              onClick={() => router.push("/coach-dashboard/profile/edit")}
+            >
               <Edit className="w-4 h-4" />
               <span>Edit Profile</span>
             </Button>
