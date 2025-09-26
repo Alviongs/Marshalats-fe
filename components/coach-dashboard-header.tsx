@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuPortal } from "@/components/ui/dropdown-menu"
-import { Menu, Home, BookOpen, User, Users, LogOut, Calendar, ClipboardList, TrendingUp, MessageSquare, Clock, ChevronDown, MoreVertical } from "lucide-react"
+import { Menu, Home, BookOpen, User, Users, LogOut, Calendar, ClipboardList, TrendingUp, MessageSquare, Clock, ChevronDown, MoreVertical, DollarSign } from "lucide-react"
 
 interface CoachDashboardHeaderProps {
   currentPage?: string
@@ -116,6 +116,13 @@ export default function CoachDashboardHeader({
       icon: TrendingUp,
       exact: false,
       description: "Performance reports"
+    },
+    {
+      name: "Payment Tracking",
+      path: "/coach-dashboard/payment-tracking",
+      icon: DollarSign,
+      exact: false,
+      description: "Monitor student payments"
     },
     {
       name: "Messages",

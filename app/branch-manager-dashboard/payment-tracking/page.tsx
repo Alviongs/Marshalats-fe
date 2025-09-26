@@ -6,10 +6,12 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Search, RefreshCw, DollarSign, Clock, Users, TrendingUp } from "lucide-react"
+import { Search, RefreshCw, DollarSign, Clock, Users, TrendingUp, Eye, Download } from "lucide-react"
 import { useRouter } from "next/navigation"
 import BranchManagerDashboardHeader from "@/components/branch-manager-dashboard-header"
 import { BranchManagerAuth } from "@/lib/branchManagerAuth"
+import { useToast } from "@/hooks/use-toast"
+import paymentAPI from "@/lib/paymentAPI"
 
 interface Payment {
   id: string
@@ -35,6 +37,7 @@ interface PaymentStats {
 
 export default function BranchManagerPaymentTrackingPage() {
   const router = useRouter()
+  const { toast } = useToast()
   const [payments, setPayments] = useState<Payment[]>([])
   const [stats, setStats] = useState<PaymentStats>({
     total_collected: 0,
@@ -48,6 +51,7 @@ export default function BranchManagerPaymentTrackingPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [typeFilter, setTypeFilter] = useState("all")
+  const [exporting, setExporting] = useState(false)
 
   // Authentication check
   useEffect(() => {
@@ -265,6 +269,41 @@ export default function BranchManagerPaymentTrackingPage() {
     }
   }
 
+  // Handle export
+  const handleExport = async () => {
+    if (exporting) return
+
+    setExporting(true)
+    try {
+      toast({
+        title: "Exporting payments...",
+        description: "Your payment report is being generated.",
+      })
+
+      // Use branch manager token for authentication
+      const token = BranchManagerAuth.getToken()
+      await paymentAPI.exportPayments({
+        status: statusFilter,
+        payment_type: typeFilter,
+        format: 'csv'
+      }, token)
+
+      toast({
+        title: "Export successful",
+        description: "Payment report has been downloaded.",
+      })
+    } catch (error) {
+      console.error('Export error:', error)
+      toast({
+        title: "Export failed",
+        description: error instanceof Error ? error.message : "Failed to export payment report",
+        variant: "destructive"
+      })
+    } finally {
+      setExporting(false)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <BranchManagerDashboardHeader currentPage="Payment Tracking" />
@@ -285,6 +324,15 @@ export default function BranchManagerPaymentTrackingPage() {
             >
               <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
               <span>Refresh</span>
+            </Button>
+            <Button
+              variant="outline"
+              onClick={handleExport}
+              disabled={exporting}
+              className="flex items-center space-x-2"
+            >
+              <Download className="w-4 h-4" />
+              <span>{exporting ? "Exporting..." : "Export CSV"}</span>
             </Button>
           </div>
         </div>
@@ -483,6 +531,7 @@ export default function BranchManagerPaymentTrackingPage() {
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Transaction ID</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
@@ -514,6 +563,19 @@ export default function BranchManagerPaymentTrackingPage() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-mono">
                           {payment.transaction_id || 'N/A'}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center space-x-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="p-1"
+                              onClick={() => router.push(`/branch-manager-dashboard/payments/${payment.id}`)}
+                              title="Explore Payment Details"
+                            >
+                              <Eye className="w-4 h-4 text-blue-600" />
+                            </Button>
+                          </div>
                         </td>
                       </tr>
                     ))}

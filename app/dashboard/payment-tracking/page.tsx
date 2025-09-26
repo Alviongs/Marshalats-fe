@@ -12,6 +12,8 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useRouter } from "next/navigation"
 import DashboardHeader from "@/components/dashboard-header"
+import { useToast } from "@/hooks/use-toast"
+import paymentAPI from "@/lib/paymentAPI"
 
 interface Payment {
   id: string
@@ -37,6 +39,7 @@ interface PaymentStats {
 
 export default function PaymentTrackingPage() {
   const router = useRouter()
+  const { toast } = useToast()
   const [payments, setPayments] = useState<Payment[]>([])
   const [stats, setStats] = useState<PaymentStats>({
     total_collected: 0,
@@ -48,6 +51,7 @@ export default function PaymentTrackingPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [typeFilter, setTypeFilter] = useState("all")
+  const [exporting, setExporting] = useState(false)
 
   // Fetch payments and stats
   useEffect(() => {
@@ -146,7 +150,38 @@ export default function PaymentTrackingPage() {
     }
   }
 
+  // Handle export
+  const handleExport = async () => {
+    if (exporting) return
 
+    setExporting(true)
+    try {
+      toast({
+        title: "Exporting payments...",
+        description: "Your payment report is being generated.",
+      })
+
+      await paymentAPI.exportPayments({
+        status: statusFilter,
+        payment_type: typeFilter,
+        format: 'csv'
+      })
+
+      toast({
+        title: "Export successful",
+        description: "Payment report has been downloaded.",
+      })
+    } catch (error) {
+      console.error('Export error:', error)
+      toast({
+        title: "Export failed",
+        description: error instanceof Error ? error.message : "Failed to export payment report",
+        variant: "destructive"
+      })
+    } finally {
+      setExporting(false)
+    }
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -178,8 +213,13 @@ export default function PaymentTrackingPage() {
           </Button>
 
           {/* Export Report Button */}
-          <Button className="bg-transparent border border-gray-300  text-[#5A6ACF] text-[10px] w-[120px] hover:bg-gray-100 px-6 py-2 rounded-md">
-            View Report
+          <Button
+            onClick={handleExport}
+            disabled={exporting}
+            className="bg-transparent border border-gray-300  text-[#5A6ACF] text-[10px] w-[120px] hover:bg-gray-100 px-6 py-2 rounded-md flex items-center gap-1"
+          >
+            <Download className="w-3 h-3" />
+            {exporting ? "Exporting..." : "Export CSV"}
           </Button>
 
           {/* View & Filter Options */}
@@ -301,13 +341,22 @@ export default function PaymentTrackingPage() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center space-x-2">
-                        <Button variant="ghost" size="sm" className="p-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="p-1"
+                          onClick={() => router.push(`/dashboard/payments/${payment.id}`)}
+                          title="Explore Payment Details"
+                        >
+                          <Eye className="w-4 h-4 text-blue-600" />
+                        </Button>
+                        <Button variant="ghost" size="sm" className="p-1" title="Download Receipt">
                           <Download className="w-4 h-4 text-gray-600" />
                         </Button>
-                        <Button variant="ghost" size="sm" className="p-1">
+                        <Button variant="ghost" size="sm" className="p-1" title="Send Message">
                           <MessageCircle className="w-4 h-4 text-green-600" />
                         </Button>
-                        <Button variant="ghost" size="sm" className="p-1">
+                        <Button variant="ghost" size="sm" className="p-1" title="Send Email">
                           <Mail className="w-4 h-4 text-blue-600" />
                         </Button>
                       </div>
