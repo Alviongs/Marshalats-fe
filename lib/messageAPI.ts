@@ -143,7 +143,7 @@ class MessageAPI extends BaseAPI {
         'Content-Type': 'application/json'
       }
     }
-    
+
     const branchManagerToken = BranchManagerAuth.getToken()
     if (branchManagerToken) {
       return {
@@ -151,7 +151,31 @@ class MessageAPI extends BaseAPI {
         'Content-Type': 'application/json'
       }
     }
-    
+
+    // Check for coach authentication - try direct localStorage access first
+    const coachToken = localStorage.getItem("access_token") || localStorage.getItem("token")
+    if (coachToken) {
+      console.log('🔍 DEBUG: Found coach token in localStorage')
+
+      // Validate it's a coach token by checking JWT payload
+      try {
+        const tokenParts = coachToken.split('.')
+        if (tokenParts.length === 3) {
+          const payload = JSON.parse(atob(tokenParts[1]))
+          if (payload.role === 'coach') {
+            console.log('🔍 DEBUG: Using coach authentication token')
+            console.log('🔍 DEBUG: Coach ID:', payload.sub, 'Branch ID:', payload.branch_id)
+            return {
+              'Authorization': `Bearer ${coachToken}`,
+              'Content-Type': 'application/json'
+            }
+          }
+        }
+      } catch (e) {
+        console.warn('⚠️ Could not validate coach token:', e)
+      }
+    }
+
     // Fallback to environment token
     const envToken = process.env.NEXT_PUBLIC_AUTH_TOKEN
     if (envToken) {
@@ -160,7 +184,7 @@ class MessageAPI extends BaseAPI {
         'Content-Type': 'application/json'
       }
     }
-    
+
     return {
       'Content-Type': 'application/json'
     }

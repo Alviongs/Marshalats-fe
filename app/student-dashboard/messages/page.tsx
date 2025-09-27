@@ -885,7 +885,7 @@ export default function StudentMessagesPage() {
                       }}
                     >
                       <MessageCircle className="w-4 h-4" />
-                      <span>Message Branch Manager</span>
+                      <span>Branch Manager Chat</span>
                     </Button>
                   )}
                 </div>

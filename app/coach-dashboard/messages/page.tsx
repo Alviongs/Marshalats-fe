@@ -141,6 +141,17 @@ export default function CoachMessagesPage() {
         console.log(`🔍 DEBUG: Student: ${student.name} (ID: ${student.id}, Branch: ${student.branch_id || 'None'})`)
       })
 
+      // Specifically check for branch managers
+      const branchManagers = response.recipients?.filter(r => r.type === "branch_manager") || []
+      console.log("🔍 DEBUG: Branch managers found:", branchManagers.length)
+      branchManagers.forEach(bm => {
+        console.log(`🔍 DEBUG: Branch Manager: ${bm.name} (ID: ${bm.id}, Branch: ${bm.branch_id || 'None'})`)
+      })
+
+      // Check for superadmins
+      const superadmins = response.recipients?.filter(r => r.type === "superadmin") || []
+      console.log("🔍 DEBUG: Superadmins found:", superadmins.length)
+
       // Check coach's branch assignment
       if (coachData?.branch_id) {
         console.log(`🔍 DEBUG: Coach branch ID: ${coachData.branch_id}`)
@@ -941,7 +952,7 @@ export default function CoachMessagesPage() {
                       }}
                     >
                       <MessageCircle className="w-4 h-4" />
-                      <span>Message Student</span>
+                      <span>Student Chat</span>
                     </Button>
                   )}
                   {recipients.filter(r => r.type === 'branch_manager').length > 0 && (
@@ -958,7 +969,7 @@ export default function CoachMessagesPage() {
                       }}
                     >
                       <MessageCircle className="w-4 h-4" />
-                      <span>Message Branch Manager</span>
+                      <span>Branch Manager Chat</span>
                     </Button>
                   )}
                 </div>
