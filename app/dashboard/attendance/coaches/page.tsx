@@ -1,20 +1,288 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Search, MessageCircle, Phone } from "lucide-react"
+import { Search, MessageCircle, Phone, CheckCircle, XCircle, Clock, Download, Calendar as CalendarIcon, Filter } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useRouter } from "next/navigation"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import DashboardHeader from "@/components/dashboard-header"
+import { checkAuth, getAuthHeaders } from "@/lib/auth"
+
+interface Coach {
+  id: string
+  full_name: string
+  email: string
+  phone?: string
+  expertise?: string
+  branch_id?: string
+  branch_name?: string
+  attendance_status?: "present" | "absent" | "late"
+  check_in_time?: string
+  check_out_time?: string
+  notes?: string
+  date_of_join?: string
+}
+
+interface CoachAttendanceStats {
+  total_coaches: number
+  present_today: number
+  absent_today: number
+  late_today: number
+  attendance_rate: number
+}
 
 export default function CoachAttendancePage() {
   const router = useRouter()
   const [activeTab, setActiveTab] = useState("master")
+
+  // New state for comprehensive coach attendance management
+  const [coaches, setCoaches] = useState<Coach[]>([])
+  const [attendanceStats, setAttendanceStats] = useState<CoachAttendanceStats>({
+    total_coaches: 0,
+    present_today: 0,
+    absent_today: 0,
+    late_today: 0,
+    attendance_rate: 0
+  })
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [searchTerm, setSearchTerm] = useState("")
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0])
+  const [selectedBranch, setSelectedBranch] = useState("all")
+  const [branches, setBranches] = useState<any[]>([])
+
+  // Filter coaches based on search term and branch
+  const filteredCoaches = coaches.filter(coach => {
+    const matchesSearch = coach.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      coach.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (coach.expertise && coach.expertise.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (coach.branch_name && coach.branch_name.toLowerCase().includes(searchTerm.toLowerCase()))
+
+    const matchesBranch = selectedBranch === "all" || coach.branch_id === selectedBranch
+
+    return matchesSearch && matchesBranch
+  })
+
+  // Fetch branches for filtering
+  const fetchBranches = async () => {
+    try {
+      const authResult = checkAuth()
+      if (!authResult.isAuthenticated) return
+
+      const headers = getAuthHeaders()
+      const response = await fetch('http://localhost:8003/api/branches', {
+        method: 'GET',
+        headers
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setBranches(data.branches || [])
+      }
+    } catch (error) {
+      console.error("Error fetching branches:", error)
+    }
+  }
+
+  // Fetch coaches and attendance data across all branches
+  const fetchCoachesAndAttendance = async () => {
+    setLoading(true)
+    setError(null)
+
+    try {
+      const authResult = checkAuth()
+      if (!authResult.isAuthenticated) {
+        setError("Authentication required")
+        return
+      }
+
+      const headers = getAuthHeaders()
+
+      // Fetch all coaches across branches
+      const coachesResponse = await fetch('http://localhost:8003/api/attendance/coaches?all_branches=true', {
+        method: 'GET',
+        headers
+      })
+
+      if (coachesResponse.ok) {
+        const coachesData = await coachesResponse.json()
+        const coachesWithAttendance = (coachesData.coaches || []).map((coach: any) => ({
+          id: coach.coach_id || coach.id,
+          full_name: coach.coach_name || coach.full_name,
+          email: coach.email,
+          phone: coach.phone,
+          expertise: coach.expertise || coach.specialization,
+          branch_id: coach.branch_id,
+          branch_name: coach.branch_name,
+          attendance_status: "present", // Default status
+          check_in_time: "",
+          check_out_time: "",
+          notes: "",
+          date_of_join: coach.date_of_join || coach.created_at
+        }))
+
+        setCoaches(coachesWithAttendance)
+      }
+
+      // Fetch attendance statistics for coaches across all branches
+      const statsResponse = await fetch('http://localhost:8003/api/attendance/stats?user_type=coach&all_branches=true', {
+        method: 'GET',
+        headers
+      })
+
+      if (statsResponse.ok) {
+        const statsData = await statsResponse.json()
+        setAttendanceStats({
+          total_coaches: statsData.total_coaches || 0,
+          present_today: statsData.today_present_coaches || 0,
+          absent_today: (statsData.total_coaches || 0) - (statsData.today_present_coaches || 0),
+          late_today: 0,
+          attendance_rate: statsData.average_coach_attendance || 0
+        })
+      }
+
+    } catch (error) {
+      console.error("Error fetching data:", error)
+      setError("Failed to load coach attendance data. Using mock data for demonstration.")
+
+      // Fallback mock data
+      const mockCoaches: Coach[] = [
+        {
+          id: "1",
+          full_name: "Abhi Ram",
+          email: "abhi@example.com",
+          phone: "123-456-7890",
+          expertise: "Martial Arts",
+          branch_id: "branch-1",
+          branch_name: "Downtown Branch",
+          attendance_status: "present",
+          check_in_time: "06:30 AM",
+          check_out_time: "09:00 AM",
+          notes: "",
+          date_of_join: "2025-04-20"
+        },
+        {
+          id: "2",
+          full_name: "Sarah Coach",
+          email: "sarah.coach@example.com",
+          phone: "123-456-7891",
+          expertise: "Karate",
+          branch_id: "branch-2",
+          branch_name: "Uptown Branch",
+          attendance_status: "late",
+          check_in_time: "06:45 AM",
+          notes: "Arrived 15 minutes late",
+          date_of_join: "2025-03-15"
+        }
+      ]
+
+      setCoaches(mockCoaches)
+      setAttendanceStats({
+        total_coaches: mockCoaches.length,
+        present_today: 1,
+        absent_today: 0,
+        late_today: 1,
+        attendance_rate: 90.5
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Mark attendance for a coach (superadmin can mark for any coach)
+  const handleMarkCoachAttendance = async (coachId: string, status: "present" | "absent" | "late") => {
+    try {
+      const authResult = checkAuth()
+      if (!authResult.isAuthenticated) {
+        setError("Authentication required")
+        return
+      }
+
+      const coach = coaches.find(c => c.id === coachId)
+      if (!coach) {
+        setError("Coach not found")
+        return
+      }
+
+      const headers = getAuthHeaders()
+
+      // Prepare attendance data
+      const attendanceData = {
+        user_id: coachId,
+        user_type: "coach",
+        branch_id: coach.branch_id || "",
+        attendance_date: new Date().toISOString(),
+        status: status,
+        check_in_time: status !== "absent" ? new Date().toISOString() : null,
+        notes: `Marked by superadmin`
+      }
+
+      // Try to save to backend
+      try {
+        const response = await fetch('http://localhost:8003/api/attendance/coach/mark', {
+          method: 'POST',
+          headers,
+          body: JSON.stringify(attendanceData)
+        })
+
+        if (response.ok) {
+          console.log("Coach attendance marked successfully in backend")
+        } else {
+          console.warn("Failed to save to backend, updating locally only")
+        }
+      } catch (apiError) {
+        console.warn("Backend not available, updating locally only:", apiError)
+      }
+
+      // Update local state
+      setCoaches(prev =>
+        prev.map(c =>
+          c.id === coachId
+            ? {
+                ...c,
+                attendance_status: status,
+                check_in_time: status !== "absent" ? new Date().toLocaleTimeString('en-US', {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  hour12: true
+                }) : "",
+                notes: attendanceData.notes
+              }
+            : c
+        )
+      )
+
+      // Update stats
+      setAttendanceStats(prev => {
+        const presentCount = coaches.filter(c => c.id === coachId ? status === "present" : c.attendance_status === "present").length
+        const lateCount = coaches.filter(c => c.id === coachId ? status === "late" : c.attendance_status === "late").length
+        const absentCount = coaches.length - presentCount - lateCount
+
+        return {
+          ...prev,
+          present_today: presentCount,
+          late_today: lateCount,
+          absent_today: absentCount,
+          attendance_rate: coaches.length > 0 ? (presentCount + lateCount) / coaches.length * 100 : 0
+        }
+      })
+
+    } catch (error) {
+      console.error("Error marking coach attendance:", error)
+      setError("Failed to mark coach attendance")
+    }
+  }
+
+  // Load data on component mount
+  useEffect(() => {
+    fetchBranches()
+    fetchCoachesAndAttendance()
+  }, [selectedDate])
 
   // Sample coach attendance data
   const coachAttendanceData = [
@@ -115,15 +383,43 @@ export default function CoachAttendancePage() {
       <main className="w-full p-4 lg:p-6 overflow-x-hidden xl:px-12">
         {/* Page Header */}
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4">
-          <h1 className="text-2xl font-bold text-[#0A1629]">Attendance</h1>
+          <h1 className="text-2xl font-bold text-[#0A1629]">Coach Attendance Management</h1>
           <div className="flex flex-wrap gap-2 lg:gap-3">
+            <Button
+              onClick={() => {
+                // Export functionality for superadmin coach attendance
+                const csvContent = [
+                  ['Coach Name', 'Email', 'Expertise', 'Branch', 'Status', 'Check In', 'Date', 'Notes'].join(','),
+                  ...filteredCoaches.map(coach => [
+                    coach.full_name,
+                    coach.email,
+                    coach.expertise || '',
+                    coach.branch_name || '',
+                    coach.attendance_status || 'not_marked',
+                    coach.check_in_time || '',
+                    selectedDate,
+                    coach.notes || ''
+                  ].join(','))
+                ].join('\n')
+
+                const blob = new Blob([csvContent], { type: 'text/csv' })
+                const url = window.URL.createObjectURL(blob)
+                const a = document.createElement('a')
+                a.href = url
+                a.download = `superadmin_coach_attendance_report_${selectedDate}.csv`
+                document.body.appendChild(a)
+                a.click()
+                document.body.removeChild(a)
+                window.URL.revokeObjectURL(url)
+              }}
+              className="bg-blue-600 hover:bg-blue-700 text-white text-sm"
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Export Attendance
+            </Button>
             <Button className="bg-yellow-400 hover:bg-yellow-500 text-white text-sm">Send Alerts</Button>
             <Button variant="outline" className="text-sm bg-transparent text-[#5A6ACF]">
               View Report
-            </Button>
-            <Button variant="outline" className="text-sm flex items-center space-x-2 bg-transparent text-[#5A6ACF]">
-              <span>📥</span>
-              <span>Download attendance sheet</span>
             </Button>
           </div>
         </div>
@@ -204,103 +500,206 @@ export default function CoachAttendancePage() {
               </div>
             </div>
 
-            {/* Attendance Table */}
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b bg-gray-50">
-                    <th className="text-left py-3 px-2 font-semibold text-[#6B7A99]">Name</th>
-                    <th className="text-left py-3 px-2 font-semibold text-[#6B7A99]">
-                      {activeTab === "student" ? "Student Name" : "Coach Name"}
-                    </th>
-                    <th className="text-left py-3 px-2 font-semibold text-[#6B7A99]">Gender</th>
-                    <th className="text-left py-3 px-2 font-semibold text-[#6B7A99]">Expertise</th>
-                    <th className="text-left py-3 px-2 font-semibold text-[#6B7A99]">Email Id</th>
-                    <th className="text-left py-3 px-2 font-semibold text-[#6B7A99]">Date of join</th>
-                    <th className="text-left py-3 px-2 font-semibold text-[#6B7A99]">Check in</th>
-                    <th className="text-left py-3 px-2 font-semibold text-[#6B7A99]">Check out</th>
-                    <th className="text-left py-3 px-2 font-semibold text-[#6B7A99]">Attendance</th>
-                    <th className="text-left py-3 px-2 font-semibold text-[#6B7A99]">
-                      {activeTab === "student" ? "Notes" : "Alerts"}
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {activeTab === "student"
-                    ? studentAttendanceData.map((student, index) => (
-                        <tr key={index} className="border-b hover:bg-gray-50">
-                          <td className="py-3 px-2">{student.date}</td>
-                          <td className="py-3 px-2">{student.studentName}</td>
-                          <td className="py-3 px-2">{student.gender}</td>
-                          <td className="py-3 px-2">{student.expertise}</td>
-                          <td className="py-3 px-2">{student.email}</td>
-                          <td className="py-3 px-2">{student.dateOfJoin}</td>
-                          <td className="py-3 px-2">{student.checkIn}</td>
-                          <td className="py-3 px-2">{student.checkOut}</td>
-                          <td className="py-3 px-2">
-                            <div className="flex items-center space-x-2">
-                              <span>{student.attendance}</span>
-                              <Badge
-                                className="bg-yellow-100 text-yellow-800 hover:bg-yellow-200 cursor-pointer"
-                                onClick={() => router.push(`/dashboard/attendance/student-detail/${index}`)}
-                              >
-                                View more
-                              </Badge>
-                            </div>
-                          </td>
-                          <td className="py-3 px-2">
-                            <span
-                              className={`text-xs px-2 py-1 rounded ${
-                                student.notes === "Double punch" ||
-                                student.notes === "Perfect form" ||
-                                student.notes === "Excellent technique"
-                                  ? "bg-green-100 text-green-800"
-                                  : student.notes === "Missed punch"
-                                    ? "bg-red-100 text-red-800"
-                                    : "bg-blue-100 text-blue-800"
-                              }`}
-                            >
-                              {student.notes}
-                            </span>
-                          </td>
-                        </tr>
-                      ))
-                    : coachAttendanceData.map((coach, index) => (
-                        <tr key={index} className="border-b hover:bg-gray-50">
-                          <td className="py-3 px-2">{coach.date}</td>
-                          <td className="py-3 px-2">{coach.coachName}</td>
-                          <td className="py-3 px-2">{coach.gender}</td>
-                          <td className="py-3 px-2">{coach.expertise}</td>
-                          <td className="py-3 px-2">{coach.email}</td>
-                          <td className="py-3 px-2">{coach.dateOfJoin}</td>
-                          <td className="py-3 px-2">{coach.checkIn}</td>
-                          <td className="py-3 px-2">{coach.checkOut}</td>
-                          <td className="py-3 px-2">
-                            <div className="flex items-center space-x-2">
-                              <span>{coach.attendance}</span>
-                              <Badge
-                                className="bg-yellow-100 text-yellow-800 hover:bg-yellow-200 cursor-pointer"
-                                onClick={() => router.push(`/dashboard/attendance/coach-detail/${index}`)}
-                              >
-                                View more
-                              </Badge>
-                            </div>
-                          </td>
-                          <td className="py-3 px-2">
-                            <div className="flex items-center space-x-2">
-                              <div className="flex items-center justify-center w-8 h-8 bg-green-100 rounded-full">
-                                <MessageCircle className="w-4 h-4 text-green-600" />
-                              </div>
-                              <span className="text-xs text-gray-500">WhatsApp</span>
-                              <div className="flex items-center justify-center w-8 h-8 bg-blue-100 rounded-full">
-                                <Phone className="w-4 h-4 text-blue-600" />
-                              </div>
-                              <span className="text-xs text-gray-500">SMS</span>
-                            </div>
-                          </td>
-                        </tr>
+            {/* Coach Attendance Management */}
+            <div className="space-y-4">
+              {/* Search and Filters */}
+              <div className="flex flex-col sm:flex-row gap-4 mb-4">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                  <Input
+                    placeholder="Search coaches..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+                <div className="flex items-center gap-2">
+                  <Filter className="h-4 w-4 text-gray-400" />
+                  <Select value={selectedBranch} onValueChange={setSelectedBranch}>
+                    <SelectTrigger className="w-40">
+                      <SelectValue placeholder="All Branches" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Branches</SelectItem>
+                      {branches.map((branch) => (
+                        <SelectItem key={branch.id} value={branch.id}>
+                          {branch.name}
+                        </SelectItem>
                       ))}
-                </tbody>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex items-center gap-2">
+                  <CalendarIcon className="h-4 w-4 text-gray-400" />
+                  <Input
+                    type="date"
+                    value={selectedDate}
+                    onChange={(e) => setSelectedDate(e.target.value)}
+                    className="w-40"
+                  />
+                </div>
+              </div>
+
+              {/* Statistics Cards */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                <Card>
+                  <CardContent className="px-4 py-3">
+                    <div className="text-center">
+                      <p className="text-sm text-gray-600 mb-1">Total Coaches</p>
+                      <p className="text-2xl font-bold text-blue-600">{attendanceStats.total_coaches}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="px-4 py-3">
+                    <div className="text-center">
+                      <p className="text-sm text-gray-600 mb-1">Present Today</p>
+                      <p className="text-2xl font-bold text-green-600">{attendanceStats.present_today}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="px-4 py-3">
+                    <div className="text-center">
+                      <p className="text-sm text-gray-600 mb-1">Absent Today</p>
+                      <p className="text-2xl font-bold text-red-600">{attendanceStats.absent_today}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="px-4 py-3">
+                    <div className="text-center">
+                      <p className="text-sm text-gray-600 mb-1">Late Today</p>
+                      <p className="text-2xl font-bold text-yellow-600">{attendanceStats.late_today}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {loading && (
+                <div className="flex justify-center items-center py-8">
+                  <div className="text-gray-500">Loading coaches...</div>
+                </div>
+              )}
+
+              {error && (
+                <div className="flex justify-center items-center py-8">
+                  <div className="text-red-500">{error}</div>
+                </div>
+              )}
+
+              {!loading && !error && (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b bg-gray-50">
+                        <th className="text-left py-3 px-2 font-semibold text-[#6B7A99]">Coach Name</th>
+                        <th className="text-left py-3 px-2 font-semibold text-[#6B7A99]">Expertise</th>
+                        <th className="text-left py-3 px-2 font-semibold text-[#6B7A99]">Branch</th>
+                        <th className="text-left py-3 px-2 font-semibold text-[#6B7A99]">Email</th>
+                        <th className="text-left py-3 px-2 font-semibold text-[#6B7A99]">Status</th>
+                        <th className="text-left py-3 px-2 font-semibold text-[#6B7A99]">Check In</th>
+                        <th className="text-left py-3 px-2 font-semibold text-[#6B7A99]">Notes</th>
+                        <th className="text-left py-3 px-2 font-semibold text-[#6B7A99]">Mark Attendance</th>
+                        <th className="text-left py-3 px-2 font-semibold text-[#6B7A99]">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredCoaches.map((coach) => {
+                        const getStatusBadge = (status: string) => {
+                          switch (status) {
+                            case "present":
+                              return <Badge className="bg-green-100 text-green-800">Present</Badge>
+                            case "absent":
+                              return <Badge className="bg-red-100 text-red-800">Absent</Badge>
+                            case "late":
+                              return <Badge className="bg-yellow-100 text-yellow-800">Late</Badge>
+                            default:
+                              return <Badge variant="outline">Not Marked</Badge>
+                          }
+                        }
+
+                        return (
+                          <tr key={coach.id} className="border-b hover:bg-gray-50">
+                            <td className="py-3 px-2">
+                              <div className="flex items-center space-x-3">
+                                <Avatar className="h-8 w-8">
+                                  <AvatarImage src="" />
+                                  <AvatarFallback className="bg-blue-100 text-blue-600">
+                                    {coach.full_name.split(' ').map(n => n[0]).join('')}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <div>
+                                  <div className="font-semibold">{coach.full_name}</div>
+                                  <div className="text-xs text-gray-500">{coach.phone}</div>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="py-3 px-2">{coach.expertise || "N/A"}</td>
+                            <td className="py-3 px-2">{coach.branch_name || "N/A"}</td>
+                            <td className="py-3 px-2">{coach.email}</td>
+                            <td className="py-3 px-2">
+                              {getStatusBadge(coach.attendance_status || "not_marked")}
+                            </td>
+                            <td className="py-3 px-2">{coach.check_in_time || "-"}</td>
+                            <td className="py-3 px-2">
+                              <span className="text-xs text-gray-600">
+                                {coach.notes || "-"}
+                              </span>
+                            </td>
+                            <td className="py-3 px-2">
+                              <div className="flex space-x-1">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="text-green-600 border-green-200 hover:bg-green-50 px-2 py-1 text-xs"
+                                  onClick={() => handleMarkCoachAttendance(coach.id, "present")}
+                                >
+                                  <CheckCircle className="h-3 w-3 mr-1" />
+                                  Present
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="text-yellow-600 border-yellow-200 hover:bg-yellow-50 px-2 py-1 text-xs"
+                                  onClick={() => handleMarkCoachAttendance(coach.id, "late")}
+                                >
+                                  <Clock className="h-3 w-3 mr-1" />
+                                  Late
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="text-red-600 border-red-200 hover:bg-red-50 px-2 py-1 text-xs"
+                                  onClick={() => handleMarkCoachAttendance(coach.id, "absent")}
+                                >
+                                  <XCircle className="h-3 w-3 mr-1" />
+                                  Absent
+                                </Button>
+                              </div>
+                            </td>
+                            <td className="py-3 px-2">
+                              <div className="flex items-center space-x-2">
+                                <div className="flex items-center justify-center w-8 h-8 bg-green-100 rounded-full cursor-pointer">
+                                  <MessageCircle className="w-4 h-4 text-green-600" />
+                                </div>
+                                <div className="flex items-center justify-center w-8 h-8 bg-blue-100 rounded-full cursor-pointer">
+                                  <Phone className="w-4 h-4 text-blue-600" />
+                                </div>
+                              </div>
+                            </td>
+                          </tr>
+                        )
+                      })}
+
+                      {filteredCoaches.length === 0 && (
+                        <tr>
+                          <td colSpan={9} className="text-center py-8 text-gray-500">
+                            No coaches found
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
               </table>
             </div>
           </CardContent>

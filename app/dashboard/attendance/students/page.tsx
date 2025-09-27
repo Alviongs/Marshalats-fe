@@ -15,13 +15,38 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Search } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
+import { Search, CheckCircle, XCircle, Clock, Download, Calendar as CalendarIcon, Filter } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useRouter } from "next/navigation"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import DashboardHeader from "@/components/dashboard-header"
+import { checkAuth, getAuthHeaders } from "@/lib/auth"
+
+interface Student {
+  id: string
+  full_name: string
+  email: string
+  phone?: string
+  course_name?: string
+  course_id?: string
+  branch_id?: string
+  branch_name?: string
+  attendance_status?: "present" | "absent" | "late"
+  check_in_time?: string
+  check_out_time?: string
+  notes?: string
+}
+
+interface AttendanceStats {
+  total_students: number
+  present_today: number
+  absent_today: number
+  late_today: number
+  attendance_rate: number
+}
 
 const students = {
   male: 6,
@@ -49,6 +74,250 @@ export default function StudentAttendancePage() {
   const [selectedFilter, setSelectedFilter] = useState("filter")
   const [selectedMonth, setSelectedMonth] = useState("april")
   const [activeTab, setActiveTab] = useState("day")
+
+  // New state for comprehensive attendance management
+  const [students, setStudents] = useState<Student[]>([])
+  const [attendanceStats, setAttendanceStats] = useState<AttendanceStats>({
+    total_students: 0,
+    present_today: 0,
+    absent_today: 0,
+    late_today: 0,
+    attendance_rate: 0
+  })
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [searchTerm, setSearchTerm] = useState("")
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0])
+  const [selectedBranch, setSelectedBranch] = useState("all")
+  const [branches, setBranches] = useState<any[]>([])
+
+  // Filter students based on search term and branch
+  const filteredStudents = students.filter(student => {
+    const matchesSearch = student.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      student.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (student.course_name && student.course_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (student.branch_name && student.branch_name.toLowerCase().includes(searchTerm.toLowerCase()))
+
+    const matchesBranch = selectedBranch === "all" || student.branch_id === selectedBranch
+
+    return matchesSearch && matchesBranch
+  })
+
+  // Fetch branches for filtering
+  const fetchBranches = async () => {
+    try {
+      const authResult = checkAuth()
+      if (!authResult.isAuthenticated) return
+
+      const headers = getAuthHeaders()
+      const response = await fetch('http://localhost:8003/api/branches', {
+        method: 'GET',
+        headers
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setBranches(data.branches || [])
+      }
+    } catch (error) {
+      console.error("Error fetching branches:", error)
+    }
+  }
+
+  // Fetch students and attendance data across all branches
+  const fetchStudentsAndAttendance = async () => {
+    setLoading(true)
+    setError(null)
+
+    try {
+      const authResult = checkAuth()
+      if (!authResult.isAuthenticated) {
+        setError("Authentication required")
+        return
+      }
+
+      const headers = getAuthHeaders()
+
+      // Fetch all students across branches
+      const studentsResponse = await fetch('http://localhost:8003/api/attendance/students?all_branches=true', {
+        method: 'GET',
+        headers
+      })
+
+      if (studentsResponse.ok) {
+        const studentsData = await studentsResponse.json()
+        const studentsWithAttendance = (studentsData.students || []).map((student: any) => ({
+          id: student.student_id || student.id,
+          full_name: student.student_name || student.full_name,
+          email: student.email,
+          phone: student.phone,
+          course_name: student.course_name,
+          course_id: student.course_id,
+          branch_id: student.branch_id,
+          branch_name: student.branch_name,
+          attendance_status: "present", // Default status
+          check_in_time: "",
+          check_out_time: "",
+          notes: ""
+        }))
+
+        setStudents(studentsWithAttendance)
+      }
+
+      // Fetch attendance statistics across all branches
+      const statsResponse = await fetch('http://localhost:8003/api/attendance/stats?all_branches=true', {
+        method: 'GET',
+        headers
+      })
+
+      if (statsResponse.ok) {
+        const statsData = await statsResponse.json()
+        setAttendanceStats({
+          total_students: statsData.total_students || 0,
+          present_today: statsData.today_present_students || 0,
+          absent_today: (statsData.total_students || 0) - (statsData.today_present_students || 0),
+          late_today: 0,
+          attendance_rate: statsData.average_student_attendance || 0
+        })
+      }
+
+    } catch (error) {
+      console.error("Error fetching data:", error)
+      setError("Failed to load attendance data. Using mock data for demonstration.")
+
+      // Fallback mock data
+      const mockStudents: Student[] = [
+        {
+          id: "1",
+          full_name: "John Smith",
+          email: "john@example.com",
+          phone: "123-456-7890",
+          course_name: "Karate Basics",
+          course_id: "course-1",
+          branch_id: "branch-1",
+          branch_name: "Downtown Branch",
+          attendance_status: "present",
+          check_in_time: "09:00 AM",
+          notes: ""
+        },
+        {
+          id: "2",
+          full_name: "Sarah Johnson",
+          email: "sarah@example.com",
+          phone: "123-456-7891",
+          course_name: "Advanced Taekwondo",
+          course_id: "course-2",
+          branch_id: "branch-2",
+          branch_name: "Uptown Branch",
+          attendance_status: "late",
+          check_in_time: "09:15 AM",
+          notes: "Arrived 15 minutes late"
+        }
+      ]
+
+      setStudents(mockStudents)
+      setAttendanceStats({
+        total_students: mockStudents.length,
+        present_today: 1,
+        absent_today: 0,
+        late_today: 1,
+        attendance_rate: 85.5
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Mark attendance for a student (superadmin can mark for any student)
+  const handleMarkAttendance = async (studentId: string, status: "present" | "absent" | "late") => {
+    try {
+      const authResult = checkAuth()
+      if (!authResult.isAuthenticated) {
+        setError("Authentication required")
+        return
+      }
+
+      const student = students.find(s => s.id === studentId)
+      if (!student) {
+        setError("Student not found")
+        return
+      }
+
+      const headers = getAuthHeaders()
+
+      // Prepare attendance data
+      const attendanceData = {
+        user_id: studentId,
+        user_type: "student",
+        course_id: student.course_id || "",
+        branch_id: student.branch_id || "",
+        attendance_date: new Date().toISOString(),
+        status: status,
+        check_in_time: status !== "absent" ? new Date().toISOString() : null,
+        notes: `Marked by superadmin`
+      }
+
+      // Try to save to backend
+      try {
+        const response = await fetch('http://localhost:8003/api/attendance/mark', {
+          method: 'POST',
+          headers,
+          body: JSON.stringify(attendanceData)
+        })
+
+        if (response.ok) {
+          console.log("Attendance marked successfully in backend")
+        } else {
+          console.warn("Failed to save to backend, updating locally only")
+        }
+      } catch (apiError) {
+        console.warn("Backend not available, updating locally only:", apiError)
+      }
+
+      // Update local state
+      setStudents(prev =>
+        prev.map(s =>
+          s.id === studentId
+            ? {
+                ...s,
+                attendance_status: status,
+                check_in_time: status !== "absent" ? new Date().toLocaleTimeString('en-US', {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  hour12: true
+                }) : "",
+                notes: attendanceData.notes
+              }
+            : s
+        )
+      )
+
+      // Update stats
+      setAttendanceStats(prev => {
+        const presentCount = students.filter(s => s.id === studentId ? status === "present" : s.attendance_status === "present").length
+        const lateCount = students.filter(s => s.id === studentId ? status === "late" : s.attendance_status === "late").length
+        const absentCount = students.length - presentCount - lateCount
+
+        return {
+          ...prev,
+          present_today: presentCount,
+          late_today: lateCount,
+          absent_today: absentCount,
+          attendance_rate: students.length > 0 ? (presentCount + lateCount) / students.length * 100 : 0
+        }
+      })
+
+    } catch (error) {
+      console.error("Error marking attendance:", error)
+      setError("Failed to mark attendance")
+    }
+  }
+
+  // Load data on component mount
+  useEffect(() => {
+    fetchBranches()
+    fetchStudentsAndAttendance()
+  }, [selectedDate])
 
   const attendanceData = [
   { week: "Jan week-1", Present: 40, Absent: 20 },
@@ -376,61 +645,168 @@ Rock Martial Arts Academy - Attendance Management System
   }
 
   const renderAttendanceTable = () => {
-    const data = getFilteredData()
+    if (loading) {
+      return (
+        <div className="flex justify-center items-center py-8">
+          <div className="text-gray-500">Loading students...</div>
+        </div>
+      )
+    }
+
+    if (error) {
+      return (
+        <div className="flex justify-center items-center py-8">
+          <div className="text-red-500">{error}</div>
+        </div>
+      )
+    }
+
+    const getStatusBadge = (status: string) => {
+      switch (status) {
+        case "present":
+          return <Badge className="bg-green-100 text-green-800">Present</Badge>
+        case "absent":
+          return <Badge className="bg-red-100 text-red-800">Absent</Badge>
+        case "late":
+          return <Badge className="bg-yellow-100 text-yellow-800">Late</Badge>
+        default:
+          return <Badge variant="outline">Not Marked</Badge>
+      }
+    }
 
     return (
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b text-[#6B7A99]">
-              <th className="text-left py-3">Student Name</th>
-              <th className="text-left py-3">Course</th>
-              <th className="text-left py-3">Branch</th>
-              <th className="text-left py-3">Present</th>
-              <th className="text-left py-3">Absent</th>
-              <th className="text-left py-3">Leave</th>
-              <th className="text-left py-3">Notes</th>
-              <th className="text-left py-3">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {data.map((student, index) => (
-              <tr key={index} className="border-b text-[#6B7A99]">
-                <td className="py-3 font-semibold">{student.name}</td>
-                <td className="py-3 font-semibold">{student.course}</td>
-                <td className="py-3 font-semibold">{student.branch}</td>
-                <td className="py-3">{student.present}</td>
-                <td className="py-3">{student.absent}</td>
-                <td className="py-3">{student.leave}</td>
-                <td className="py-3">
-                  <span
-                    className={`text-sm ${
-                      student.notes.includes("Perfect") ||
-                      student.notes.includes("Excellent") ||
-                      student.notes.includes("Good")
-                        ? "text-green-600"
-                        : student.notes.includes("Missed") ||
-                            student.notes.includes("Sick") ||
-                            student.notes.includes("improvement")
-                          ? "text-red-600"
-                          : "text-gray-600"
-                    }`}
-                  >
-                    {student.notes}
-                  </span>
-                </td>
-                <td className="py-3">
-                  <Button
-                    className="bg-yellow-400 hover:bg-yellow-500 text-black text-xs px-3 py-1"
-                    onClick={() => handleReportDownload(student.name)}
-                  >
-                    Report
-                  </Button>
-                </td>
+      <div className="space-y-4">
+        {/* Search and Filters */}
+        <div className="flex flex-col sm:flex-row gap-4 mb-4">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+            <Input
+              placeholder="Search students..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <Filter className="h-4 w-4 text-gray-400" />
+            <Select value={selectedBranch} onValueChange={setSelectedBranch}>
+              <SelectTrigger className="w-40">
+                <SelectValue placeholder="All Branches" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Branches</SelectItem>
+                {branches.map((branch) => (
+                  <SelectItem key={branch.id} value={branch.id}>
+                    {branch.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex items-center gap-2">
+            <CalendarIcon className="h-4 w-4 text-gray-400" />
+            <Input
+              type="date"
+              value={selectedDate}
+              onChange={(e) => setSelectedDate(e.target.value)}
+              className="w-40"
+            />
+          </div>
+        </div>
+
+        {/* Attendance Table */}
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b text-[#6B7A99]">
+                <th className="text-left py-3">Student Name</th>
+                <th className="text-left py-3">Course</th>
+                <th className="text-left py-3">Branch</th>
+                <th className="text-left py-3">Status</th>
+                <th className="text-left py-3">Check In</th>
+                <th className="text-left py-3">Notes</th>
+                <th className="text-left py-3">Mark Attendance</th>
+                <th className="text-left py-3">Action</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {filteredStudents.map((student) => (
+                <tr key={student.id} className="border-b text-[#6B7A99]">
+                  <td className="py-3">
+                    <div className="flex items-center space-x-3">
+                      <Avatar className="h-8 w-8">
+                        <AvatarImage src="" />
+                        <AvatarFallback className="bg-blue-100 text-blue-600">
+                          {student.full_name.split(' ').map(n => n[0]).join('')}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <div className="font-semibold">{student.full_name}</div>
+                        <div className="text-xs text-gray-500">{student.email}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="py-3 font-semibold">{student.course_name || "N/A"}</td>
+                  <td className="py-3 font-semibold">{student.branch_name || "N/A"}</td>
+                  <td className="py-3">
+                    {getStatusBadge(student.attendance_status || "not_marked")}
+                  </td>
+                  <td className="py-3">{student.check_in_time || "-"}</td>
+                  <td className="py-3">
+                    <span className="text-xs text-gray-600">
+                      {student.notes || "-"}
+                    </span>
+                  </td>
+                  <td className="py-3">
+                    <div className="flex space-x-1">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="text-green-600 border-green-200 hover:bg-green-50 px-2 py-1 text-xs"
+                        onClick={() => handleMarkAttendance(student.id, "present")}
+                      >
+                        <CheckCircle className="h-3 w-3 mr-1" />
+                        Present
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="text-yellow-600 border-yellow-200 hover:bg-yellow-50 px-2 py-1 text-xs"
+                        onClick={() => handleMarkAttendance(student.id, "late")}
+                      >
+                        <Clock className="h-3 w-3 mr-1" />
+                        Late
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="text-red-600 border-red-200 hover:bg-red-50 px-2 py-1 text-xs"
+                        onClick={() => handleMarkAttendance(student.id, "absent")}
+                      >
+                        <XCircle className="h-3 w-3 mr-1" />
+                        Absent
+                      </Button>
+                    </div>
+                  </td>
+                  <td className="py-3">
+                    <Button
+                      className="bg-yellow-400 hover:bg-yellow-500 text-black text-xs px-3 py-1"
+                      onClick={() => handleReportDownload(student.full_name)}
+                    >
+                      Report
+                    </Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          {filteredStudents.length === 0 && (
+            <div className="text-center py-8 text-gray-500">
+              No students found
+            </div>
+          )}
+        </div>
       </div>
     )
   }
@@ -442,6 +818,38 @@ Rock Martial Arts Academy - Attendance Management System
       <main className="w-full p-4 lg:p-6 overflow-x-hidden xl:px-12">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold text-[#0A1629]">Attendance Tracker</h1>
+          <Button
+            onClick={() => {
+              // Export functionality for superadmin
+              const csvContent = [
+                ['Student Name', 'Email', 'Course', 'Branch', 'Status', 'Check In', 'Date', 'Notes'].join(','),
+                ...filteredStudents.map(student => [
+                  student.full_name,
+                  student.email,
+                  student.course_name || '',
+                  student.branch_name || '',
+                  student.attendance_status || 'not_marked',
+                  student.check_in_time || '',
+                  selectedDate,
+                  student.notes || ''
+                ].join(','))
+              ].join('\n')
+
+              const blob = new Blob([csvContent], { type: 'text/csv' })
+              const url = window.URL.createObjectURL(blob)
+              const a = document.createElement('a')
+              a.href = url
+              a.download = `superadmin_attendance_report_${selectedDate}.csv`
+              document.body.appendChild(a)
+              a.click()
+              document.body.removeChild(a)
+              window.URL.revokeObjectURL(url)
+            }}
+            className="bg-blue-600 hover:bg-blue-700 text-white"
+          >
+            <Download className="h-4 w-4 mr-2" />
+            Export All Attendance
+          </Button>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
@@ -453,8 +861,8 @@ Rock Martial Arts Academy - Attendance Management System
                 <CardContent className="px-6 py-4 h-full">
                   <div className="text-start">
                     <p className="text-sm text-[#9593A8] mb-3">Total No. students</p>
-                    <p className="text-2xl text-[#403C6B] font-bold">347</p>
-                    <p className="text-xs text-[#9593A8]">In last 24 hours</p>
+                    <p className="text-2xl text-[#403C6B] font-bold">{attendanceStats.total_students}</p>
+                    <p className="text-xs text-[#9593A8]">Across all branches</p>
                   </div>
                 </CardContent>
               </Card>
@@ -473,8 +881,8 @@ Rock Martial Arts Academy - Attendance Management System
                 <CardContent className="px-6 py-4 h-full">
                   <div className="text-start">
                     <p className="text-sm text-[#9593A8] mb-3">Present Today</p>
-                    <p className="text-2xl text-[#403C6B] font-bold">344</p>
-                    <p className="text-xs text-[#9593A8]">In last 24 hours</p>
+                    <p className="text-2xl text-[#403C6B] font-bold">{attendanceStats.present_today}</p>
+                    <p className="text-xs text-[#9593A8]">Across all branches</p>
                   </div>
                 </CardContent>
               </Card>
