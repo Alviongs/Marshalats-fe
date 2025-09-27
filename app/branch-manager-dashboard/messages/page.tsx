@@ -11,39 +11,39 @@ import { Textarea } from "@/components/ui/textarea"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import CoachDashboardHeader from "@/components/coach-dashboard-header"
+import BranchManagerDashboardHeader from "@/components/branch-manager-dashboard-header"
 import { Send, Search, MessageCircle, Plus, Reply, Archive, Trash2, Loader2, Mail, MailOpen, Clock, User } from "lucide-react"
 import { format } from "date-fns"
 import messageAPI, { Conversation, Message, MessageRecipient, MessageStats } from "@/lib/messageAPI"
-import { checkCoachAuth } from "@/lib/coachAuth"
+import { BranchManagerAuth } from "@/lib/branchManagerAuth"
 
-export default function CoachMessagesPage() {
+export default function BranchManagerMessagesPage() {
   const router = useRouter()
-  const [coachData, setCoachData] = useState<any>(null)
+  const [branchManagerData, setBranchManagerData] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-
+  
   // Message state
   const [conversations, setConversations] = useState<Conversation[]>([])
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null)
   const [threadMessages, setThreadMessages] = useState<Message[]>([])
   const [messageStats, setMessageStats] = useState<MessageStats | null>(null)
   const [recipients, setRecipients] = useState<MessageRecipient[]>([])
-
+  
   // UI state
   const [activeTab, setActiveTab] = useState("inbox")
   const [searchTerm, setSearchTerm] = useState("")
   const [isComposeDialogOpen, setIsComposeDialogOpen] = useState(false)
   const [isLoadingMessages, setIsLoadingMessages] = useState(false)
   const [isLoadingThread, setIsLoadingThread] = useState(false)
-
+  
   // Compose message state
   const [composeRecipient, setComposeRecipient] = useState("")
   const [composeSubject, setComposeSubject] = useState("")
   const [composeContent, setComposeContent] = useState("")
   const [composePriority, setComposePriority] = useState<"low" | "normal" | "high" | "urgent">("normal")
   const [isSending, setIsSending] = useState(false)
-
+  
   // Reply state
   const [replyContent, setReplyContent] = useState("")
   const [isReplying, setIsReplying] = useState(false)
@@ -51,14 +51,19 @@ export default function CoachMessagesPage() {
   useEffect(() => {
     const initializeData = async () => {
       try {
-        // Check coach authentication
-        const authResult = checkCoachAuth()
-        if (!authResult.isAuthenticated || !authResult.coach) {
-          router.push("/coach/login")
+        // Check branch manager authentication
+        if (!BranchManagerAuth.isAuthenticated()) {
+          router.push("/branch-manager/login")
           return
         }
 
-        setCoachData(authResult.coach)
+        const user = BranchManagerAuth.getCurrentUser()
+        if (!user) {
+          router.push("/branch-manager/login")
+          return
+        }
+
+        setBranchManagerData(user)
 
         // Load initial data
         await Promise.all([
@@ -68,7 +73,7 @@ export default function CoachMessagesPage() {
         ])
 
       } catch (error) {
-        console.error("Error initializing coach messages:", error)
+        console.error("Error initializing branch manager messages:", error)
         setError("Failed to load messages. Please try again.")
       } finally {
         setLoading(false)
@@ -145,12 +150,20 @@ export default function CoachMessagesPage() {
         return
       }
 
+      // Check if there's an existing conversation with this recipient and subject
+      const existingConversation = conversations.find(conv => {
+        const hasRecipient = conv.participants.some(p => p.user_id === composeRecipient)
+        const sameSubject = conv.subject === composeSubject || conv.subject === `Re: ${composeSubject}`
+        return hasRecipient && sameSubject && !conv.is_archived
+      })
+
       await messageAPI.sendMessage({
         recipient_id: composeRecipient,
         recipient_type: recipient.type,
         subject: composeSubject,
         content: composeContent,
-        priority: composePriority
+        priority: composePriority,
+        thread_id: existingConversation?.thread_id  // Use existing thread if found
       })
 
       // Reset form
@@ -183,29 +196,45 @@ export default function CoachMessagesPage() {
       const lastMessage = threadMessages[threadMessages.length - 1]
       if (!lastMessage) return
 
-      // Determine recipient (sender of the last message if it's not from current user)
-      const currentUserId = coachData?.id
-      const recipientId = lastMessage.sender_name !== coachData?.full_name ?
-        threadMessages.find(m => m.sender_name !== coachData?.full_name)?.sender_name :
-        lastMessage.recipient_name
+      // Determine recipient - find the other participant in the conversation
+      const currentUserId = branchManagerData?.id
+      const currentUserName = branchManagerData?.full_name
 
-      const recipient = recipients.find(r => r.name === recipientId)
-      if (!recipient) {
+      // Find the other participant in the conversation
+      const otherParticipant = selectedConversation.participants.find(
+        p => p.user_id !== currentUserId
+      )
+
+      if (!otherParticipant) {
         setError("Cannot determine message recipient")
         return
+      }
+
+      // Find the recipient in the recipients list
+      const recipient = recipients.find(r => r.id === otherParticipant.user_id)
+      if (!recipient) {
+        setError("Recipient not found in available recipients")
+        return
+      }
+
+      // Normalize subject - remove "Re:" prefix if it exists to avoid "Re: Re:" chains
+      let replySubject = selectedConversation.subject
+      if (!replySubject.startsWith("Re: ")) {
+        replySubject = `Re: ${replySubject}`
       }
 
       await messageAPI.sendMessage({
         recipient_id: recipient.id,
         recipient_type: recipient.type,
-        subject: `Re: ${selectedConversation.subject}`,
+        subject: replySubject,
         content: replyContent,
         priority: "normal",
-        reply_to_message_id: lastMessage.id
+        reply_to_message_id: lastMessage.id,
+        thread_id: selectedConversation.thread_id  // Pass the existing thread_id
       })
 
       setReplyContent("")
-
+      
       // Reload thread messages
       await loadThreadMessages(selectedConversation.thread_id)
       await loadConversations()
@@ -220,9 +249,8 @@ export default function CoachMessagesPage() {
   }
 
   const handleLogout = () => {
-    localStorage.removeItem("coachToken")
-    localStorage.removeItem("coachData")
-    router.push("/coach/login")
+    BranchManagerAuth.clearAuthData()
+    router.push("/branch-manager/login")
   }
 
   // Filter conversations based on active tab and search
@@ -249,7 +277,7 @@ export default function CoachMessagesPage() {
     switch (userType) {
       case "student":
         return "bg-blue-100 text-blue-800"
-      case "branch_manager":
+      case "coach":
         return "bg-green-100 text-green-800"
       case "superadmin":
         return "bg-purple-100 text-purple-800"
@@ -262,8 +290,8 @@ export default function CoachMessagesPage() {
     switch (userType) {
       case "student":
         return "Student"
-      case "branch_manager":
-        return "Branch Manager"
+      case "coach":
+        return "Coach"
       case "superadmin":
         return "Admin"
       default:
@@ -274,14 +302,14 @@ export default function CoachMessagesPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <CoachDashboardHeader
-          currentPage="Messages"
-          coachName={coachData?.full_name || "Coach"}
+        <BranchManagerDashboardHeader 
+          branchManagerName={branchManagerData?.full_name || "Branch Manager"}
+          onLogout={handleLogout}
         />
         <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
           <div className="px-4 py-6 sm:px-0">
             <div className="flex items-center justify-center h-64">
-              <Loader2 className="h-8 w-8 animate-spin text-yellow-600" />
+              <Loader2 className="h-8 w-8 animate-spin text-green-600" />
             </div>
           </div>
         </main>
@@ -292,9 +320,9 @@ export default function CoachMessagesPage() {
   if (error && !conversations.length) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <CoachDashboardHeader
-          currentPage="Messages"
-          coachName={coachData?.full_name || "Coach"}
+        <BranchManagerDashboardHeader 
+          branchManagerName={branchManagerData?.full_name || "Branch Manager"}
+          onLogout={handleLogout}
         />
         <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
           <div className="px-4 py-6 sm:px-0">
@@ -318,22 +346,23 @@ export default function CoachMessagesPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <CoachDashboardHeader
-        currentPage="Messages"
-        coachName={coachData?.full_name || "Coach"}
+      <BranchManagerDashboardHeader
+        branchManagerName={branchManagerData?.full_name || "Branch Manager"}
+        onLogout={handleLogout}
       />
 
+      {/* Main Content */}
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
           {/* Page Header */}
           <div className="flex justify-between items-center mb-8">
             <div>
               <h1 className="text-3xl font-bold text-gray-900 mb-2">Messages</h1>
-              <p className="text-gray-600">Communication with students and administration</p>
+              <p className="text-gray-600">Communication with students, coaches, and administration</p>
             </div>
             <Dialog open={isComposeDialogOpen} onOpenChange={setIsComposeDialogOpen}>
               <DialogTrigger asChild>
-                <Button className="bg-yellow-600 hover:bg-yellow-700">
+                <Button className="bg-green-600 hover:bg-green-700">
                   <Plus className="w-4 h-4 mr-2" />
                   Compose Message
                 </Button>
@@ -524,14 +553,14 @@ export default function CoachMessagesPage() {
                   ) : (
                     <div className="space-y-0">
                       {filteredConversations.map((conversation) => {
-                        const otherParticipant = conversation.participants.find(p => p.user_id !== coachData?.id)
+                        const otherParticipant = conversation.participants.find(p => p.user_id !== branchManagerData?.id)
                         return (
                           <div
                             key={conversation.thread_id}
                             onClick={() => handleConversationSelect(conversation)}
                             className={`p-4 border-b cursor-pointer hover:bg-gray-50 transition-colors ${
                               conversation.unread_count > 0 ? "bg-blue-50 border-l-4 border-l-blue-500" : ""
-                            } ${selectedConversation?.thread_id === conversation.thread_id ? "bg-yellow-50" : ""}`}
+                            } ${selectedConversation?.thread_id === conversation.thread_id ? "bg-green-50" : ""}`}
                           >
                             <div className="flex justify-between items-start mb-2">
                               <div className="flex items-center space-x-2">
@@ -589,7 +618,7 @@ export default function CoachMessagesPage() {
                       <div>
                         <CardTitle className="text-lg">{selectedConversation.subject}</CardTitle>
                         <CardDescription>
-                          Conversation with {selectedConversation.participants.find(p => p.user_id !== coachData?.id)?.user_name}
+                          Conversation with {selectedConversation.participants.find(p => p.user_id !== branchManagerData?.id)?.user_name}
                         </CardDescription>
                       </div>
                       <div className="flex items-center space-x-2">
@@ -614,7 +643,7 @@ export default function CoachMessagesPage() {
                         {/* Messages Thread */}
                         <div className="max-h-96 overflow-y-auto space-y-4 border rounded-lg p-4">
                           {threadMessages.map((message, index) => {
-                            const isFromCurrentUser = message.sender_name === coachData?.full_name
+                            const isFromCurrentUser = message.sender_name === branchManagerData?.full_name
                             return (
                               <div
                                 key={message.id}
@@ -622,17 +651,17 @@ export default function CoachMessagesPage() {
                               >
                                 <div className={`max-w-[70%] rounded-lg p-3 ${
                                   isFromCurrentUser
-                                    ? 'bg-yellow-600 text-white'
+                                    ? 'bg-green-600 text-white'
                                     : 'bg-gray-100 text-gray-900'
                                 }`}>
                                   <div className="flex items-center justify-between mb-1">
                                     <p className={`text-xs font-medium ${
-                                      isFromCurrentUser ? 'text-yellow-100' : 'text-gray-600'
+                                      isFromCurrentUser ? 'text-green-100' : 'text-gray-600'
                                     }`}>
                                       {message.sender_name}
                                     </p>
                                     <p className={`text-xs ${
-                                      isFromCurrentUser ? 'text-yellow-100' : 'text-gray-500'
+                                      isFromCurrentUser ? 'text-green-100' : 'text-gray-500'
                                     }`}>
                                       {format(new Date(message.created_at), "MMM d, h:mm a")}
                                     </p>
@@ -675,7 +704,7 @@ export default function CoachMessagesPage() {
                               <Button
                                 onClick={handleSendReply}
                                 disabled={isReplying || !replyContent.trim()}
-                                className="bg-yellow-600 hover:bg-yellow-700"
+                                className="bg-green-600 hover:bg-green-700"
                               >
                                 {isReplying ? (
                                   <>
@@ -727,7 +756,7 @@ export default function CoachMessagesPage() {
                         const admin = recipients.find(r => r.type === 'superadmin')
                         if (admin) {
                           setComposeRecipient(admin.id)
-                          setComposeSubject("Coach Inquiry")
+                          setComposeSubject("Branch Manager Inquiry")
                           setIsComposeDialogOpen(true)
                         }
                       }}
@@ -744,7 +773,7 @@ export default function CoachMessagesPage() {
                         const student = recipients.find(r => r.type === 'student')
                         if (student) {
                           setComposeRecipient(student.id)
-                          setComposeSubject("Training Update")
+                          setComposeSubject("Student Update")
                           setIsComposeDialogOpen(true)
                         }
                       }}
@@ -753,21 +782,21 @@ export default function CoachMessagesPage() {
                       <span>Message Student</span>
                     </Button>
                   )}
-                  {recipients.filter(r => r.type === 'branch_manager').length > 0 && (
+                  {recipients.filter(r => r.type === 'coach').length > 0 && (
                     <Button
                       variant="outline"
                       className="flex items-center space-x-2"
                       onClick={() => {
-                        const manager = recipients.find(r => r.type === 'branch_manager')
-                        if (manager) {
-                          setComposeRecipient(manager.id)
-                          setComposeSubject("Branch Update")
+                        const coach = recipients.find(r => r.type === 'coach')
+                        if (coach) {
+                          setComposeRecipient(coach.id)
+                          setComposeSubject("Coach Communication")
                           setIsComposeDialogOpen(true)
                         }
                       }}
                     >
                       <MessageCircle className="w-4 h-4" />
-                      <span>Message Branch Manager</span>
+                      <span>Message Coach</span>
                     </Button>
                   )}
                 </div>
