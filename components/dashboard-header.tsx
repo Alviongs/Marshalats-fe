@@ -254,6 +254,14 @@ export default function DashboardHeader({ currentPage = "Dashboard" }: Dashboard
                       <div className="px-3 py-2">
                         <p className="text-sm font-medium text-gray-500 mb-2">Attendance</p>
                         <button
+                          onClick={() => handleMobileNavigation("/dashboard/attendance")}
+                          className={`w-full text-left px-3 py-1 rounded-md hover:bg-gray-100 text-sm text-gray-600 ${
+                            isActivePath("/dashboard/attendance") && !isActivePath("/dashboard/attendance/students") && !isActivePath("/dashboard/attendance/coaches") && !isActivePath("/dashboard/attendance/reports") ? "bg-yellow-50 text-yellow-700" : ""
+                          }`}
+                        >
+                          Overview
+                        </button>
+                        <button
                           onClick={() => handleMobileNavigation("/dashboard/attendance/students")}
                           className={`w-full text-left px-3 py-1 rounded-md hover:bg-gray-100 text-sm text-gray-600 ${
                             isActivePath("/dashboard/attendance/students") ? "bg-yellow-50 text-yellow-700" : ""
@@ -268,6 +276,14 @@ export default function DashboardHeader({ currentPage = "Dashboard" }: Dashboard
                           }`}
                         >
                           Coach Attendance
+                        </button>
+                        <button
+                          onClick={() => handleMobileNavigation("/dashboard/attendance/reports")}
+                          className={`w-full text-left px-3 py-1 rounded-md hover:bg-gray-100 text-sm text-gray-600 ${
+                            isActivePath("/dashboard/attendance/reports") ? "bg-yellow-50 text-yellow-700" : ""
+                          }`}
+                        >
+                          Reports & Analytics
                         </button>
                       </div>
                       <button
@@ -383,6 +399,12 @@ export default function DashboardHeader({ currentPage = "Dashboard" }: Dashboard
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="bg-white/95 backdrop-blur-md border border-gray-200/50 shadow-xl rounded-lg p-1 overflow-hidden">
                   <DropdownMenuItem
+                    onClick={() => router.push("/dashboard/attendance")}
+                    className="hover:bg-gray-100/80 rounded-md transition-colors duration-200 font-medium text-gray-700 hover:text-gray-900"
+                  >
+                    Overview
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
                     onClick={() => router.push("/dashboard/attendance/students")}
                     className="hover:bg-gray-100/80 rounded-md transition-colors duration-200 font-medium text-gray-700 hover:text-gray-900"
                   >
@@ -393,6 +415,12 @@ export default function DashboardHeader({ currentPage = "Dashboard" }: Dashboard
                     className="hover:bg-gray-100/80 rounded-md transition-colors duration-200 font-medium text-gray-700 hover:text-gray-900"
                   >
                     Coach Attendance
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => router.push("/dashboard/attendance/reports")}
+                    className="hover:bg-gray-100/80 rounded-md transition-colors duration-200 font-medium text-gray-700 hover:text-gray-900"
+                  >
+                    Reports & Analytics
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>

@@ -181,7 +181,7 @@ export function formatAuthHeaders(config: AuthConfig): Record<string, string> {
 export function getCurrentAuthConfig(): AuthConfig {
   const authType = process.env.NEXT_PUBLIC_AUTH_TYPE || 'jwt'
   const authToken = process.env.NEXT_PUBLIC_AUTH_TOKEN || 'valid-super-admin-token'
-  
+
   switch (authType) {
     case 'apikey':
       return { ...authConfigs.apiKey, tokenValue: authToken }
@@ -192,4 +192,15 @@ export function getCurrentAuthConfig(): AuthConfig {
     default:
       return { ...authConfigs.jwt, tokenValue: authToken }
   }
+}
+
+// Backward compatibility exports for superadmin authentication
+export function checkAuth(): { isAuthenticated: boolean } {
+  return {
+    isAuthenticated: SuperAdminAuth.isAuthenticated()
+  }
+}
+
+export function getAuthHeaders(): Record<string, string> {
+  return SuperAdminAuth.getAuthHeaders()
 }

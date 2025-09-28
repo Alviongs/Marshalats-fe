@@ -1,30 +1,68 @@
 "use client"
 
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
+import { format } from "date-fns"
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  PieChart,
+  Pie,
+  Cell,
+  ResponsiveContainer,
+} from "recharts"
+import {
+  Calendar,
+  CalendarIcon,
+  Download,
+  Search,
+  Filter,
+  Users,
+  CheckCircle,
+  XCircle,
+  Clock,
+  AlertCircle,
+  RefreshCw,
+  FileText,
+  TrendingUp,
+  MapPin,
+  BookOpen,
+  User,
+  MessageCircle,
+  Phone,
+  Award
+} from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Search, MessageCircle, Phone, CheckCircle, XCircle, Clock, Download, Calendar as CalendarIcon, Filter } from "lucide-react"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { useRouter } from "next/navigation"
-import { useState, useEffect } from "react"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Calendar as CalendarComponent } from "@/components/ui/calendar"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import DashboardHeader from "@/components/dashboard-header"
 import { checkAuth, getAuthHeaders } from "@/lib/auth"
 
-interface Coach {
+interface CoachAttendanceRecord {
   id: string
-  full_name: string
+  coach_id: string
+  coach_name: string
   email: string
   phone?: string
   expertise?: string
-  branch_id?: string
-  branch_name?: string
-  attendance_status?: "present" | "absent" | "late"
+  branch_id: string
+  branch_name: string
+  status: "present" | "absent" | "late" | "not_marked"
   check_in_time?: string
   check_out_time?: string
   notes?: string
+  date: string
   date_of_join?: string
 }
 
@@ -33,40 +71,75 @@ interface CoachAttendanceStats {
   present_today: number
   absent_today: number
   late_today: number
+  not_marked_today: number
   attendance_rate: number
 }
 
-export default function CoachAttendancePage() {
-  const router = useRouter()
-  const [activeTab, setActiveTab] = useState("master")
+interface Branch {
+  id: string
+  name: string
+  branch?: {
+    name: string
+  }
+}
 
-  // New state for comprehensive coach attendance management
-  const [coaches, setCoaches] = useState<Coach[]>([])
+export default function SuperAdminCoachAttendancePage() {
+  const router = useRouter()
+
+  // Enhanced state management
+  const [attendanceRecords, setAttendanceRecords] = useState<CoachAttendanceRecord[]>([])
   const [attendanceStats, setAttendanceStats] = useState<CoachAttendanceStats>({
     total_coaches: 0,
     present_today: 0,
     absent_today: 0,
     late_today: 0,
+    not_marked_today: 0,
     attendance_rate: 0
   })
+  const [branches, setBranches] = useState<Branch[]>([])
+
+  // UI state
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
+
+  // Filter state
   const [searchTerm, setSearchTerm] = useState("")
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0])
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date())
   const [selectedBranch, setSelectedBranch] = useState("all")
-  const [branches, setBranches] = useState<any[]>([])
+  const [selectedStatus, setSelectedStatus] = useState("all")
 
-  // Filter coaches based on search term and branch
-  const filteredCoaches = coaches.filter(coach => {
-    const matchesSearch = coach.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      coach.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (coach.expertise && coach.expertise.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      (coach.branch_name && coach.branch_name.toLowerCase().includes(searchTerm.toLowerCase()))
+  // Saving state for individual records
+  const [saveStatus, setSaveStatus] = useState<Record<string, 'idle' | 'saving' | 'success' | 'error'>>({})
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
 
-    const matchesBranch = selectedBranch === "all" || coach.branch_id === selectedBranch
+  // Filter attendance records based on search and filters
+  const filteredRecords = attendanceRecords.filter(record => {
+    const matchesSearch = record.coach_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      record.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (record.expertise && record.expertise.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      record.branch_name.toLowerCase().includes(searchTerm.toLowerCase())
 
-    return matchesSearch && matchesBranch
+    const matchesBranch = selectedBranch === "all" || record.branch_id === selectedBranch
+    const matchesStatus = selectedStatus === "all" || record.status === selectedStatus
+
+    return matchesSearch && matchesBranch && matchesStatus
   })
+
+  // Clear messages after timeout
+  useEffect(() => {
+    if (successMessage) {
+      const timer = setTimeout(() => setSuccessMessage(null), 5000)
+      return () => clearTimeout(timer)
+    }
+  }, [successMessage])
+
+  useEffect(() => {
+    if (error) {
+      const timer = setTimeout(() => setError(null), 8000)
+      return () => clearTimeout(timer)
+    }
+  }, [error])
 
   // Fetch branches for filtering
   const fetchBranches = async () => {
@@ -82,19 +155,23 @@ export default function CoachAttendancePage() {
 
       if (response.ok) {
         const data = await response.json()
-        setBranches(data.branches || [])
+        const branchList = (data.branches || []).map((branch: any) => ({
+          id: branch.id,
+          name: branch.branch?.name || branch.name || 'Unknown Branch'
+        }))
+        setBranches(branchList)
       }
     } catch (error) {
       console.error("Error fetching branches:", error)
     }
   }
 
-  // Fetch coaches and attendance data across all branches
-  const fetchCoachesAndAttendance = async () => {
-    setLoading(true)
-    setError(null)
-
+  // Fetch coach attendance data for selected date
+  const fetchCoachAttendanceData = async () => {
     try {
+      setLoading(true)
+      setError(null)
+
       const authResult = checkAuth()
       if (!authResult.isAuthenticated) {
         setError("Authentication required")
@@ -102,409 +179,494 @@ export default function CoachAttendancePage() {
       }
 
       const headers = getAuthHeaders()
+      const dateStr = format(selectedDate, 'yyyy-MM-dd')
 
-      // Fetch all coaches across branches
-      const coachesResponse = await fetch('http://localhost:8003/api/attendance/coaches?all_branches=true', {
+      console.log(`🔄 Superadmin fetching coach attendance data for date: ${dateStr}`)
+
+      // Fetch all coaches first
+      const coachesResponse = await fetch('http://localhost:8003/api/coaches', {
         method: 'GET',
         headers
       })
 
       if (coachesResponse.ok) {
         const coachesData = await coachesResponse.json()
-        const coachesWithAttendance = (coachesData.coaches || []).map((coach: any) => ({
-          id: coach.coach_id || coach.id,
-          full_name: coach.coach_name || coach.full_name,
-          email: coach.email,
-          phone: coach.phone,
-          expertise: coach.expertise || coach.specialization,
-          branch_id: coach.branch_id,
-          branch_name: coach.branch_name,
-          attendance_status: "present", // Default status
-          check_in_time: "",
-          check_out_time: "",
-          notes: "",
-          date_of_join: coach.date_of_join || coach.created_at
-        }))
+        console.log("✅ Coaches data received:", coachesData)
 
-        setCoaches(coachesWithAttendance)
-      }
-
-      // Fetch attendance statistics for coaches across all branches
-      const statsResponse = await fetch('http://localhost:8003/api/attendance/stats?user_type=coach&all_branches=true', {
-        method: 'GET',
-        headers
-      })
-
-      if (statsResponse.ok) {
-        const statsData = await statsResponse.json()
-        setAttendanceStats({
-          total_coaches: statsData.total_coaches || 0,
-          present_today: statsData.today_present_coaches || 0,
-          absent_today: (statsData.total_coaches || 0) - (statsData.today_present_coaches || 0),
-          late_today: 0,
-          attendance_rate: statsData.average_coach_attendance || 0
+        const records: CoachAttendanceRecord[] = (coachesData.coaches || []).map((coach: any) => {
+          return {
+            id: `${coach.id}_${dateStr}`,
+            coach_id: coach.id,
+            coach_name: coach.full_name || 'Unknown Coach',
+            email: coach.email || '',
+            phone: coach.phone || '',
+            expertise: coach.expertise || 'General',
+            branch_id: coach.branch_id || '',
+            branch_name: branches.find(b => b.id === coach.branch_id)?.name || 'Unknown Branch',
+            status: "not_marked", // Default status - we'll fetch actual attendance separately
+            check_in_time: undefined,
+            check_out_time: undefined,
+            notes: "",
+            date: dateStr,
+            date_of_join: coach.date_of_join
+          }
         })
+
+        // Now try to fetch actual attendance data for coaches
+        try {
+          const attendanceResponse = await fetch(`http://localhost:8003/api/attendance/coaches?date=${dateStr}`, {
+            method: 'GET',
+            headers
+          })
+
+          if (attendanceResponse.ok) {
+            const attendanceData = await attendanceResponse.json()
+            console.log("✅ Coach attendance data received:", attendanceData)
+
+            // Update records with actual attendance data
+            const updatedRecords = records.map(record => {
+              const attendanceRecord = (attendanceData.coaches || []).find((a: any) =>
+                a.coach_id === record.coach_id || a.id === record.coach_id
+              )
+
+              if (attendanceRecord && attendanceRecord.attendance) {
+                return {
+                  ...record,
+                  status: attendanceRecord.attendance.status || "not_marked",
+                  check_in_time: attendanceRecord.attendance.check_in_time ?
+                    new Date(attendanceRecord.attendance.check_in_time).toLocaleTimeString('en-US', {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                      hour12: true
+                    }) : undefined,
+                  check_out_time: attendanceRecord.attendance.check_out_time ?
+                    new Date(attendanceRecord.attendance.check_out_time).toLocaleTimeString('en-US', {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                      hour12: true
+                    }) : undefined,
+                  notes: attendanceRecord.attendance.notes || ""
+                }
+              }
+              return record
+            })
+
+            setAttendanceRecords(updatedRecords)
+          } else {
+            console.warn("No attendance endpoint for coaches, using coach list only")
+            setAttendanceRecords(records)
+          }
+        } catch (attendanceError) {
+          console.warn("Failed to fetch coach attendance, using coach list only:", attendanceError)
+          setAttendanceRecords(records)
+        }
+
+        // Calculate statistics
+        const stats = {
+          total_coaches: records.length,
+          present_today: records.filter(r => r.status === "present").length,
+          absent_today: records.filter(r => r.status === "absent").length,
+          late_today: records.filter(r => r.status === "late").length,
+          not_marked_today: records.filter(r => r.status === "not_marked").length,
+          attendance_rate: records.length > 0 ?
+            (records.filter(r => r.status === "present" || r.status === "late").length / records.length) * 100 : 0
+        }
+
+        setAttendanceStats(stats)
+        console.log("📊 Calculated coach stats:", stats)
+
+      } else {
+        const errorText = await coachesResponse.text()
+        console.error("❌ Failed to fetch coaches data:", coachesResponse.status, errorText)
+        setError(`Failed to fetch coaches data: ${coachesResponse.status}`)
       }
 
     } catch (error) {
-      console.error("Error fetching data:", error)
-      setError("Failed to load coach attendance data. Using mock data for demonstration.")
-
-      // Fallback mock data
-      const mockCoaches: Coach[] = [
-        {
-          id: "1",
-          full_name: "Abhi Ram",
-          email: "abhi@example.com",
-          phone: "123-456-7890",
-          expertise: "Martial Arts",
-          branch_id: "branch-1",
-          branch_name: "Downtown Branch",
-          attendance_status: "present",
-          check_in_time: "06:30 AM",
-          check_out_time: "09:00 AM",
-          notes: "",
-          date_of_join: "2025-04-20"
-        },
-        {
-          id: "2",
-          full_name: "Sarah Coach",
-          email: "sarah.coach@example.com",
-          phone: "123-456-7891",
-          expertise: "Karate",
-          branch_id: "branch-2",
-          branch_name: "Uptown Branch",
-          attendance_status: "late",
-          check_in_time: "06:45 AM",
-          notes: "Arrived 15 minutes late",
-          date_of_join: "2025-03-15"
-        }
-      ]
-
-      setCoaches(mockCoaches)
+      console.error("❌ Error fetching coach attendance data:", error)
+      setError("Failed to load coach attendance data. Please check your connection and try again.")
+      setAttendanceRecords([])
       setAttendanceStats({
-        total_coaches: mockCoaches.length,
-        present_today: 1,
+        total_coaches: 0,
+        present_today: 0,
         absent_today: 0,
-        late_today: 1,
-        attendance_rate: 90.5
+        late_today: 0,
+        not_marked_today: 0,
+        attendance_rate: 0
       })
     } finally {
       setLoading(false)
     }
   }
 
-  // Mark attendance for a coach (superadmin can mark for any coach)
-  const handleMarkCoachAttendance = async (coachId: string, status: "present" | "absent" | "late") => {
+  // Handle coach attendance marking
+  const handleMarkAttendance = async (recordId: string, status: "present" | "absent" | "late") => {
     try {
+      setSaveStatus(prev => ({ ...prev, [recordId]: 'saving' }))
+
+      console.log("🔄 Superadmin marking coach attendance for record:", recordId, "status:", status)
+
       const authResult = checkAuth()
       if (!authResult.isAuthenticated) {
+        setSaveStatus(prev => ({ ...prev, [recordId]: 'error' }))
         setError("Authentication required")
         return
       }
 
-      const coach = coaches.find(c => c.id === coachId)
-      if (!coach) {
-        setError("Coach not found")
+      const record = attendanceRecords.find(r => r.id === recordId)
+      if (!record) {
+        setSaveStatus(prev => ({ ...prev, [recordId]: 'error' }))
+        setError("Coach attendance record not found")
         return
       }
 
       const headers = getAuthHeaders()
 
-      // Prepare attendance data
       const attendanceData = {
-        user_id: coachId,
+        user_id: record.coach_id,
         user_type: "coach",
-        branch_id: coach.branch_id || "",
-        attendance_date: new Date().toISOString(),
+        branch_id: record.branch_id,
+        attendance_date: `${record.date}T10:00:00Z`,
         status: status,
         check_in_time: status !== "absent" ? new Date().toISOString() : null,
-        notes: `Marked by superadmin`
+        notes: `Marked by superadmin on ${format(new Date(), 'PPP')}`
       }
 
-      // Try to save to backend
-      try {
-        const response = await fetch('http://localhost:8003/api/attendance/coach/mark', {
-          method: 'POST',
-          headers,
-          body: JSON.stringify(attendanceData)
-        })
+      console.log(`💾 Saving coach attendance for ${record.coach_name} with status: ${status}`)
 
-        if (response.ok) {
-          console.log("Coach attendance marked successfully in backend")
-        } else {
-          console.warn("Failed to save to backend, updating locally only")
-        }
-      } catch (apiError) {
-        console.warn("Backend not available, updating locally only:", apiError)
-      }
-
-      // Update local state
-      setCoaches(prev =>
-        prev.map(c =>
-          c.id === coachId
-            ? {
-                ...c,
-                attendance_status: status,
-                check_in_time: status !== "absent" ? new Date().toLocaleTimeString('en-US', {
-                  hour: '2-digit',
-                  minute: '2-digit',
-                  hour12: true
-                }) : "",
-                notes: attendanceData.notes
-              }
-            : c
-        )
-      )
-
-      // Update stats
-      setAttendanceStats(prev => {
-        const presentCount = coaches.filter(c => c.id === coachId ? status === "present" : c.attendance_status === "present").length
-        const lateCount = coaches.filter(c => c.id === coachId ? status === "late" : c.attendance_status === "late").length
-        const absentCount = coaches.length - presentCount - lateCount
-
-        return {
-          ...prev,
-          present_today: presentCount,
-          late_today: lateCount,
-          absent_today: absentCount,
-          attendance_rate: coaches.length > 0 ? (presentCount + lateCount) / coaches.length * 100 : 0
-        }
+      const response = await fetch(`http://localhost:8003/api/attendance/mark`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(attendanceData)
       })
 
+      if (response.ok) {
+        const result = await response.json()
+        console.log(`✅ Successfully saved coach attendance for ${record.coach_name}`)
+
+        setSaveStatus(prev => ({ ...prev, [recordId]: 'success' }))
+        setSuccessMessage(`Attendance marked as ${status} for coach ${record.coach_name}`)
+
+        // Update local state
+        setAttendanceRecords(prev =>
+          prev.map(r =>
+            r.id === recordId
+              ? {
+                  ...r,
+                  status: status,
+                  check_in_time: status !== "absent" ? new Date().toLocaleTimeString('en-US', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: true
+                  }) : undefined,
+                  notes: attendanceData.notes
+                }
+              : r
+          )
+        )
+
+        // Update statistics
+        setAttendanceStats(prev => {
+          const updatedRecords = attendanceRecords.map(r =>
+            r.id === recordId ? { ...r, status } : r
+          )
+
+          return {
+            total_coaches: updatedRecords.length,
+            present_today: updatedRecords.filter(r => r.status === "present").length,
+            absent_today: updatedRecords.filter(r => r.status === "absent").length,
+            late_today: updatedRecords.filter(r => r.status === "late").length,
+            not_marked_today: updatedRecords.filter(r => r.status === "not_marked").length,
+            attendance_rate: updatedRecords.length > 0 ?
+              (updatedRecords.filter(r => r.status === "present" || r.status === "late").length / updatedRecords.length) * 100 : 0
+          }
+        })
+
+        // Clear success status after delay
+        setTimeout(() => {
+          setSaveStatus(prev => ({ ...prev, [recordId]: 'idle' }))
+        }, 2000)
+
+      } else {
+        const errorText = await response.text()
+        console.warn(`❌ Failed to save coach attendance for ${record.coach_name}: ${response.status} ${errorText}`)
+        setSaveStatus(prev => ({ ...prev, [recordId]: 'error' }))
+        setError(`Failed to save coach attendance: ${response.status}`)
+      }
+
     } catch (error) {
-      console.error("Error marking coach attendance:", error)
-      setError("Failed to mark coach attendance")
+      console.error("❌ Error marking coach attendance:", error)
+      setSaveStatus(prev => ({ ...prev, [recordId]: 'error' }))
+      setError("Failed to mark coach attendance. Please try again.")
     }
   }
 
-  // Load data on component mount
+  // Load initial data
   useEffect(() => {
     fetchBranches()
-    fetchCoachesAndAttendance()
-  }, [selectedDate])
+  }, [])
 
-  // Sample coach attendance data
-  const coachAttendanceData = [
-    {
-      date: "28/04/2025",
-      coachName: "Abhi ram",
-      gender: "Male",
-      expertise: "Martial Arts",
-      email: "Abhi@gmail.com",
-      dateOfJoin: "20/04/2025",
-      checkIn: "06:30 AM",
-      checkOut: "09:00 AM",
-      attendance: "90%",
-    },
-    // Repeat for multiple entries
-    ...Array(10)
-      .fill(null)
-      .map((_, index) => ({
-        date: "28/04/2025",
-        coachName: "Abhi ram",
-        gender: "Male",
-        expertise: "Martial Arts",
-        email: "Abhi@gmail.com",
-        dateOfJoin: "20/04/2025",
-        checkIn: "06:30 AM",
-        checkOut: "09:00 AM",
-        attendance: "90%",
-      })),
-  ]
+  // Fetch attendance data when date changes
+  useEffect(() => {
+    if (branches.length > 0) {
+      fetchCoachAttendanceData()
+    }
+  }, [selectedDate, branches])
 
-  const studentAttendanceData = [
-    {
-      date: "28/04/2025",
-      studentName: "Krishna Kumar Jit",
-      gender: "Male",
-      expertise: "Martial Arts",
-      email: "krishna@gmail.com",
-      dateOfJoin: "20/04/2025",
-      checkIn: "06:30 AM",
-      checkOut: "09:00 AM",
-      attendance: "90%",
-      notes: "Double punch",
-    },
-    {
-      date: "28/04/2025",
-      studentName: "Arun K",
-      gender: "Female",
-      expertise: "Martial Arts",
-      email: "arun@gmail.com",
-      dateOfJoin: "20/04/2025",
-      checkIn: "06:30 AM",
-      checkOut: "09:00 AM",
-      attendance: "85%",
-      notes: "Missed punch",
-    },
-    {
-      date: "28/04/2025",
-      studentName: "Priya Sharma",
-      gender: "Female",
-      expertise: "Karate",
-      email: "priya@gmail.com",
-      dateOfJoin: "15/04/2025",
-      checkIn: "07:00 AM",
-      checkOut: "09:30 AM",
-      attendance: "95%",
-      notes: "Perfect form",
-    },
-    {
-      date: "28/04/2025",
-      studentName: "Raj Patel",
-      gender: "Male",
-      expertise: "Taekwondo",
-      email: "raj@gmail.com",
-      dateOfJoin: "18/04/2025",
-      checkIn: "06:45 AM",
-      checkOut: "09:15 AM",
-      attendance: "88%",
-      notes: "Good progress",
-    },
-    {
-      date: "28/04/2025",
-      studentName: "Sneha Reddy",
-      gender: "Female",
-      expertise: "Kung Fu",
-      email: "sneha@gmail.com",
-      dateOfJoin: "22/04/2025",
-      checkIn: "06:30 AM",
-      checkOut: "09:00 AM",
-      attendance: "92%",
-      notes: "Excellent technique",
-    },
-  ]
+  // Utility functions
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case "present":
+        return <Badge className="bg-green-100 text-green-800 hover:bg-green-200">Present</Badge>
+      case "absent":
+        return <Badge className="bg-red-100 text-red-800 hover:bg-red-200">Absent</Badge>
+      case "late":
+        return <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-200">Late</Badge>
+      default:
+        return <Badge variant="outline" className="text-gray-600">Not Marked</Badge>
+    }
+  }
 
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case "present":
+        return <CheckCircle className="h-4 w-4 text-green-600" />
+      case "absent":
+        return <XCircle className="h-4 w-4 text-red-600" />
+      case "late":
+        return <Clock className="h-4 w-4 text-yellow-600" />
+      default:
+        return <AlertCircle className="h-4 w-4 text-gray-400" />
+    }
+  }
+
+  const getSaveStatusIcon = (recordId: string) => {
+    const status = saveStatus[recordId] || 'idle'
+    switch (status) {
+      case 'saving':
+        return <RefreshCw className="h-3 w-3 animate-spin text-blue-600" />
+      case 'success':
+        return <CheckCircle className="h-3 w-3 text-green-600" />
+      case 'error':
+        return <XCircle className="h-3 w-3 text-red-600" />
+      default:
+        return null
+    }
+  }
+
+  // Export functionality
+  const handleExportData = () => {
+    const csvContent = [
+      ['Coach Name', 'Email', 'Phone', 'Expertise', 'Branch', 'Status', 'Check In Time', 'Notes', 'Date'].join(','),
+      ...filteredRecords.map(record => [
+        record.coach_name,
+        record.email,
+        record.phone || '',
+        record.expertise || '',
+        record.branch_name,
+        record.status,
+        record.check_in_time || '',
+        record.notes || '',
+        record.date
+      ].join(','))
+    ].join('\n')
+
+    const blob = new Blob([csvContent], { type: 'text/csv' })
+    const url = window.URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `coach_attendance_${format(selectedDate, 'yyyy-MM-dd')}.csv`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    window.URL.revokeObjectURL(url)
+  }
+
+  // Chart data for analytics
+  const getChartData = () => {
+    const statusCounts = {
+      present: attendanceStats.present_today,
+      absent: attendanceStats.absent_today,
+      late: attendanceStats.late_today,
+      not_marked: attendanceStats.not_marked_today
+    }
+
+    return [
+      { name: 'Present', value: statusCounts.present, fill: '#10B981' },
+      { name: 'Absent', value: statusCounts.absent, fill: '#EF4444' },
+      { name: 'Late', value: statusCounts.late, fill: '#F59E0B' },
+      { name: 'Not Marked', value: statusCounts.not_marked, fill: '#6B7280' }
+    ]
+  }
+
+  const getBranchWiseData = () => {
+    const branchStats = branches.map(branch => {
+      const branchRecords = filteredRecords.filter(r => r.branch_id === branch.id)
+      return {
+        name: branch.name,
+        present: branchRecords.filter(r => r.status === 'present').length,
+        absent: branchRecords.filter(r => r.status === 'absent').length,
+        late: branchRecords.filter(r => r.status === 'late').length,
+        total: branchRecords.length
+      }
+    }).filter(branch => branch.total > 0)
+
+    return branchStats
+  }
+
+  // Render main content
   return (
-    <div className="min-h-screen bg-gray-50 overflow-x-hidden">
-      <DashboardHeader currentPage="Coach Attendance" />
+    <div className="min-h-screen bg-gray-50">
+      <DashboardHeader />
 
-      <main className="w-full p-4 lg:p-6 overflow-x-hidden xl:px-12">
-        {/* Page Header */}
-        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4">
-          <h1 className="text-2xl font-bold text-[#0A1629]">Coach Attendance Management</h1>
-          <div className="flex flex-wrap gap-2 lg:gap-3">
-            <Button
-              onClick={() => {
-                // Export functionality for superadmin coach attendance
-                const csvContent = [
-                  ['Coach Name', 'Email', 'Expertise', 'Branch', 'Status', 'Check In', 'Date', 'Notes'].join(','),
-                  ...filteredCoaches.map(coach => [
-                    coach.full_name,
-                    coach.email,
-                    coach.expertise || '',
-                    coach.branch_name || '',
-                    coach.attendance_status || 'not_marked',
-                    coach.check_in_time || '',
-                    selectedDate,
-                    coach.notes || ''
-                  ].join(','))
-                ].join('\n')
-
-                const blob = new Blob([csvContent], { type: 'text/csv' })
-                const url = window.URL.createObjectURL(blob)
-                const a = document.createElement('a')
-                a.href = url
-                a.download = `superadmin_coach_attendance_report_${selectedDate}.csv`
-                document.body.appendChild(a)
-                a.click()
-                document.body.removeChild(a)
-                window.URL.revokeObjectURL(url)
-              }}
-              className="bg-blue-600 hover:bg-blue-700 text-white text-sm"
-            >
-              <Download className="h-4 w-4 mr-2" />
-              Export Attendance
-            </Button>
-            <Button className="bg-yellow-400 hover:bg-yellow-500 text-white text-sm">Send Alerts</Button>
-            <Button variant="outline" className="text-sm bg-transparent text-[#5A6ACF]">
-              View Report
-            </Button>
-          </div>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Coach Attendance Management</h1>
+          <p className="text-gray-600">Manage coach attendance across all branches</p>
         </div>
 
-        {/* Attendance Tabs */}
-        <div className="mb-6">
-          <div className="flex space-x-2">
-            <Button
-              onClick={() => setActiveTab("student")}
-              className={
-                activeTab === "student"
-                  ? "bg-yellow-400 hover:bg-yellow-500 text-white"
-                  : "bg-[#D8E0F0] text-black hover:bg-gray-300"
-              }
-            >
-              Student Attendance
-            </Button>
-            <Button
-              onClick={() => setActiveTab("master")}
-              className={
-                activeTab === "master"
-                  ? "bg-yellow-400 hover:bg-yellow-500 text-white"
-                  : "bg-[#D8E0F0] text-black hover:bg-gray-300"
-              }
-            >
-              Master Attendance
-            </Button>
-          </div>
-        </div>
+        {/* Alerts */}
+        {error && (
+          <Alert className="mb-6 border-red-200 bg-red-50">
+            <AlertCircle className="h-4 w-4 text-red-600" />
+            <AlertDescription className="text-red-800">{error}</AlertDescription>
+          </Alert>
+        )}
 
-        <Card>
-          <CardContent className="p-6">
-            {/* Section Header with Filters */}
-            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4">
-              <h2 className="text-lg font-semibold text-[#4F5077]">
-                {activeTab === "student" ? "Student Attendance" : "Master Attendance"}
-              </h2>
-              <div className="flex flex-wrap gap-2 lg:gap-4 items-center">
-                <div className="flex items-center space-x-2">
-                  <span className="text-sm text-black">Branch:</span>
-                  <Select defaultValue="select-branch">
-                    <SelectTrigger className="w-32 bg-[#F1F1F1] text-[#9593A8]">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="select-branch">Select branch</SelectItem>
-                      <SelectItem value="madhapur">Madhapur</SelectItem>
-                      <SelectItem value="hitech">Hitech City</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <span className="text-sm text-[#6B7A99]">Select Month:</span>
-                  <Select defaultValue="april">
-                    <SelectTrigger className="w-24 bg-[#F1F1F1] text-[#9593A8]">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="april">April</SelectItem>
-                      <SelectItem value="march">March</SelectItem>
-                      <SelectItem value="may">May</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <span className="text-sm text-gray-600">Sort By:</span>
-                  <Select defaultValue="today">
-                    <SelectTrigger className="w-20 bg-[#F1F1F1] text-[#9593A8]">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="today">Today</SelectItem>
-                      <SelectItem value="week">Week</SelectItem>
-                      <SelectItem value="month">Month</SelectItem>
-                    </SelectContent>
-                  </Select>
+        {successMessage && (
+          <Alert className="mb-6 border-green-200 bg-green-50">
+            <CheckCircle className="h-4 w-4 text-green-600" />
+            <AlertDescription className="text-green-800">{successMessage}</AlertDescription>
+          </Alert>
+        )}
+
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center">
+                <Users className="h-8 w-8 text-blue-600" />
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600">Total Coaches</p>
+                  <p className="text-2xl font-bold text-gray-900">{attendanceStats.total_coaches}</p>
                 </div>
               </div>
-            </div>
+            </CardContent>
+          </Card>
 
-            {/* Coach Attendance Management */}
-            <div className="space-y-4">
-              {/* Search and Filters */}
-              <div className="flex flex-col sm:flex-row gap-4 mb-4">
-                <div className="relative flex-1">
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center">
+                <CheckCircle className="h-8 w-8 text-green-600" />
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600">Present</p>
+                  <p className="text-2xl font-bold text-green-600">{attendanceStats.present_today}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center">
+                <XCircle className="h-8 w-8 text-red-600" />
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600">Absent</p>
+                  <p className="text-2xl font-bold text-red-600">{attendanceStats.absent_today}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center">
+                <Clock className="h-8 w-8 text-yellow-600" />
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600">Late</p>
+                  <p className="text-2xl font-bold text-yellow-600">{attendanceStats.late_today}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center">
+                <TrendingUp className="h-8 w-8 text-purple-600" />
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600">Attendance Rate</p>
+                  <p className="text-2xl font-bold text-purple-600">{attendanceStats.attendance_rate.toFixed(1)}%</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Filters and Controls */}
+        <Card className="mb-8">
+          <CardContent className="p-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+              {/* Date Picker */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Date</label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="w-full justify-start text-left font-normal">
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {format(selectedDate, "PPP")}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <CalendarComponent
+                      mode="single"
+                      selected={selectedDate}
+                      onSelect={(date) => date && setSelectedDate(date)}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              {/* Branch Filter */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Branch</label>
+                <Select value={selectedBranch} onValueChange={setSelectedBranch}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="All Branches" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Branches</SelectItem>
+                    {branches.map((branch) => (
+                      <SelectItem key={branch.id} value={branch.id}>
+                        {branch.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Status Filter */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Status</label>
+                <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="All Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Status</SelectItem>
+                    <SelectItem value="present">Present</SelectItem>
+                    <SelectItem value="absent">Absent</SelectItem>
+                    <SelectItem value="late">Late</SelectItem>
+                    <SelectItem value="not_marked">Not Marked</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Search */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Search</label>
+                <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                   <Input
                     placeholder="Search coaches..."
@@ -513,198 +675,259 @@ export default function CoachAttendancePage() {
                     className="pl-10"
                   />
                 </div>
-                <div className="flex items-center gap-2">
-                  <Filter className="h-4 w-4 text-gray-400" />
-                  <Select value={selectedBranch} onValueChange={setSelectedBranch}>
-                    <SelectTrigger className="w-40">
-                      <SelectValue placeholder="All Branches" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Branches</SelectItem>
-                      {branches.map((branch) => (
-                        <SelectItem key={branch.id} value={branch.id}>
-                          {branch.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="flex items-center gap-2">
-                  <CalendarIcon className="h-4 w-4 text-gray-400" />
-                  <Input
-                    type="date"
-                    value={selectedDate}
-                    onChange={(e) => setSelectedDate(e.target.value)}
-                    className="w-40"
-                  />
-                </div>
               </div>
 
-              {/* Statistics Cards */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                <Card>
-                  <CardContent className="px-4 py-3">
-                    <div className="text-center">
-                      <p className="text-sm text-gray-600 mb-1">Total Coaches</p>
-                      <p className="text-2xl font-bold text-blue-600">{attendanceStats.total_coaches}</p>
-                    </div>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardContent className="px-4 py-3">
-                    <div className="text-center">
-                      <p className="text-sm text-gray-600 mb-1">Present Today</p>
-                      <p className="text-2xl font-bold text-green-600">{attendanceStats.present_today}</p>
-                    </div>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardContent className="px-4 py-3">
-                    <div className="text-center">
-                      <p className="text-sm text-gray-600 mb-1">Absent Today</p>
-                      <p className="text-2xl font-bold text-red-600">{attendanceStats.absent_today}</p>
-                    </div>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardContent className="px-4 py-3">
-                    <div className="text-center">
-                      <p className="text-sm text-gray-600 mb-1">Late Today</p>
-                      <p className="text-2xl font-bold text-yellow-600">{attendanceStats.late_today}</p>
-                    </div>
-                  </CardContent>
-                </Card>
+              {/* Actions */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Actions</label>
+                <div className="flex gap-2">
+                  <Button
+                    onClick={fetchCoachAttendanceData}
+                    variant="outline"
+                    size="sm"
+                    disabled={loading}
+                  >
+                    <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+                    Refresh
+                  </Button>
+                  <Button
+                    onClick={handleExportData}
+                    variant="outline"
+                    size="sm"
+                    disabled={filteredRecords.length === 0}
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    Export
+                  </Button>
+                </div>
               </div>
-
-              {loading && (
-                <div className="flex justify-center items-center py-8">
-                  <div className="text-gray-500">Loading coaches...</div>
-                </div>
-              )}
-
-              {error && (
-                <div className="flex justify-center items-center py-8">
-                  <div className="text-red-500">{error}</div>
-                </div>
-              )}
-
-              {!loading && !error && (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b bg-gray-50">
-                        <th className="text-left py-3 px-2 font-semibold text-[#6B7A99]">Coach Name</th>
-                        <th className="text-left py-3 px-2 font-semibold text-[#6B7A99]">Expertise</th>
-                        <th className="text-left py-3 px-2 font-semibold text-[#6B7A99]">Branch</th>
-                        <th className="text-left py-3 px-2 font-semibold text-[#6B7A99]">Email</th>
-                        <th className="text-left py-3 px-2 font-semibold text-[#6B7A99]">Status</th>
-                        <th className="text-left py-3 px-2 font-semibold text-[#6B7A99]">Check In</th>
-                        <th className="text-left py-3 px-2 font-semibold text-[#6B7A99]">Notes</th>
-                        <th className="text-left py-3 px-2 font-semibold text-[#6B7A99]">Mark Attendance</th>
-                        <th className="text-left py-3 px-2 font-semibold text-[#6B7A99]">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filteredCoaches.map((coach) => {
-                        const getStatusBadge = (status: string) => {
-                          switch (status) {
-                            case "present":
-                              return <Badge className="bg-green-100 text-green-800">Present</Badge>
-                            case "absent":
-                              return <Badge className="bg-red-100 text-red-800">Absent</Badge>
-                            case "late":
-                              return <Badge className="bg-yellow-100 text-yellow-800">Late</Badge>
-                            default:
-                              return <Badge variant="outline">Not Marked</Badge>
-                          }
-                        }
-
-                        return (
-                          <tr key={coach.id} className="border-b hover:bg-gray-50">
-                            <td className="py-3 px-2">
-                              <div className="flex items-center space-x-3">
-                                <Avatar className="h-8 w-8">
-                                  <AvatarImage src="" />
-                                  <AvatarFallback className="bg-blue-100 text-blue-600">
-                                    {coach.full_name.split(' ').map(n => n[0]).join('')}
-                                  </AvatarFallback>
-                                </Avatar>
-                                <div>
-                                  <div className="font-semibold">{coach.full_name}</div>
-                                  <div className="text-xs text-gray-500">{coach.phone}</div>
-                                </div>
-                              </div>
-                            </td>
-                            <td className="py-3 px-2">{coach.expertise || "N/A"}</td>
-                            <td className="py-3 px-2">{coach.branch_name || "N/A"}</td>
-                            <td className="py-3 px-2">{coach.email}</td>
-                            <td className="py-3 px-2">
-                              {getStatusBadge(coach.attendance_status || "not_marked")}
-                            </td>
-                            <td className="py-3 px-2">{coach.check_in_time || "-"}</td>
-                            <td className="py-3 px-2">
-                              <span className="text-xs text-gray-600">
-                                {coach.notes || "-"}
-                              </span>
-                            </td>
-                            <td className="py-3 px-2">
-                              <div className="flex space-x-1">
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className="text-green-600 border-green-200 hover:bg-green-50 px-2 py-1 text-xs"
-                                  onClick={() => handleMarkCoachAttendance(coach.id, "present")}
-                                >
-                                  <CheckCircle className="h-3 w-3 mr-1" />
-                                  Present
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className="text-yellow-600 border-yellow-200 hover:bg-yellow-50 px-2 py-1 text-xs"
-                                  onClick={() => handleMarkCoachAttendance(coach.id, "late")}
-                                >
-                                  <Clock className="h-3 w-3 mr-1" />
-                                  Late
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className="text-red-600 border-red-200 hover:bg-red-50 px-2 py-1 text-xs"
-                                  onClick={() => handleMarkCoachAttendance(coach.id, "absent")}
-                                >
-                                  <XCircle className="h-3 w-3 mr-1" />
-                                  Absent
-                                </Button>
-                              </div>
-                            </td>
-                            <td className="py-3 px-2">
-                              <div className="flex items-center space-x-2">
-                                <div className="flex items-center justify-center w-8 h-8 bg-green-100 rounded-full cursor-pointer">
-                                  <MessageCircle className="w-4 h-4 text-green-600" />
-                                </div>
-                                <div className="flex items-center justify-center w-8 h-8 bg-blue-100 rounded-full cursor-pointer">
-                                  <Phone className="w-4 h-4 text-blue-600" />
-                                </div>
-                              </div>
-                            </td>
-                          </tr>
-                        )
-                      })}
-
-                      {filteredCoaches.length === 0 && (
-                        <tr>
-                          <td colSpan={9} className="text-center py-8 text-gray-500">
-                            No coaches found
-                          </td>
-                        </tr>
-                      )}
-                    </tbody>
-              </table>
             </div>
           </CardContent>
         </Card>
-      </main>
+
+        {/* Main Content */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Attendance Table */}
+          <div className="lg:col-span-2">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <span>Coach Attendance ({filteredRecords.length} coaches)</span>
+                  <div className="text-sm text-gray-500">
+                    {format(selectedDate, "EEEE, MMMM d, yyyy")}
+                  </div>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {loading ? (
+                  <div className="flex justify-center items-center py-12">
+                    <RefreshCw className="h-8 w-8 animate-spin text-blue-600" />
+                    <span className="ml-3 text-gray-600">Loading coach attendance data...</span>
+                  </div>
+                ) : filteredRecords.length === 0 ? (
+                  <div className="text-center py-12">
+                    <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">No coaches found</h3>
+                    <p className="text-gray-500">
+                      {attendanceRecords.length === 0
+                        ? "No coaches available for the selected date."
+                        : "No coaches match your current filters."}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Coach
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Expertise
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Branch
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Status
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Check In
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Actions
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {filteredRecords.map((record) => (
+                          <tr key={record.id} className="hover:bg-gray-50">
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="flex items-center">
+                                <div className="flex-shrink-0 h-10 w-10">
+                                  <div className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
+                                    <User className="h-5 w-5 text-gray-600" />
+                                  </div>
+                                </div>
+                                <div className="ml-4">
+                                  <div className="text-sm font-medium text-gray-900">
+                                    {record.coach_name}
+                                  </div>
+                                  <div className="text-sm text-gray-500">
+                                    {record.email}
+                                  </div>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="flex items-center">
+                                <Award className="h-4 w-4 text-gray-400 mr-2" />
+                                <span className="text-sm text-gray-900">{record.expertise}</span>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="flex items-center">
+                                <MapPin className="h-4 w-4 text-gray-400 mr-2" />
+                                <span className="text-sm text-gray-900">{record.branch_name}</span>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="flex items-center">
+                                {getStatusIcon(record.status)}
+                                <span className="ml-2">{getStatusBadge(record.status)}</span>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                              {record.check_in_time || '-'}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                              <div className="flex items-center space-x-2">
+                                <Button
+                                  onClick={() => handleMarkAttendance(record.id, "present")}
+                                  size="sm"
+                                  variant={record.status === "present" ? "default" : "outline"}
+                                  className="text-xs"
+                                  disabled={saveStatus[record.id] === 'saving'}
+                                >
+                                  Present
+                                </Button>
+                                <Button
+                                  onClick={() => handleMarkAttendance(record.id, "late")}
+                                  size="sm"
+                                  variant={record.status === "late" ? "default" : "outline"}
+                                  className="text-xs"
+                                  disabled={saveStatus[record.id] === 'saving'}
+                                >
+                                  Late
+                                </Button>
+                                <Button
+                                  onClick={() => handleMarkAttendance(record.id, "absent")}
+                                  size="sm"
+                                  variant={record.status === "absent" ? "default" : "outline"}
+                                  className="text-xs"
+                                  disabled={saveStatus[record.id] === 'saving'}
+                                >
+                                  Absent
+                                </Button>
+                                {getSaveStatusIcon(record.id)}
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Analytics Sidebar */}
+          <div className="space-y-6">
+            {/* Attendance Distribution */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Attendance Distribution</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="h-64">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={getChartData()}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={60}
+                        outerRadius={100}
+                        paddingAngle={5}
+                        dataKey="value"
+                      >
+                        {getChartData().map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.fill} />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                      <Legend />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Branch-wise Statistics */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Branch-wise Attendance</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="h-64">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={getBranchWiseData()}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis
+                        dataKey="name"
+                        angle={-45}
+                        textAnchor="end"
+                        height={80}
+                        fontSize={12}
+                      />
+                      <YAxis />
+                      <Tooltip />
+                      <Legend />
+                      <Bar dataKey="present" fill="#10B981" name="Present" />
+                      <Bar dataKey="late" fill="#F59E0B" name="Late" />
+                      <Bar dataKey="absent" fill="#EF4444" name="Absent" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Quick Stats */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Quick Stats</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-600">Total Branches</span>
+                  <span className="font-semibold">{branches.length}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-600">Filtered Results</span>
+                  <span className="font-semibold">{filteredRecords.length}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-600">Attendance Rate</span>
+                  <span className="font-semibold text-green-600">
+                    {attendanceStats.attendance_rate.toFixed(1)}%
+                  </span>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
