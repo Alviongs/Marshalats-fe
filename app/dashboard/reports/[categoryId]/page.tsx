@@ -17,9 +17,8 @@ import {
   Loader2,
   RefreshCw
 } from "lucide-react"
-import DashboardHeader from "@/components/dashboard-header"
+import BranchManagerDashboardHeader from "@/components/branch-manager-dashboard-header"
 import { reportsAPI, ReportFilters, ReportFilterOptions } from "@/lib/reportsAPI"
-import { useAuth } from "@/contexts/AuthContext"
 import { toast } from "sonner"
 import ErrorBoundary from "@/components/error-boundary"
 import { useReportsApi } from "@/hooks/useApiWithRetry"
@@ -31,7 +30,7 @@ import {
 } from "@/components/skeleton-loaders"
 import { ReportsBreadcrumb } from "@/components/breadcrumb"
 import { notFound } from 'next/navigation'
-import { TokenManager } from "@/lib/tokenManager"
+import { BranchManagerAuth } from "@/lib/branchManagerAuth"
 import { studentAPI } from "@/lib/studentAPI"
 
 // Branch interface (same as branches page)

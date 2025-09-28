@@ -23,6 +23,17 @@ interface ReportCategory {
 
 const reportCategories: ReportCategory[] = [
   {
+    id: "master",
+    name: "Master Reports",
+    description: "Comprehensive master (coach) information and analytics for your branch",
+    icon: Users,
+    reports: [
+      { id: "master-overview", name: "Master Overview", icon: Users },
+      { id: "master-performance", name: "Master Performance", icon: TrendingUp },
+      { id: "master-assignments", name: "Master Assignments", icon: FileText },
+    ]
+  },
+  {
     id: "branch",
     name: "Branch Reports",
     description: "Branch-specific analytics, performance, and operational reports",
@@ -108,7 +119,12 @@ export default function BranchManagerReports() {
 
   const handleCategoryClick = (categoryId: string) => {
     setSelectedCategory(categoryId)
-    router.push(`/branch-manager-dashboard/reports/${categoryId}`)
+    // Special handling for master reports - go directly to master page
+    if (categoryId === 'master') {
+      router.push(`/branch-manager-dashboard/reports/master`)
+    } else {
+      router.push(`/branch-manager-dashboard/reports/${categoryId}`)
+    }
   }
 
   const handleReportClick = (categoryId: string, reportId: string) => {
