@@ -17,8 +17,9 @@ import {
   Loader2,
   RefreshCw
 } from "lucide-react"
-import BranchManagerDashboardHeader from "@/components/branch-manager-dashboard-header"
+import DashboardHeader from "@/components/dashboard-header"
 import { reportsAPI, ReportFilters, ReportFilterOptions } from "@/lib/reportsAPI"
+import { useAuth } from "@/contexts/AuthContext"
 import { toast } from "sonner"
 import ErrorBoundary from "@/components/error-boundary"
 import { useReportsApi } from "@/hooks/useApiWithRetry"
@@ -30,8 +31,8 @@ import {
 } from "@/components/skeleton-loaders"
 import { ReportsBreadcrumb } from "@/components/breadcrumb"
 import { notFound } from 'next/navigation'
-import { BranchManagerAuth } from "@/lib/branchManagerAuth"
 import { studentAPI } from "@/lib/studentAPI"
+import { TokenManager } from "@/lib/tokenManager"
 
 // Branch interface (same as branches page)
 interface Branch {
@@ -188,6 +189,38 @@ function CategoryReportsPageContent() {
   const { user } = useAuth()
 
   const categoryId = params.categoryId as string
+
+  // Authentication check
+  useEffect(() => {
+    if (!TokenManager.isAuthenticated()) {
+      console.log("❌ User not authenticated")
+      router.push('/login')
+      return
+    }
+
+    const currentUser = TokenManager.getUser()
+    if (!currentUser) {
+      console.log("❌ No user data found")
+      router.push('/login')
+      return
+    }
+
+    // Check if user is superadmin
+    if (currentUser.role !== "superadmin" && currentUser.role !== "super_admin") {
+      console.log("❌ User is not superadmin:", currentUser.role)
+      // Redirect based on user role
+      if (currentUser.role === "student") {
+        router.push("/student-dashboard")
+      } else if (currentUser.role === "coach") {
+        router.push("/coach-dashboard")
+      } else if (currentUser.role === "branch_manager") {
+        router.push("/branch-manager-dashboard")
+      } else {
+        router.push("/login")
+      }
+      return
+    }
+  }, [router])
 
   // Enhanced state management
   const [searchTerm, setSearchTerm] = useState("")
