@@ -101,98 +101,59 @@ export default function BranchManagerBranchDetailPage() {
       setLoading(true)
       setError(null)
 
-      const currentUser = BranchManagerAuth.getCurrentUser()
-      if (!currentUser) {
-        throw new Error("User data not found")
+      const token = BranchManagerAuth.getToken()
+      if (!token) {
+        throw new Error("Authentication token not found. Please login again.")
       }
 
-      // Mock branch details data for branch manager
-      const mockBranch: BranchDetails = {
-        id: branchId,
-        branch: {
-          name: currentUser.branch_name || "Main Branch",
-          address: {
-            street: "123 Main Street, Downtown",
-            city: "City Center",
-            state: "State",
-            postal_code: "12345",
-            country: "Country"
-          },
-          phone: "+1234567890",
-          email: "mainbranch@marshalats.com",
-          operating_hours: {
-            monday: "06:00 - 22:00",
-            tuesday: "06:00 - 22:00",
-            wednesday: "06:00 - 22:00",
-            thursday: "06:00 - 22:00",
-            friday: "06:00 - 22:00",
-            saturday: "07:00 - 20:00",
-            sunday: "08:00 - 18:00"
-          }
-        },
-        is_active: true,
-        created_at: "2024-01-01T00:00:00Z",
-        updated_at: new Date().toISOString(),
-        total_students: 150,
-        total_coaches: 8,
-        active_courses: 12,
-        monthly_revenue: 125000
+      console.log('🔍 Fetching branch details for ID:', branchId)
+
+      // Call the new backend API endpoint
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/branch-details/${branchId}`, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      })
+
+      if (!response.ok) {
+        if (response.status === 404) {
+          throw new Error("Branch not found")
+        } else if (response.status === 403) {
+          throw new Error("You don't have permission to access this branch")
+        } else if (response.status === 401) {
+          throw new Error("Authentication failed. Please login again.")
+        }
+
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.detail || errorData.message || `Failed to fetch branch details (${response.status})`)
       }
 
-      const mockCourses: Course[] = [
-        {
-          id: "course_001",
-          name: "Martial Arts Beginner",
-          difficulty_level: "Beginner",
-          enrolled_students: 25,
-          instructor_name: "John Smith"
-        },
-        {
-          id: "course_002",
-          name: "Yoga Intermediate",
-          difficulty_level: "Intermediate",
-          enrolled_students: 18,
-          instructor_name: "Sarah Johnson"
-        },
-        {
-          id: "course_003",
-          name: "Dance Advanced",
-          difficulty_level: "Advanced",
-          enrolled_students: 12,
-          instructor_name: "Mike Davis"
-        }
-      ]
+      const data = await response.json()
+      console.log('✅ Branch details received:', data)
 
-      const mockCoaches: Coach[] = [
-        {
-          id: "coach_001",
-          full_name: "John Smith",
-          contact_info: {
-            email: "john.smith@marshalats.com",
-            phone: "+1234567891"
-          },
-          areas_of_expertise: ["Martial Arts", "Self Defense"],
-          is_active: true
-        },
-        {
-          id: "coach_002",
-          full_name: "Sarah Johnson",
-          contact_info: {
-            email: "sarah.johnson@marshalats.com",
-            phone: "+1234567892"
-          },
-          areas_of_expertise: ["Yoga", "Meditation"],
-          is_active: true
-        }
-      ]
+      // Map the API response to our component state
+      if (data.branch) {
+        setBranch(data.branch)
+      }
 
-      setBranch(mockBranch)
-      setCourses(mockCourses)
-      setCoaches(mockCoaches)
+      if (data.courses) {
+        setCourses(data.courses)
+      }
+
+      if (data.coaches) {
+        setCoaches(data.coaches)
+      }
 
     } catch (err: any) {
-      console.error("Error fetching branch details:", err)
+      console.error("❌ Error fetching branch details:", err)
       setError(err.message || "Failed to fetch branch details")
+
+      // If authentication error, redirect to login
+      if (err.message.includes("Authentication") || err.message.includes("login")) {
+        BranchManagerAuth.logout()
+        router.replace('/branch-manager/login')
+      }
     } finally {
       setLoading(false)
     }
@@ -416,12 +377,23 @@ export default function BranchManagerBranchDetailPage() {
               <CardContent>
                 {branch.branch.operating_hours ? (
                   <div className="space-y-2">
-                    {Object.entries(branch.branch.operating_hours).map(([day, hours]) => (
-                      <div key={day} className="flex justify-between items-center">
-                        <span className="font-medium text-gray-900 capitalize">{day}</span>
-                        <span className="text-sm text-gray-600">{hours}</span>
-                      </div>
-                    ))}
+                    {Array.isArray(branch.branch.operating_hours) ? (
+                      // Handle array format from API (timings array)
+                      branch.branch.operating_hours.map((timing: any, index: number) => (
+                        <div key={index} className="flex justify-between items-center">
+                          <span className="font-medium text-gray-900 capitalize">{timing.day}</span>
+                          <span className="text-sm text-gray-600">{timing.open} - {timing.close}</span>
+                        </div>
+                      ))
+                    ) : (
+                      // Handle object format (day: hours)
+                      Object.entries(branch.branch.operating_hours).map(([day, hours]) => (
+                        <div key={day} className="flex justify-between items-center">
+                          <span className="font-medium text-gray-900 capitalize">{day}</span>
+                          <span className="text-sm text-gray-600">{hours}</span>
+                        </div>
+                      ))
+                    )}
                   </div>
                 ) : (
                   <p className="text-sm text-gray-500">Operating hours not specified</p>
@@ -445,26 +417,34 @@ export default function BranchManagerBranchDetailPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {courses.map((course) => (
-                    <div key={course.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                      <div>
-                        <p className="font-medium text-gray-900">{course.name}</p>
-                        <p className="text-sm text-gray-600">
-                          {course.difficulty_level} • {course.enrolled_students} students
-                        </p>
-                        {course.instructor_name && (
-                          <p className="text-xs text-gray-500">Instructor: {course.instructor_name}</p>
-                        )}
+                  {courses.length > 0 ? (
+                    courses.map((course) => (
+                      <div key={course.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div>
+                          <p className="font-medium text-gray-900">{course.name || 'Unknown Course'}</p>
+                          <p className="text-sm text-gray-600">
+                            {course.difficulty_level || 'Unknown'} • {course.enrolled_students || 0} students
+                          </p>
+                          {course.instructor_name && (
+                            <p className="text-xs text-gray-500">Instructor: {course.instructor_name}</p>
+                          )}
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => router.push(`/branch-manager-dashboard/courses/${course.id}`)}
+                        >
+                          View
+                        </Button>
                       </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => router.push(`/branch-manager-dashboard/courses/${course.id}`)}
-                      >
-                        View
-                      </Button>
+                    ))
+                  ) : (
+                    <div className="text-center py-8">
+                      <BookOpen className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                      <p className="text-gray-500 text-sm">No courses assigned to this branch yet</p>
+                      <p className="text-gray-400 text-xs mt-1">Contact your administrator to assign courses</p>
                     </div>
-                  ))}
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -482,28 +462,42 @@ export default function BranchManagerBranchDetailPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {coaches.map((coach) => (
-                    <div key={coach.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                      <div>
-                        <p className="font-medium text-gray-900">{coach.full_name}</p>
-                        <p className="text-sm text-gray-600">{coach.contact_info.email}</p>
-                        <div className="flex flex-wrap gap-1 mt-1">
-                          {coach.areas_of_expertise.map((expertise, index) => (
-                            <Badge key={index} variant="outline" className="text-xs">
-                              {expertise}
-                            </Badge>
-                          ))}
+                  {coaches.length > 0 ? (
+                    coaches.map((coach) => (
+                      <div key={coach.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div>
+                          <p className="font-medium text-gray-900">{coach.full_name || 'Unknown Coach'}</p>
+                          <p className="text-sm text-gray-600">{coach.contact_info?.email || 'No email provided'}</p>
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {coach.areas_of_expertise && coach.areas_of_expertise.length > 0 ? (
+                              coach.areas_of_expertise.map((expertise, index) => (
+                                <Badge key={index} variant="outline" className="text-xs">
+                                  {expertise}
+                                </Badge>
+                              ))
+                            ) : (
+                              <Badge variant="outline" className="text-xs text-gray-400">
+                                No specialization listed
+                              </Badge>
+                            )}
+                          </div>
                         </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => router.push(`/branch-manager-dashboard/coaches/${coach.id}`)}
+                        >
+                          View
+                        </Button>
                       </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => router.push(`/branch-manager-dashboard/coaches/${coach.id}`)}
-                      >
-                        View
-                      </Button>
+                    ))
+                  ) : (
+                    <div className="text-center py-8">
+                      <Users className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                      <p className="text-gray-500 text-sm">No coaches assigned to this branch yet</p>
+                      <p className="text-gray-400 text-xs mt-1">Contact your administrator to assign coaches</p>
                     </div>
-                  ))}
+                  )}
                 </div>
               </CardContent>
             </Card>
