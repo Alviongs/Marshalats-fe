@@ -153,6 +153,7 @@ export default function BranchManagerDashboard() {
       // Get dashboard statistics from API
       const response = await dashboardAPI.getBranchManagerDashboardStats(token)
       console.log('📊 Dashboard stats response:', response)
+      console.log('📊 Raw stats from API:', response.dashboard_stats)
 
       const stats = response.dashboard_stats
 
@@ -160,12 +161,14 @@ export default function BranchManagerDashboard() {
       const dashboardStats: DashboardStats = {
         total_students: stats.active_students || 0,
         active_students: stats.active_students || 0,
+        total_users: stats.total_users || 0,
         total_coaches: stats.total_coaches || 0,
         active_coaches: stats.active_coaches || 0,
         total_branches: stats.total_branches || 1,
         active_branches: stats.active_branches || 1,
         total_courses: stats.total_courses || 0,
         active_courses: stats.active_courses || 0,
+        monthly_active_users: stats.monthly_active_users || 0,
         total_enrollments: stats.active_enrollments || 0,
         active_enrollments: stats.active_enrollments || 0,
         this_month_enrollments: stats.active_enrollments || 0,
@@ -176,8 +179,15 @@ export default function BranchManagerDashboard() {
         today_attendance: stats.today_attendance || 0
       }
 
+      console.log('📊 Mapped dashboard stats:', dashboardStats)
+      console.log('🎯 Key metrics check:')
+      console.log(`   Total Students: ${dashboardStats.total_students}`)
+      console.log(`   Total Coaches: ${dashboardStats.total_coaches}`)
+      console.log(`   Total Courses: ${dashboardStats.total_courses}`)
+      console.log(`   Total Revenue: ₹${dashboardStats.total_revenue}`)
+
       setDashboardStats(dashboardStats)
-      console.log('✅ Dashboard stats loaded successfully')
+      console.log('✅ Dashboard stats loaded successfully and state updated')
     } catch (err) {
       console.error('❌ Error loading dashboard data:', err)
       setError('Failed to load dashboard statistics. Please try again.')
@@ -239,12 +249,32 @@ export default function BranchManagerDashboard() {
 
       console.log('🔄 Loading managed branches...')
 
-      // Use the correct backend API endpoint for branches
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/branches`, {
+      // Get dashboard stats for revenue data
+      let dashboardRevenue = 0
+      try {
+        const dashboardResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/dashboard/stats?_t=${Date.now()}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          cache: 'no-cache'
+        })
+        if (dashboardResponse.ok) {
+          const dashboardData = await dashboardResponse.json()
+          dashboardRevenue = dashboardData.dashboard_stats?.monthly_revenue || 0
+          console.log('💰 Dashboard revenue:', dashboardRevenue)
+        }
+      } catch (err) {
+        console.warn('⚠️ Could not fetch dashboard revenue:', err)
+      }
+
+      // Use the correct backend API endpoint for branches with cache busting
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/branches?_t=${Date.now()}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
-        }
+        },
+        cache: 'no-cache'
       })
 
       if (!response.ok) {
@@ -255,28 +285,45 @@ export default function BranchManagerDashboard() {
       console.log('🏢 Branches response:', data)
 
       const branches = data.branches || []
+      console.log('🏢 Raw branches data:', branches)
 
       // Transform branch data to match expected interface
-      const branchesWithStats: BranchInfo[] = branches.map((branch: any) => ({
-        id: branch.id,
-        branch: {
-          name: branch.branch?.name || 'Unknown Branch',
-          address: {
-            city: branch.branch?.address?.city || '',
-            state: branch.branch?.address?.state || '',
-            line1: branch.branch?.address?.line1 || '',
-            area: branch.branch?.address?.area || ''
-          }
-        },
-        // These will be populated by separate API calls if needed
-        total_students: 0,
-        total_coaches: 0,
-        active_courses: 0,
-        monthly_revenue: 0
-      }))
+      const branchesWithStats: BranchInfo[] = branches.map((branch: any) => {
+        const stats = branch.statistics || {}
+        console.log(`🏢 Processing branch ${branch.branch?.name}:`, {
+          id: branch.id,
+          statistics: stats,
+          student_count: stats.student_count,
+          coach_count: stats.coach_count,
+          active_courses: stats.active_courses,
+          dashboard_revenue: dashboardRevenue
+        })
+
+        const transformedBranch = {
+          id: branch.id,
+          branch: {
+            name: branch.branch?.name || 'Unknown Branch',
+            address: {
+              city: branch.branch?.address?.city || '',
+              state: branch.branch?.address?.state || '',
+              line1: branch.branch?.address?.line1 || '',
+              area: branch.branch?.address?.area || ''
+            }
+          },
+          // Use actual statistics from the API response
+          total_students: stats.student_count || 0,
+          total_coaches: stats.coach_count || 0,
+          active_courses: stats.active_courses || 0,
+          monthly_revenue: dashboardRevenue // Use revenue from dashboard stats
+        }
+
+        console.log(`✅ Transformed branch data:`, transformedBranch)
+        return transformedBranch
+      })
 
       setManagedBranches(branchesWithStats)
       console.log('✅ Managed branches loaded successfully:', branchesWithStats.length)
+      console.log('🏢 Final branches with stats:', branchesWithStats)
     } catch (err) {
       console.error('❌ Error loading branches data:', err)
       setBranchesError('Failed to load branches data. Please try again.')
