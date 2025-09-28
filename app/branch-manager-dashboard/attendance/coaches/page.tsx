@@ -17,7 +17,7 @@ import {
   Search,
   Download,
   Loader2,
-  Save,
+  RefreshCw,
   Eye
 } from "lucide-react"
 import { format } from "date-fns"
@@ -61,9 +61,8 @@ export default function BranchManagerCoachAttendancePage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedDate, setSelectedDate] = useState<Date>(new Date())
   const [datePickerOpen, setDatePickerOpen] = useState(false)
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
-  const [saveStatus, setSaveStatus] = useState<{[key: string]: 'saving' | 'success' | 'error'}>({})
-  const [bulkSaving, setBulkSaving] = useState(false)
+  const [saveStatus, setSaveStatus] = useState<{[key: string]: 'idle' | 'saving' | 'success' | 'error'}>({})
+  const [refreshing, setRefreshing] = useState(false)
 
   // Fetch coach attendance data for selected date
   const fetchCoachAttendanceData = async () => {
@@ -92,20 +91,44 @@ export default function BranchManagerCoachAttendancePage() {
         const data = await response.json()
         console.log("✅ Coach attendance data received:", data)
 
-        const records: CoachAttendanceRecord[] = (data.coaches || []).map((coach: any) => ({
-          id: coach.coach_id || coach.id,
-          coach_id: coach.coach_id || coach.id,
-          coach_name: coach.coach_name || coach.full_name,
-          email: coach.email,
-          phone: coach.phone,
-          expertise: coach.expertise || [],
-          branch_id: coach.branch_id,
-          status: "not_marked", // Default status - will be updated with actual attendance
-          check_in_time: undefined,
-          check_out_time: undefined,
-          notes: "",
-          date: dateStr
-        }))
+        const records: CoachAttendanceRecord[] = (data.coaches || []).map((coach: any) => {
+          // Extract attendance information
+          const attendance = coach.attendance || {}
+          const status = attendance.status || "not_marked"
+
+          // Format check-in time if available
+          let checkInTime = undefined
+          if (attendance.check_in_time) {
+            try {
+              checkInTime = new Date(attendance.check_in_time).toLocaleTimeString('en-US', {
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: true
+              })
+            } catch (e) {
+              console.warn("Failed to parse check-in time:", attendance.check_in_time)
+            }
+          }
+
+          return {
+            id: `${coach.coach_id || coach.id}_${dateStr}`,
+            coach_id: coach.coach_id || coach.id,
+            coach_name: coach.coach_name || coach.full_name,
+            email: coach.email || "",
+            phone: coach.phone || "",
+            expertise: coach.expertise || [],
+            branch_id: coach.branch_id,
+            status: status,
+            check_in_time: checkInTime,
+            check_out_time: attendance.check_out_time ? new Date(attendance.check_out_time).toLocaleTimeString('en-US', {
+              hour: '2-digit',
+              minute: '2-digit',
+              hour12: true
+            }) : undefined,
+            notes: attendance.notes || "",
+            date: dateStr
+          }
+        })
 
         setAttendanceRecords(records)
         setFilteredRecords(records)
@@ -120,6 +143,8 @@ export default function BranchManagerCoachAttendancePage() {
             (records.filter(r => r.status === "present" || r.status === "late").length / records.length) * 100 : 0
         }
         setAttendanceStats(stats)
+
+        console.log("📊 Coach attendance stats calculated:", stats)
 
       } else {
         const errorText = await response.text()
@@ -153,7 +178,7 @@ export default function BranchManagerCoachAttendancePage() {
     }
   }, [router, selectedDate])
 
-  // Handle attendance marking
+  // Handle attendance marking with immediate save
   const handleMarkAttendance = async (recordId: string, status: "present" | "absent" | "late") => {
     try {
       setSaveStatus(prev => ({ ...prev, [recordId]: 'saving' }))
@@ -174,67 +199,93 @@ export default function BranchManagerCoachAttendancePage() {
         return
       }
 
-      // Update local state immediately for better UX
-      setAttendanceRecords(prev =>
-        prev.map(r =>
-          r.id === recordId
-            ? {
-                ...r,
-                status,
-                check_in_time: status !== "absent" ? new Date().toLocaleTimeString('en-US', {
-                  hour: '2-digit',
-                  minute: '2-digit',
-                  hour12: true
-                }) : undefined
-              }
-            : r
-        )
-      )
+      const headers = getBranchManagerAuthHeaders()
 
-      setFilteredRecords(prev =>
-        prev.map(r =>
-          r.id === recordId
-            ? {
-                ...r,
-                status,
-                check_in_time: status !== "absent" ? new Date().toLocaleTimeString('en-US', {
-                  hour: '2-digit',
-                  minute: '2-digit',
-                  hour12: true
-                }) : undefined
-              }
-            : r
-        )
-      )
-
-      // Update attendance stats
-      const updatedRecords = attendanceRecords.map(r =>
-        r.id === recordId ? { ...r, status } : r
-      )
-
-      const stats: CoachAttendanceStats = {
-        total_coaches: updatedRecords.length,
-        present_today: updatedRecords.filter(r => r.status === "present").length,
-        absent_today: updatedRecords.filter(r => r.status === "absent").length,
-        late_today: updatedRecords.filter(r => r.status === "late").length,
-        attendance_rate: updatedRecords.length > 0 ?
-          (updatedRecords.filter(r => r.status === "present" || r.status === "late").length / updatedRecords.length) * 100 : 0
+      const attendanceData = {
+        user_id: record.coach_id,
+        user_type: "coach",
+        course_id: null, // Coaches don't have specific courses for attendance
+        branch_id: record.branch_id,
+        attendance_date: `${format(selectedDate, 'yyyy-MM-dd')}T10:00:00Z`,
+        status: status,
+        check_in_time: status !== "absent" ? new Date().toISOString() : null,
+        notes: `Marked by branch manager: ${authResult.user.full_name || authResult.user.email}`
       }
-      setAttendanceStats(stats)
 
-      // Mark as having unsaved changes
-      setHasUnsavedChanges(true)
-      setSaveStatus(prev => ({ ...prev, [recordId]: 'success' }))
-      console.log("📝 Coach attendance status updated locally - marked as unsaved for bulk save")
+      console.log(`💾 Saving coach attendance for ${record.coach_name} with status: ${status}`)
 
-      // Clear save status after 3 seconds
-      setTimeout(() => {
-        setSaveStatus(prev => {
-          const newStatus = { ...prev }
-          delete newStatus[recordId]
-          return newStatus
-        })
-      }, 3000)
+      const response = await fetch(`http://localhost:8003/api/attendance/mark`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(attendanceData)
+      })
+
+      if (response.ok) {
+        const result = await response.json()
+        console.log(`✅ Successfully saved coach attendance for ${record.coach_name}`)
+
+        setSaveStatus(prev => ({ ...prev, [recordId]: 'success' }))
+        setSuccessMessage(`Attendance marked as ${status} for coach ${record.coach_name}`)
+
+        // Update local state with the saved data
+        const newCheckInTime = status !== "absent" ? new Date().toLocaleTimeString('en-US', {
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: true
+        }) : undefined
+
+        setAttendanceRecords(prev =>
+          prev.map(r =>
+            r.id === recordId
+              ? {
+                  ...r,
+                  status,
+                  check_in_time: newCheckInTime,
+                  notes: attendanceData.notes
+                }
+              : r
+          )
+        )
+
+        setFilteredRecords(prev =>
+          prev.map(r =>
+            r.id === recordId
+              ? {
+                  ...r,
+                  status,
+                  check_in_time: newCheckInTime,
+                  notes: attendanceData.notes
+                }
+              : r
+          )
+        )
+
+        // Update attendance stats
+        const updatedRecords = attendanceRecords.map(r =>
+          r.id === recordId ? { ...r, status } : r
+        )
+
+        const stats: CoachAttendanceStats = {
+          total_coaches: updatedRecords.length,
+          present_today: updatedRecords.filter(r => r.status === "present").length,
+          absent_today: updatedRecords.filter(r => r.status === "absent").length,
+          late_today: updatedRecords.filter(r => r.status === "late").length,
+          attendance_rate: updatedRecords.length > 0 ?
+            (updatedRecords.filter(r => r.status === "present" || r.status === "late").length / updatedRecords.length) * 100 : 0
+        }
+        setAttendanceStats(stats)
+
+        // Clear success status after delay
+        setTimeout(() => {
+          setSaveStatus(prev => ({ ...prev, [recordId]: 'idle' }))
+        }, 2000)
+
+      } else {
+        const errorText = await response.text()
+        console.warn(`❌ Failed to save coach attendance for ${record.coach_name}: ${response.status} ${errorText}`)
+        setSaveStatus(prev => ({ ...prev, [recordId]: 'error' }))
+        setError(`Failed to save coach attendance: ${response.status}`)
+      }
 
     } catch (error) {
       console.error("❌ Error marking coach attendance:", error)
@@ -257,76 +308,26 @@ export default function BranchManagerCoachAttendancePage() {
     }
   }, [searchTerm, attendanceRecords])
 
-  // Bulk save all changes
-  const handleBulkSave = async () => {
-    if (!hasUnsavedChanges) return
-
-    try {
-      setBulkSaving(true)
-      setError(null)
-
-      const authResult = checkBranchManagerAuth()
-      if (!authResult.isAuthenticated || !authResult.user) {
-        setError("Authentication required")
-        return
-      }
-
-      const headers = getBranchManagerAuthHeaders()
-      let successCount = 0
-      let errorCount = 0
-
-      console.log("💾 Starting bulk save of coach attendance records...")
-
-      for (const record of attendanceRecords) {
-        if (record.status === "not_marked") continue
-
-        const attendanceData = {
-          user_id: record.coach_id,
-          user_type: "coach",
-          course_id: null, // Coaches don't have specific courses for attendance
-          branch_id: record.branch_id,
-          attendance_date: `${format(selectedDate, 'yyyy-MM-dd')}T${new Date().toTimeString().split(' ')[0]}`,
-          status: record.status,
-          check_in_time: record.status !== "absent" ? new Date().toISOString() : null,
-          check_out_time: null,
-          notes: `Marked by branch manager: ${authResult.user.full_name || authResult.user.email}`
-        }
-
-        console.log(`💾 Saving coach attendance for ${record.coach_name} with status: ${record.status}`)
-
-        const response = await fetch(`http://localhost:8003/api/attendance/mark`, {
-          method: 'POST',
-          headers,
-          body: JSON.stringify(attendanceData)
-        })
-
-        if (response.ok) {
-          successCount++
-          console.log(`✅ Successfully saved coach attendance for ${record.coach_name}`)
-        } else {
-          errorCount++
-          const errorText = await response.text()
-          console.warn(`❌ Failed to save coach attendance for ${record.coach_name}: ${response.status} ${errorText}`)
-        }
-      }
-
-      if (successCount > 0) {
-        setSuccessMessage(`Successfully saved ${successCount} coach attendance records`)
-        setHasUnsavedChanges(false)
-      }
-
-      if (errorCount > 0) {
-        setError(`Failed to save ${errorCount} coach attendance records`)
-      }
-
-      console.log(`📊 Coach attendance bulk save completed: ${successCount} success, ${errorCount} errors`)
-
-    } catch (error) {
-      console.error("❌ Error during coach attendance bulk save:", error)
-      setError(`Failed to save coach attendance records: ${error instanceof Error ? error.message : 'Unknown error'}`)
-    } finally {
-      setBulkSaving(false)
+  // Clear messages after timeout
+  useEffect(() => {
+    if (successMessage) {
+      const timer = setTimeout(() => setSuccessMessage(null), 5000)
+      return () => clearTimeout(timer)
     }
+  }, [successMessage])
+
+  useEffect(() => {
+    if (error) {
+      const timer = setTimeout(() => setError(null), 8000)
+      return () => clearTimeout(timer)
+    }
+  }, [error])
+
+  // Refresh attendance data
+  const handleRefresh = async () => {
+    setRefreshing(true)
+    await fetchCoachAttendanceData()
+    setRefreshing(false)
   }
 
   // Export coach attendance data to CSV
@@ -446,6 +447,19 @@ export default function BranchManagerCoachAttendancePage() {
           {/* Action Buttons */}
           <div className="flex gap-2">
             <Button
+              onClick={handleRefresh}
+              variant="outline"
+              disabled={refreshing}
+              className="border-gray-300"
+            >
+              {refreshing ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <RefreshCw className="mr-2 h-4 w-4" />
+              )}
+              Refresh
+            </Button>
+            <Button
               onClick={handleExportAttendance}
               variant="outline"
               className="border-gray-300"
@@ -453,25 +467,6 @@ export default function BranchManagerCoachAttendancePage() {
               <Download className="mr-2 h-4 w-4" />
               Export CSV
             </Button>
-            {hasUnsavedChanges && (
-              <Button
-                onClick={handleBulkSave}
-                disabled={bulkSaving}
-                className="bg-blue-600 hover:bg-blue-700"
-              >
-                {bulkSaving ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Saving...
-                  </>
-                ) : (
-                  <>
-                    <Save className="mr-2 h-4 w-4" />
-                    Save All Changes
-                  </>
-                )}
-              </Button>
-            )}
           </div>
         </div>
 
@@ -533,11 +528,9 @@ export default function BranchManagerCoachAttendancePage() {
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
               <span>Coach Attendance - {format(selectedDate, "MMMM d, yyyy")}</span>
-              {hasUnsavedChanges && (
-                <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">
-                  Unsaved Changes
-                </Badge>
-              )}
+              <div className="text-sm text-gray-500">
+                {filteredRecords.length} coaches
+              </div>
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -612,7 +605,7 @@ export default function BranchManagerCoachAttendancePage() {
                           <p className="text-gray-900">{record.check_in_time || "-"}</p>
                         </td>
                         <td className="py-4 px-4">
-                          <div className="flex gap-2">
+                          <div className="flex gap-2 items-center">
                             <Button
                               size="sm"
                               variant={record.status === "present" ? "default" : "outline"}
@@ -620,7 +613,7 @@ export default function BranchManagerCoachAttendancePage() {
                               disabled={saveStatus[record.id] === 'saving'}
                               className={record.status === "present" ? "bg-green-600 hover:bg-green-700" : ""}
                             >
-                              {saveStatus[record.id] === 'saving' && record.status === "present" ? (
+                              {saveStatus[record.id] === 'saving' ? (
                                 <Loader2 className="h-3 w-3 animate-spin" />
                               ) : (
                                 <CheckCircle className="h-3 w-3" />
@@ -632,7 +625,7 @@ export default function BranchManagerCoachAttendancePage() {
                               onClick={() => handleMarkAttendance(record.id, "absent")}
                               disabled={saveStatus[record.id] === 'saving'}
                             >
-                              {saveStatus[record.id] === 'saving' && record.status === "absent" ? (
+                              {saveStatus[record.id] === 'saving' ? (
                                 <Loader2 className="h-3 w-3 animate-spin" />
                               ) : (
                                 <XCircle className="h-3 w-3" />
@@ -645,12 +638,18 @@ export default function BranchManagerCoachAttendancePage() {
                               disabled={saveStatus[record.id] === 'saving'}
                               className={record.status === "late" ? "bg-yellow-600 hover:bg-yellow-700 text-white" : ""}
                             >
-                              {saveStatus[record.id] === 'saving' && record.status === "late" ? (
+                              {saveStatus[record.id] === 'saving' ? (
                                 <Loader2 className="h-3 w-3 animate-spin" />
                               ) : (
                                 <Clock className="h-3 w-3" />
                               )}
                             </Button>
+                            {saveStatus[record.id] === 'success' && (
+                              <CheckCircle className="h-4 w-4 text-green-600" />
+                            )}
+                            {saveStatus[record.id] === 'error' && (
+                              <XCircle className="h-4 w-4 text-red-600" />
+                            )}
                           </div>
                         </td>
                         <td className="py-4 px-4">
