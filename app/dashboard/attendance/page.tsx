@@ -123,19 +123,19 @@ export default function AttendanceOverviewPage() {
       console.log(`🔄 Fetching attendance overview for date: ${dateStr}`)
 
       // Fetch students data
-      const studentsResponse = await fetch(`http://localhost:8003/api/attendance/students?date=${dateStr}`, {
+      const studentsResponse = await fetch(`http://31.97.224.169:8003/api/attendance/students?date=${dateStr}`, {
         method: 'GET',
         headers
       })
 
       // Fetch coaches data
-      const coachesResponse = await fetch('http://localhost:8003/api/coaches', {
+      const coachesResponse = await fetch('http://31.97.224.169:8003/api/coaches', {
         method: 'GET',
         headers
       })
 
       // Fetch branches data
-      const branchesResponse = await fetch('http://localhost:8003/api/branches', {
+      const branchesResponse = await fetch('http://31.97.224.169:8003/api/branches', {
         method: 'GET',
         headers
       })

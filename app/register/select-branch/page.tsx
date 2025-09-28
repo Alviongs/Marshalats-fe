@@ -51,7 +51,7 @@ export default function SelectBranchPage() {
         setIsLoadingLocations(true)
         setError(null)
 
-        const response = await fetch('http://localhost:8003/api/locations/public/details?active_only=true')
+        const response = await fetch('http://31.97.224.169:8003/api/locations/public/details?active_only=true')
 
         if (!response.ok) {
           throw new Error('Failed to fetch locations')
@@ -90,7 +90,7 @@ export default function SelectBranchPage() {
         setIsLoadingBranches(true)
         setError(null)
 
-        const response = await fetch(`http://localhost:8003/api/branches/public/by-location/${selectedLocation}?active_only=true`)
+        const response = await fetch(`http://31.97.224.169:8003/api/branches/public/by-location/${selectedLocation}?active_only=true`)
 
         if (!response.ok) {
           throw new Error('Failed to fetch branches for location')
