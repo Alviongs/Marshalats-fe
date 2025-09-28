@@ -349,6 +349,43 @@ export default function BranchManagerDashboardHeader({ currentPage = "Dashboard"
                 Courses
               </button>
 
+              {/* Attendance Dropdown */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    className={`pb-2 px-1 text-sm font-semibold whitespace-nowrap cursor-pointer border-b-2 transition-all duration-300 hover:scale-105 ${
+                      isActivePath("/branch-manager-dashboard/attendance")
+                        ? "text-gray-900 border-blue-400 shadow-sm"
+                        : "text-gray-600 hover:text-gray-900 border-transparent hover:border-gray-300"
+                    }`}
+                  >
+                    Attendance
+                    <ChevronDown className="w-3 h-3 ml-1" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuPortal>
+                  <DropdownMenuContent align="start" className="w-48 bg-white/95 backdrop-blur-md border border-gray-200/50 shadow-lg">
+                    <DropdownMenuItem
+                      onClick={() => router.push("/branch-manager-dashboard/attendance/students")}
+                      className={`cursor-pointer hover:bg-gray-100/80 transition-colors ${
+                        pathname === "/branch-manager-dashboard/attendance/students" ? "bg-blue-50 text-blue-700" : ""
+                      }`}
+                    >
+                      Student Attendance
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => router.push("/branch-manager-dashboard/attendance/coaches")}
+                      className={`cursor-pointer hover:bg-gray-100/80 transition-colors ${
+                        pathname === "/branch-manager-dashboard/attendance/coaches" ? "bg-blue-50 text-blue-700" : ""
+                      }`}
+                    >
+                      Coach Attendance
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenuPortal>
+              </DropdownMenu>
+
               {/* More Dropdown */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -362,18 +399,6 @@ export default function BranchManagerDashboardHeader({ currentPage = "Dashboard"
                 </DropdownMenuTrigger>
                 <DropdownMenuPortal>
                   <DropdownMenuContent align="start" className="w-48 bg-white/95 backdrop-blur-md border border-gray-200/50 shadow-lg">
-                    <DropdownMenuItem
-                      onClick={() => router.push("/branch-manager-dashboard/attendance/students")}
-                      className="cursor-pointer hover:bg-gray-100/80 transition-colors"
-                    >
-                      Student Attendance
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => router.push("/branch-manager-dashboard/attendance/coaches")}
-                      className="cursor-pointer hover:bg-gray-100/80 transition-colors"
-                    >
-                      Coach Attendance
-                    </DropdownMenuItem>
                     <DropdownMenuItem
                       onClick={() => router.push("/branch-manager-dashboard/reports")}
                       className="cursor-pointer hover:bg-gray-100/80 transition-colors"

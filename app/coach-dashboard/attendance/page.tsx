@@ -276,8 +276,8 @@ export default function CoachAttendancePage() {
       // Use selected date instead of always using today
       const selectedDateStr = selectedDate.toISOString().split('T')[0]
 
-      // Fetch attendance data directly from the attendance endpoint (includes students + attendance)
-      const attendanceResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/attendance/coach/${coachId}/students/attendance?date=${selectedDateStr}`, {
+      // Fetch attendance data using the unified endpoint
+      const attendanceResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/attendance/students?date=${selectedDateStr}`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -297,12 +297,25 @@ export default function CoachAttendancePage() {
       const attendanceRecords: AttendanceRecord[] = []
       const students = attendanceData.students || []
 
+      // Debug: Show raw attendance data for first few students
+      console.log("🔍 RAW ATTENDANCE DATA FROM API:")
+      students.slice(0, 3).forEach((student: any, index: number) => {
+        console.log(`   Student ${index + 1}: ${student.full_name}`)
+        console.log(`      Attendance:`, student.attendance)
+        console.log(`      Status: '${student.attendance?.status}'`)
+      })
+
       for (const student of students) {
         // Get course information
         const primaryCourse = student.courses?.[0]
         const attendance = student.attendance || {}
 
-        attendanceRecords.push({
+        // Debug logging for attendance status
+        console.log(`🔍 Processing student: ${student.full_name}`)
+        console.log(`   Raw attendance:`, attendance)
+        console.log(`   Status: '${attendance.status}' (type: ${typeof attendance.status})`)
+
+        const processedRecord = {
           id: `${student.id}_${selectedDateStr}`,
           student_name: student.full_name || 'Unknown Student',
           student_id: student.id,
@@ -323,8 +336,21 @@ export default function CoachAttendancePage() {
               hour12: true
             }) : "",
           notes: attendance.notes || ""
-        })
+        }
+
+        console.log(`   Processed status: '${processedRecord.status}'`)
+        if (processedRecord.status === 'present') {
+          console.log(`   ✅ PRESENT record created for ${student.full_name}`)
+        }
+
+        attendanceRecords.push(processedRecord)
       }
+
+      // Debug logging for final records
+      console.log(`🔍 Final attendance records (${attendanceRecords.length}):`)
+      attendanceRecords.forEach((record, index) => {
+        console.log(`   ${index + 1}. ${record.student_name}: ${record.status}`)
+      })
 
       // Calculate statistics
       const stats: AttendanceStats = {
@@ -334,6 +360,17 @@ export default function CoachAttendancePage() {
         late_today: attendanceRecords.filter(r => r.status === "late").length,
         attendance_rate: attendanceRecords.length > 0 ?
           (attendanceRecords.filter(r => r.status === "present" || r.status === "late").length / attendanceRecords.length) * 100 : 0
+      }
+
+      console.log(`📊 Calculated stats:`, stats)
+
+      // Debug: Alert if present records are found
+      if (stats.present_today > 0) {
+        console.log(`🎉 FRONTEND: ${stats.present_today} PRESENT records found and will be displayed!`)
+        // Temporary visual confirmation
+        setSuccessMessage(`✅ Found ${stats.present_today} present attendance records for ${selectedDate.toDateString()}`)
+      } else {
+        console.log(`⚠️ FRONTEND: No present records found in processed data`)
       }
 
       setAttendanceRecords(attendanceRecords)
@@ -985,44 +1022,43 @@ export default function CoachAttendancePage() {
                           {getStatusBadge(record.status)}
                         </div>
                         
-                        <div className="flex space-x-1">
+                        <div className="flex gap-2">
                           <Button
                             size="sm"
                             variant={record.status === "present" ? "default" : "outline"}
                             onClick={() => handleMarkAttendance(record.id, "present")}
                             disabled={saveStatus[record.id] === 'saving'}
-                            className="text-xs"
+                            className={record.status === "present" ? "bg-green-600 hover:bg-green-700" : ""}
                           >
-                            {saveStatus[record.id] === 'saving' ? (
-                              <Loader2 className="w-3 h-3 animate-spin" />
+                            {saveStatus[record.id] === 'saving' && record.status === "present" ? (
+                              <Loader2 className="h-3 w-3 animate-spin" />
                             ) : (
-                              "Present"
+                              <CheckCircle className="h-3 w-3" />
                             )}
                           </Button>
                           <Button
                             size="sm"
-                            variant={record.status === "late" ? "default" : "outline"}
-                            onClick={() => handleMarkAttendance(record.id, "late")}
-                            disabled={saveStatus[record.id] === 'saving'}
-                            className="text-xs"
-                          >
-                            {saveStatus[record.id] === 'saving' ? (
-                              <Loader2 className="w-3 h-3 animate-spin" />
-                            ) : (
-                              "Late"
-                            )}
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant={record.status === "absent" ? "default" : "outline"}
+                            variant={record.status === "absent" ? "destructive" : "outline"}
                             onClick={() => handleMarkAttendance(record.id, "absent")}
                             disabled={saveStatus[record.id] === 'saving'}
-                            className="text-xs"
                           >
-                            {saveStatus[record.id] === 'saving' ? (
-                              <Loader2 className="w-3 h-3 animate-spin" />
+                            {saveStatus[record.id] === 'saving' && record.status === "absent" ? (
+                              <Loader2 className="h-3 w-3 animate-spin" />
                             ) : (
-                              "Absent"
+                              <XCircle className="h-3 w-3" />
+                            )}
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant={record.status === "late" ? "secondary" : "outline"}
+                            onClick={() => handleMarkAttendance(record.id, "late")}
+                            disabled={saveStatus[record.id] === 'saving'}
+                            className={record.status === "late" ? "bg-yellow-600 hover:bg-yellow-700 text-white" : ""}
+                          >
+                            {saveStatus[record.id] === 'saving' && record.status === "late" ? (
+                              <Loader2 className="h-3 w-3 animate-spin" />
+                            ) : (
+                              <Clock className="h-3 w-3" />
                             )}
                           </Button>
                         </div>
