@@ -26,6 +26,7 @@ import {
   TrendingUp
 } from "lucide-react"
 import BranchManagerDashboardHeader from "@/components/branch-manager-dashboard-header"
+import { BranchManagerAuth } from "@/lib/branchManagerAuth"
 
 interface FilterState {
   branch_id: string
@@ -35,71 +36,162 @@ interface FilterState {
   search: string
 }
 
-// Static mock data
-const generateMockData = (category: string) => {
-  const data = []
-  for (let i = 1; i <= 15; i++) {
-    switch (category) {
-      case 'branch':
-        data.push({
-          id: `branch_${i}`,
-          name: `Branch ${i}`,
-          location: `Location ${i}`,
-          manager_name: `Manager ${i}`,
-          student_count: Math.floor(Math.random() * 100) + 20,
-          status: Math.random() > 0.3 ? 'active' : 'inactive',
-          created_at: new Date(Date.now() - Math.random() * 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
-        })
-        break
-      case 'student':
-        data.push({
-          id: `student_${i}`,
-          name: `Student ${i}`,
-          email: `student${i}@example.com`,
-          course_name: `Course ${Math.floor(Math.random() * 5) + 1}`,
-          enrollment_date: new Date(Date.now() - Math.random() * 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-          status: Math.random() > 0.2 ? 'active' : 'inactive'
-        })
-        break
-      case 'course':
-        data.push({
-          id: `course_${i}`,
-          name: `Course ${i}`,
-          category: `Category ${Math.floor(Math.random() * 3) + 1}`,
-          duration: `${Math.floor(Math.random() * 12) + 1} months`,
-          student_count: Math.floor(Math.random() * 50) + 5,
-          status: Math.random() > 0.25 ? 'active' : 'inactive'
-        })
-        break
-      case 'financial':
-        data.push({
-          id: `payment_${i}`,
-          transaction_id: `TXN${1000 + i}`,
-          student_name: `Student ${i}`,
-          amount: Math.floor(Math.random() * 5000) + 1000,
-          payment_date: new Date(Date.now() - Math.random() * 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-          status: Math.random() > 0.3 ? 'paid' : Math.random() > 0.5 ? 'pending' : 'overdue'
-        })
-        break
-      case 'operational':
-        data.push({
-          id: `operation_${i}`,
-          operation: `Operation ${i}`,
-          date: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-          type: ['maintenance', 'training', 'event', 'inspection'][Math.floor(Math.random() * 4)],
-          result: Math.random() > 0.2 ? 'success' : 'pending',
-          status: Math.random() > 0.2 ? 'success' : 'pending'
-        })
-        break
-      default:
-        data.push({
-          id: `item_${i}`,
-          name: `Item ${i}`,
-          status: Math.random() > 0.3 ? 'active' : 'inactive'
-        })
+interface Branch {
+  id: string
+  branch: {
+    name: string
+    code: string
+    email: string
+    phone: string
+    address: {
+      line1: string
+      area: string
+      city: string
+      state: string
+      pincode: string
+      country: string
     }
   }
-  return data
+  manager_id: string
+  is_active?: boolean
+  operational_details: {
+    courses_offered: string[]
+    timings: Array<{
+      day: string
+      open: string
+      close: string
+    }>
+    holidays: string[]
+  }
+  assignments: {
+    accessories_available: boolean
+    courses: string[]
+    branch_admins: string[]
+  }
+  bank_details: {
+    bank_name: string
+    account_number: string
+    upi_id: string
+  }
+  statistics?: {
+    coach_count: number
+    student_count: number
+    course_count: number
+    active_courses: number
+  }
+  created_at: string
+  updated_at: string
+}
+
+// Function to fetch real data based on category
+const fetchCategoryData = async (category: string) => {
+  const currentUser = BranchManagerAuth.getCurrentUser()
+  const token = BranchManagerAuth.getToken()
+
+  if (!currentUser || !token) {
+    throw new Error("Authentication required. Please login again.")
+  }
+
+  switch (category) {
+    case 'branch':
+      // Fetch real branch data from API
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/branches?limit=100`, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      })
+
+      if (!response.ok) {
+        const errorText = await response.text()
+        console.error('Branches API error:', response.status, errorText)
+
+        if (response.status === 401) {
+          throw new Error("Authentication failed. Please login again.")
+        } else if (response.status === 403) {
+          throw new Error("You don't have permission to access branch information.")
+        } else {
+          throw new Error(`Failed to load branches: ${response.status} - ${errorText}`)
+        }
+      }
+
+      const branchData = await response.json()
+      console.log('✅ Branch Reports API response:', branchData)
+
+      const branchesData = branchData.branches || []
+
+      // Transform branch data to match the expected format for the table
+      return branchesData.map((branch: Branch) => ({
+        id: branch.id,
+        name: branch.branch.name,
+        location: `${branch.branch.address.city}, ${branch.branch.address.state}`,
+        address: `${branch.branch.address.line1}, ${branch.branch.address.area}, ${branch.branch.address.city}`,
+        manager_name: 'Branch Manager', // We don't have manager name in the response
+        student_count: branch.statistics?.student_count || 0,
+        coach_count: branch.statistics?.coach_count || 0,
+        course_count: branch.statistics?.course_count || 0,
+        status: branch.is_active ? 'active' : 'inactive',
+        created_at: branch.created_at,
+        email: branch.branch.email,
+        phone: branch.branch.phone,
+        code: branch.branch.code
+      }))
+
+    default:
+      // For other categories, return mock data for now
+      const mockData = []
+      for (let i = 1; i <= 15; i++) {
+        switch (category) {
+          case 'student':
+            mockData.push({
+              id: `student_${i}`,
+              name: `Student ${i}`,
+              email: `student${i}@example.com`,
+              course_name: `Course ${Math.floor(Math.random() * 5) + 1}`,
+              enrollment_date: new Date(Date.now() - Math.random() * 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+              status: Math.random() > 0.2 ? 'active' : 'inactive'
+            })
+            break
+          case 'course':
+            mockData.push({
+              id: `course_${i}`,
+              name: `Course ${i}`,
+              category: `Category ${Math.floor(Math.random() * 3) + 1}`,
+              duration: `${Math.floor(Math.random() * 12) + 1} months`,
+              student_count: Math.floor(Math.random() * 50) + 5,
+              status: Math.random() > 0.25 ? 'active' : 'inactive'
+            })
+            break
+          case 'financial':
+            mockData.push({
+              id: `payment_${i}`,
+              transaction_id: `TXN${1000 + i}`,
+              student_name: `Student ${i}`,
+              amount: Math.floor(Math.random() * 5000) + 1000,
+              payment_date: new Date(Date.now() - Math.random() * 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+              status: Math.random() > 0.3 ? 'paid' : Math.random() > 0.5 ? 'pending' : 'overdue'
+            })
+            break
+          case 'operational':
+            mockData.push({
+              id: `operation_${i}`,
+              operation: `Operation ${i}`,
+              date: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+              type: ['maintenance', 'training', 'event', 'inspection'][Math.floor(Math.random() * 4)],
+              result: Math.random() > 0.2 ? 'success' : 'pending',
+              status: Math.random() > 0.2 ? 'success' : 'pending'
+            })
+            break
+          default:
+            mockData.push({
+              id: `item_${i}`,
+              name: `Item ${i}`,
+              status: Math.random() > 0.3 ? 'active' : 'inactive'
+            })
+        }
+      }
+      return mockData
+  }
 }
 
 const mockFilterOptions = {
@@ -122,14 +214,11 @@ export default function BranchManagerCategoryReportsPage() {
   const router = useRouter()
   const categoryId = params.categoryId as string
 
-  // Generate initial mock data based on category
-  const initialMockData = generateMockData(categoryId)
-
   // State management
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [reportData, setReportData] = useState<any[]>(initialMockData)
-  const [filteredData, setFilteredData] = useState<any[]>(initialMockData)
+  const [reportData, setReportData] = useState<any[]>([])
+  const [filteredData, setFilteredData] = useState<any[]>([])
 
   // Filter states
   const [filters, setFilters] = useState<FilterState>({
@@ -143,11 +232,42 @@ export default function BranchManagerCategoryReportsPage() {
   // Search state
   const [searchInput, setSearchInput] = useState("")
 
-  // Update data when category changes
+  // Authentication check
   useEffect(() => {
-    const newMockData = generateMockData(categoryId)
-    setReportData(newMockData)
-    setFilteredData(newMockData)
+    if (!BranchManagerAuth.isAuthenticated()) {
+      router.replace('/branch-manager/login')
+      return
+    }
+  }, [router])
+
+  // Load data when category changes
+  useEffect(() => {
+    const loadCategoryData = async () => {
+      if (!BranchManagerAuth.isAuthenticated()) {
+        return
+      }
+
+      try {
+        setLoading(true)
+        setError(null)
+
+        console.log(`Loading ${categoryId} data for branch manager reports...`)
+        const data = await fetchCategoryData(categoryId)
+
+        console.log(`✅ Loaded ${data.length} ${categoryId} records`)
+        setReportData(data)
+        setFilteredData(data)
+      } catch (err: any) {
+        console.error(`Error loading ${categoryId} data:`, err)
+        setError(err.message || `Failed to load ${categoryId} information`)
+        setReportData([])
+        setFilteredData([])
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadCategoryData()
   }, [categoryId])
 
   // Filter data when filters change
@@ -173,6 +293,31 @@ export default function BranchManagerCategoryReportsPage() {
   useEffect(() => {
     setFilters(prev => ({ ...prev, search: searchInput }))
   }, [searchInput])
+
+  // Retry function for failed requests
+  const retryLoadData = async () => {
+    if (!BranchManagerAuth.isAuthenticated()) {
+      router.replace('/branch-manager/login')
+      return
+    }
+
+    try {
+      setLoading(true)
+      setError(null)
+
+      console.log(`Retrying ${categoryId} data load...`)
+      const data = await fetchCategoryData(categoryId)
+
+      console.log(`✅ Retry successful: Loaded ${data.length} ${categoryId} records`)
+      setReportData(data)
+      setFilteredData(data)
+    } catch (err: any) {
+      console.error(`Retry failed for ${categoryId} data:`, err)
+      setError(err.message || `Failed to load ${categoryId} information`)
+    } finally {
+      setLoading(false)
+    }
+  }
 
 
 
@@ -444,7 +589,7 @@ export default function BranchManagerCategoryReportsPage() {
                   variant="outline"
                   onClick={() => {
                     setFilters({
-                      branch_id: branchManagerBranchId || "",
+                      branch_id: "",
                       course_id: "",
                       category_id: "",
                       status: "",
@@ -482,9 +627,28 @@ export default function BranchManagerCategoryReportsPage() {
                 <AlertCircle className="w-12 h-12 text-red-500 mb-4" />
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">Error Loading Data</h3>
                 <p className="text-gray-600 mb-4">{error}</p>
-                <Button onClick={() => window.location.reload()} variant="outline">
-                  Try Again
-                </Button>
+                <div className="flex space-x-3">
+                  <Button
+                    onClick={retryLoadData}
+                    variant="outline"
+                    disabled={loading}
+                  >
+                    {loading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Retrying...
+                      </>
+                    ) : (
+                      'Try Again'
+                    )}
+                  </Button>
+                  <Button
+                    onClick={() => router.push('/branch-manager-dashboard/reports')}
+                    variant="ghost"
+                  >
+                    Back to Reports
+                  </Button>
+                </div>
               </div>
             ) : filteredData.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-8 text-center">
@@ -501,9 +665,11 @@ export default function BranchManagerCategoryReportsPage() {
                         {categoryId === 'branch' && (
                           <>
                             <th className="text-left py-3 px-4 font-medium">Branch Name</th>
+                            <th className="text-left py-3 px-4 font-medium">Code</th>
                             <th className="text-left py-3 px-4 font-medium">Location</th>
-                            <th className="text-left py-3 px-4 font-medium">Manager</th>
+                            <th className="text-left py-3 px-4 font-medium">Contact</th>
                             <th className="text-left py-3 px-4 font-medium">Students</th>
+                            <th className="text-left py-3 px-4 font-medium">Coaches</th>
                             <th className="text-left py-3 px-4 font-medium">Status</th>
                             <th className="text-left py-3 px-4 font-medium">Actions</th>
                           </>
@@ -556,16 +722,54 @@ export default function BranchManagerCategoryReportsPage() {
                           {categoryId === 'branch' && (
                             <>
                               <td className="py-3 px-4 font-medium">{item.name || 'N/A'}</td>
-                              <td className="py-3 px-4">{item.location || item.address || 'N/A'}</td>
-                              <td className="py-3 px-4">{item.manager_name || 'N/A'}</td>
-                              <td className="py-3 px-4">{item.student_count || 0}</td>
+                              <td className="py-3 px-4">
+                                <span className="text-xs bg-gray-100 px-2 py-1 rounded">
+                                  {item.code || 'N/A'}
+                                </span>
+                              </td>
+                              <td className="py-3 px-4">
+                                <div className="text-sm">
+                                  <div className="font-medium">{item.location || 'N/A'}</div>
+                                  {item.address && (
+                                    <div className="text-gray-500 text-xs truncate max-w-[200px]">
+                                      {item.address}
+                                    </div>
+                                  )}
+                                </div>
+                              </td>
+                              <td className="py-3 px-4">
+                                <div className="text-sm">
+                                  {item.email && (
+                                    <div className="text-xs text-gray-600">{item.email}</div>
+                                  )}
+                                  {item.phone && (
+                                    <div className="text-xs text-gray-600">{item.phone}</div>
+                                  )}
+                                </div>
+                              </td>
+                              <td className="py-3 px-4">
+                                <div className="flex items-center space-x-1">
+                                  <Users className="w-3 h-3 text-blue-500" />
+                                  <span className="text-sm font-medium">{item.student_count || 0}</span>
+                                </div>
+                              </td>
+                              <td className="py-3 px-4">
+                                <div className="flex items-center space-x-1">
+                                  <Award className="w-3 h-3 text-green-500" />
+                                  <span className="text-sm font-medium">{item.coach_count || 0}</span>
+                                </div>
+                              </td>
                               <td className="py-3 px-4">
                                 <Badge variant={item.status === 'active' ? 'default' : 'secondary'}>
                                   {item.status || 'Unknown'}
                                 </Badge>
                               </td>
                               <td className="py-3 px-4">
-                                <Button variant="ghost" size="sm">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => router.push(`/branch-manager-dashboard/branches/${item.id}`)}
+                                >
                                   <Eye className="w-4 h-4" />
                                 </Button>
                               </td>
