@@ -11,7 +11,6 @@ import {
   ArrowLeft,
   Download,
   Search,
-  Filter,
   Loader2,
   AlertCircle,
   Users,
@@ -21,12 +20,16 @@ import {
   CheckCircle,
   XCircle,
   Eye,
+  Edit,
   Building,
   DollarSign,
-  TrendingUp
+  TrendingUp,
+  RefreshCw
 } from "lucide-react"
 import BranchManagerDashboardHeader from "@/components/branch-manager-dashboard-header"
 import { BranchManagerAuth } from "@/lib/branchManagerAuth"
+import { reportsAPI } from "@/lib/reportsAPI"
+import { toast } from "sonner"
 
 interface FilterState {
   branch_id: string
@@ -34,6 +37,9 @@ interface FilterState {
   category_id: string
   status: string
   search: string
+  payment_type?: string
+  payment_method?: string
+  date_range?: string
 }
 
 interface Branch {
@@ -137,6 +143,127 @@ const fetchCategoryData = async (category: string) => {
         code: branch.branch.code
       }))
 
+    case 'course':
+      // Get the branch manager's branch ID
+      const branchManagerBranchId = currentUser.branch_id || currentUser.managed_branches?.[0]
+
+      if (!branchManagerBranchId) {
+        throw new Error("Branch manager is not assigned to any branch.")
+      }
+
+      console.log('🔍 Fetching courses for branch:', branchManagerBranchId)
+
+      // Fetch real course data from API
+      const courseResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/courses/by-branch/${branchManagerBranchId}`, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      })
+
+      if (!courseResponse.ok) {
+        const errorText = await courseResponse.text()
+        console.error('Courses API error:', courseResponse.status, errorText)
+
+        if (courseResponse.status === 401) {
+          throw new Error("Authentication failed. Please login again.")
+        } else if (courseResponse.status === 403) {
+          console.warn('Branch manager access restricted - returning empty course list')
+          // Return empty array for 403 errors (branch manager can only see their own branch courses)
+          return []
+        } else if (courseResponse.status === 404) {
+          console.info('No courses found for branch - returning empty course list')
+          // Return empty array for 404 errors (no courses assigned to branch)
+          return []
+        } else {
+          throw new Error(`Failed to load courses: ${courseResponse.status} - ${errorText}`)
+        }
+      }
+
+      const courseData = await courseResponse.json()
+      console.log('✅ Courses API response:', courseData)
+
+      const coursesData = courseData.courses || []
+
+      // Transform course data to match the expected format for the table
+      return coursesData.map((course: any) => ({
+        id: course.id,
+        name: course.title || course.name || 'Untitled Course',
+        code: course.code || 'N/A',
+        category: course.category_name || 'General',
+        difficulty_level: course.difficulty_level || 'Beginner',
+        instructor_name: course.instructor_name || 'TBA',
+        instructor_id: course.instructor_id || null,
+        max_students: course.student_requirements?.max_students || 0,
+        enrolled_students: course.enrolled_students || 0,
+        active_enrollments: course.active_enrollments || 0,
+        total_enrollments: course.total_enrollments || 0,
+        completion_rate: course.completion_rate || 0,
+        pricing: course.pricing?.amount || 0,
+        currency: course.pricing?.currency || 'INR',
+        duration_months: course.duration_months || 3,
+        status: course.settings?.active ? 'active' : 'inactive',
+        offers_certification: course.settings?.offers_certification || false,
+        created_at: course.created_at,
+        updated_at: course.updated_at,
+        description: course.description || 'No description available'
+      }))
+
+    case 'financial':
+      // Get the branch manager's branch ID for filtering
+      const managerBranchId = currentUser.branch_id || currentUser.managed_branches?.[0]
+
+      if (!managerBranchId) {
+        throw new Error("Branch manager is not assigned to any branch.")
+      }
+
+      console.log('🔍 Fetching financial data for branch:', managerBranchId)
+
+      // Fetch financial reports from API with branch filtering
+      const financialResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/reports/financial?branch_id=${managerBranchId}&limit=100`, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      })
+
+      if (!financialResponse.ok) {
+        const errorText = await financialResponse.text()
+        console.error('Financial API error:', financialResponse.status, errorText)
+
+        if (financialResponse.status === 401) {
+          throw new Error("Authentication failed. Please login again.")
+        } else if (financialResponse.status === 403) {
+          throw new Error("You don't have permission to access financial information.")
+        } else {
+          throw new Error(`Failed to load financial data: ${financialResponse.status} - ${errorText}`)
+        }
+      }
+
+      const financialData = await financialResponse.json()
+      console.log('✅ Financial API response:', financialData)
+
+      const payments = financialData.payments || []
+
+      // Transform payment data to match the expected format for the table
+      return payments.map((payment: any) => ({
+        id: payment.id || payment._id,
+        transaction_id: payment.transaction_id,
+        student_name: payment.student_details?.full_name || payment.student_name || 'Unknown Student',
+        course_name: payment.course_details?.course_name || payment.course_name || 'Unknown Course',
+        branch_name: payment.branch_details?.branch_name || payment.branch_name || 'Unknown Branch',
+        amount: payment.amount || 0,
+        payment_method: payment.payment_method || 'Unknown',
+        payment_type: payment.payment_type || 'Unknown',
+        payment_status: payment.payment_status || 'pending',
+        payment_date: payment.payment_date || payment.created_at,
+        due_date: payment.due_date,
+        notes: payment.notes || '',
+        status: payment.payment_status || 'pending',
+        created_at: payment.created_at,
+        updated_at: payment.updated_at
+      }))
+
     default:
       // For other categories, return mock data for now
       const mockData = []
@@ -194,20 +321,7 @@ const fetchCategoryData = async (category: string) => {
   }
 }
 
-const mockFilterOptions = {
-  branches: [
-    { id: "branch_1", name: "Downtown Branch" },
-    { id: "branch_2", name: "Uptown Branch" },
-    { id: "branch_3", name: "Westside Branch" }
-  ],
-  courses: [
-    { id: "course_1", name: "Karate Basics" },
-    { id: "course_2", name: "Advanced Karate" },
-    { id: "course_3", name: "Taekwondo" },
-    { id: "course_4", name: "Judo" },
-    { id: "course_5", name: "Mixed Martial Arts" }
-  ]
-}
+
 
 export default function BranchManagerCategoryReportsPage() {
   const params = useParams()
@@ -226,11 +340,27 @@ export default function BranchManagerCategoryReportsPage() {
     course_id: "",
     category_id: "",
     status: "",
-    search: ""
+    search: "",
+    payment_type: "",
+    payment_method: "",
+    date_range: ""
   })
 
-  // Search state
-  const [searchInput, setSearchInput] = useState("")
+  // Financial search specific state
+  const [searchLoading, setSearchLoading] = useState(false)
+  const [filterOptions, setFilterOptions] = useState<{
+    branches: any[]
+    payment_types: any[]
+    payment_methods: any[]
+    payment_statuses: any[]
+    date_ranges: any[]
+  }>({
+    branches: [],
+    payment_types: [],
+    payment_methods: [],
+    payment_statuses: [],
+    date_ranges: []
+  })
 
   // Authentication check
   useEffect(() => {
@@ -289,10 +419,7 @@ export default function BranchManagerCategoryReportsPage() {
     setFilteredData(filtered)
   }, [filters, reportData])
 
-  // Update search filter when search input changes
-  useEffect(() => {
-    setFilters(prev => ({ ...prev, search: searchInput }))
-  }, [searchInput])
+
 
   // Retry function for failed requests
   const retryLoadData = async () => {
@@ -319,7 +446,103 @@ export default function BranchManagerCategoryReportsPage() {
     }
   }
 
+  // Load financial report filters when on financial category
+  useEffect(() => {
+    const loadFinancialReportFilters = async () => {
+      if (categoryId !== 'financial') return
 
+      try {
+        const token = BranchManagerAuth.getToken()
+        if (!token) return
+
+        const response = await reportsAPI.getFinancialReportFilters(token)
+
+        // Update filter options with financial-specific data
+        setFilterOptions(prev => ({
+          ...prev,
+          branches: response.filters.branches,
+          payment_types: response.filters.payment_types,
+          payment_methods: response.filters.payment_methods,
+          payment_statuses: response.filters.payment_statuses,
+          date_ranges: response.filters.date_ranges
+        }))
+      } catch (error) {
+        console.error('Error loading financial report filters:', error)
+      }
+    }
+
+    loadFinancialReportFilters()
+  }, [categoryId])
+
+  // Financial Reports Handler
+  const handleFinancialSearch = async () => {
+    const token = BranchManagerAuth.getToken()
+    if (!token) {
+      toast.error('Authentication required')
+      return
+    }
+
+    setSearchLoading(true)
+
+    try {
+      // Prepare filters for API call
+      const apiFilters: any = {
+        branch_id: filters.branch_id || undefined,
+        payment_type: filters.payment_type || undefined,
+        payment_method: filters.payment_method || undefined,
+        payment_status: filters.status || undefined,
+        date_range: filters.date_range || undefined,
+        search: filters.search || undefined,
+        skip: 0,
+        limit: 50
+      }
+
+      // Remove undefined values and 'all' values
+      Object.keys(apiFilters).forEach(key => {
+        if (apiFilters[key] === undefined || apiFilters[key] === 'all' || apiFilters[key] === '') {
+          delete apiFilters[key]
+        }
+      })
+
+      const response = await reportsAPI.getFinancialReports(token, apiFilters)
+      const payments = response.payments || []
+
+      // Transform payment data to match the expected format for the main table
+      const transformedData = payments.map((payment: any) => ({
+        id: payment.id || payment._id,
+        transaction_id: payment.transaction_id,
+        student_name: payment.student_details?.full_name || payment.student_name || 'Unknown Student',
+        course_name: payment.course_details?.course_name || payment.course_name || 'Unknown Course',
+        branch_name: payment.branch_details?.branch_name || payment.branch_name || 'Unknown Branch',
+        amount: payment.amount || 0,
+        payment_method: payment.payment_method || 'Unknown',
+        payment_type: payment.payment_type || 'Unknown',
+        payment_status: payment.payment_status || 'pending',
+        payment_date: payment.payment_date || payment.created_at,
+        due_date: payment.due_date,
+        notes: payment.notes || '',
+        status: payment.payment_status || 'pending',
+        created_at: payment.created_at,
+        updated_at: payment.updated_at
+      }))
+
+      // Update the main table data with search results
+      setReportData(transformedData)
+      setFilteredData(transformedData)
+
+      const count = transformedData.length
+      toast.success(`Found ${count} financial record${count !== 1 ? 's' : ''}`)
+    } catch (error) {
+      console.error('Error searching financial records:', error)
+      toast.error('Failed to load financial records. Please try again.')
+      // Reset to original data on error
+      const data = await fetchCategoryData(categoryId)
+      setReportData(data)
+      setFilteredData(data)
+    } finally {
+      setSearchLoading(false)
+    }
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -473,390 +696,429 @@ export default function BranchManagerCategoryReportsPage() {
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Growth Rate</CardTitle>
-              <TrendingUp className="h-4 w-4 text-blue-600" />
+              <CardTitle className="text-sm font-medium">
+                {categoryId === 'course' ? 'Total Enrollments' : 'Growth Rate'}
+              </CardTitle>
+              {categoryId === 'course' ? (
+                <Users className="h-4 w-4 text-blue-600" />
+              ) : (
+                <TrendingUp className="h-4 w-4 text-blue-600" />
+              )}
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-blue-600">
                 {loading ? (
                   <Loader2 className="h-6 w-6 animate-spin" />
+                ) : categoryId === 'course' ? (
+                  filteredData.reduce((total, course) => total + (course.total_enrollments || course.enrolled_students || 0), 0).toLocaleString()
                 ) : (
                   "+12.5%"
                 )}
               </div>
               <p className="text-xs text-muted-foreground">
-                From last month
+                {categoryId === 'course' ? 'Across all courses' : 'From last month'}
               </p>
             </CardContent>
           </Card>
         </div>
 
-        {/* Filters */}
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Filter className="w-5 h-5" />
-              Filters
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-              {/* Search */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Search</label>
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                  <Input
-                    placeholder="Search..."
-                    value={searchInput}
-                    onChange={(e) => setSearchInput(e.target.value)}
-                    className="pl-10"
-                  />
+
+
+        {/* Financial Reports Search/Filter Card - Only show for financial category */}
+        {categoryId === 'financial' && (
+          <>
+            {/* Search/Filter Card */}
+            <Card className="mb-6">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <DollarSign className="w-5 h-5" />
+                  Financial Reports Search
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-7 gap-4">
+                  {/* Search */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Search</label>
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                      <Input
+                        placeholder="Transaction ID, Student, Course..."
+                        value={filters.search || ""}
+                        onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
+                        className="pl-10"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Payment Type */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Payment Type</label>
+                    <Select
+                      value={filters.payment_type || "all"}
+                      onValueChange={(value) => setFilters(prev => ({ ...prev, payment_type: value === "all" ? "" : value }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="All Types" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Types</SelectItem>
+                        {filterOptions.payment_types.map((type: any) => (
+                          <SelectItem key={type.id} value={type.id}>
+                            {type.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Payment Method */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Payment Method</label>
+                    <Select
+                      value={filters.payment_method || "all"}
+                      onValueChange={(value) => setFilters(prev => ({ ...prev, payment_method: value === "all" ? "" : value }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="All Methods" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Methods</SelectItem>
+                        {filterOptions.payment_methods.map((method: any) => (
+                          <SelectItem key={method.id} value={method.id}>
+                            {method.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Payment Status */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Payment Status</label>
+                    <Select
+                      value={filters.status || "all"}
+                      onValueChange={(value) => setFilters(prev => ({ ...prev, status: value === "all" ? "" : value }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="All Statuses" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Statuses</SelectItem>
+                        {filterOptions.payment_statuses.map((status: any) => (
+                          <SelectItem key={status.id} value={status.id}>
+                            {status.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Date Range */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Date Range</label>
+                    <Select
+                      value={filters.date_range || "all"}
+                      onValueChange={(value) => setFilters(prev => ({ ...prev, date_range: value === "all" ? "" : value }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="All Dates" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Dates</SelectItem>
+                        {filterOptions.date_ranges.map((range: any) => (
+                          <SelectItem key={range.id} value={range.id}>
+                            {range.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Search Button */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium invisible">Search</label>
+                    <Button
+                      className="bg-blue-600 hover:bg-blue-700 text-white w-full"
+                      onClick={handleFinancialSearch}
+                      disabled={searchLoading}
+                    >
+                      {searchLoading ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Searching...
+                        </>
+                      ) : (
+                        <>
+                          <Search className="w-4 h-4 mr-2" />
+                          Search
+                        </>
+                      )}
+                    </Button>
+                  </div>
+
+                  {/* Reset Button */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium invisible">Reset</label>
+                    <Button
+                      variant="outline"
+                      className="w-full"
+                      onClick={async () => {
+                        // Clear all filters
+                        setFilters({
+                          branch_id: "",
+                          course_id: "",
+                          category_id: "",
+                          status: "",
+                          search: "",
+                          payment_type: "",
+                          payment_method: "",
+                          date_range: ""
+                        })
+
+                        // Reload original financial data
+                        try {
+                          const data = await fetchCategoryData(categoryId)
+                          setReportData(data)
+                          setFilteredData(data)
+                          toast.success('Filters cleared - showing all financial records')
+                        } catch (error) {
+                          console.error('Error reloading data:', error)
+                          toast.error('Failed to reload data')
+                        }
+                      }}
+                      disabled={searchLoading}
+                    >
+                      <RefreshCw className="w-4 h-4 mr-2" />
+                      Reset
+                    </Button>
+                  </div>
                 </div>
-              </div>
+              </CardContent>
+            </Card>
 
-              {/* Branch Filter - Disabled for branch managers */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Branch</label>
-                <Select
-                  value={filters.branch_id}
-                  onValueChange={(value) => setFilters(prev => ({ ...prev, branch_id: value }))}
-                  disabled={true} // Always disabled for branch managers
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Your Branch" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {mockFilterOptions.branches.map((branch: any) => (
-                      <SelectItem key={branch.id} value={branch.id}>
-                        {branch.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
 
-              {/* Course Filter */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Course</label>
-                <Select
-                  value={filters.course_id || "all_courses"}
-                  onValueChange={(value) => setFilters(prev => ({ ...prev, course_id: value === "all_courses" ? "" : value }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="All Courses" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all_courses">All Courses</SelectItem>
-                    {mockFilterOptions.courses.map((course: any) => (
-                      <SelectItem key={course.id} value={course.id}>
-                        {course.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+          </>
+        )}
 
-              {/* Status Filter */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Status</label>
-                <Select
-                  value={filters.status || "all_status"}
-                  onValueChange={(value) => setFilters(prev => ({ ...prev, status: value === "all_status" ? "" : value }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="All Status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all_status">All Status</SelectItem>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="inactive">Inactive</SelectItem>
-                    {categoryId === 'financial' && (
-                      <>
-                        <SelectItem value="paid">Paid</SelectItem>
-                        <SelectItem value="pending">Pending</SelectItem>
-                        <SelectItem value="overdue">Overdue</SelectItem>
-                      </>
-                    )}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Clear Filters */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium invisible">Clear</label>
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setFilters({
-                      branch_id: "",
-                      course_id: "",
-                      category_id: "",
-                      status: "",
-                      search: ""
-                    })
-                    setSearchInput("")
-                  }}
-                  className="w-full"
-                >
-                  Clear All Filters
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Data Table */}
+        {/* Main Data Table */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
-              <span>{categoryId.charAt(0).toUpperCase() + categoryId.slice(1)} Data</span>
+              <span>
+                {categoryId === 'financial' ? 'Financial Records' :
+                 categoryId.charAt(0).toUpperCase() + categoryId.slice(1) + ' Data'}
+              </span>
               <Badge variant="secondary">
-                {filteredData.length} total records
+                {filteredData.length} records
               </Badge>
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {loading && filteredData.length === 0 ? (
-              <div className="flex items-center justify-center py-8">
-                <Loader2 className="w-8 h-8 animate-spin" />
-                <span className="ml-2">Loading {categoryId} data...</span>
+            {loading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+                <span className="ml-2 text-gray-600">Loading {categoryId} data...</span>
               </div>
             ) : error ? (
-              <div className="flex flex-col items-center justify-center py-8 text-center">
-                <AlertCircle className="w-12 h-12 text-red-500 mb-4" />
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Error Loading Data</h3>
+              <div className="text-center py-12">
+                <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+                <p className="text-lg font-medium text-gray-900 mb-2">Error Loading Data</p>
                 <p className="text-gray-600 mb-4">{error}</p>
-                <div className="flex space-x-3">
-                  <Button
-                    onClick={retryLoadData}
-                    variant="outline"
-                    disabled={loading}
-                  >
-                    {loading ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Retrying...
-                      </>
-                    ) : (
-                      'Try Again'
-                    )}
-                  </Button>
-                  <Button
-                    onClick={() => router.push('/branch-manager-dashboard/reports')}
-                    variant="ghost"
-                  >
-                    Back to Reports
-                  </Button>
-                </div>
+                <Button onClick={retryLoadData} className="bg-blue-600 hover:bg-blue-700 text-white">
+                  Try Again
+                </Button>
               </div>
             ) : filteredData.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-8 text-center">
-                <AlertCircle className="w-12 h-12 text-gray-400 mb-4" />
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">No Data Available</h3>
-                <p className="text-gray-600">No {categoryId} data found for the selected filters.</p>
+              <div className="text-center py-12">
+                <AlertCircle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <p className="text-lg font-medium text-gray-900 mb-2">No Data Found</p>
+                <p className="text-gray-600">
+                  No {categoryId} records found. Try adjusting your filters or check back later.
+                </p>
               </div>
             ) : (
-              <>
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b">
-                        {categoryId === 'branch' && (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-gray-200">
+                      {categoryId === 'financial' ? (
+                        <>
+                          <th className="text-left py-3 px-4 font-medium text-gray-900">Transaction ID</th>
+                          <th className="text-left py-3 px-4 font-medium text-gray-900">Student</th>
+                          <th className="text-left py-3 px-4 font-medium text-gray-900">Course</th>
+                          <th className="text-left py-3 px-4 font-medium text-gray-900">Branch</th>
+                          <th className="text-left py-3 px-4 font-medium text-gray-900">Amount</th>
+                          <th className="text-left py-3 px-4 font-medium text-gray-900">Method</th>
+                          <th className="text-left py-3 px-4 font-medium text-gray-900">Status</th>
+                          <th className="text-left py-3 px-4 font-medium text-gray-900">Date</th>
+                        </>
+                      ) : categoryId === 'branch' ? (
+                        <>
+                          <th className="text-left py-3 px-4 font-medium text-gray-900">Branch Name</th>
+                          <th className="text-left py-3 px-4 font-medium text-gray-900">Location</th>
+                          <th className="text-left py-3 px-4 font-medium text-gray-900">Students</th>
+                          <th className="text-left py-3 px-4 font-medium text-gray-900">Coaches</th>
+                          <th className="text-left py-3 px-4 font-medium text-gray-900">Courses</th>
+                          <th className="text-left py-3 px-4 font-medium text-gray-900">Status</th>
+                          <th className="text-left py-3 px-4 font-medium text-gray-900">Actions</th>
+                        </>
+                      ) : categoryId === 'course' ? (
+                        <>
+                          <th className="text-left py-3 px-4 font-medium text-gray-900">Course Name</th>
+                          <th className="text-left py-3 px-4 font-medium text-gray-900">Category</th>
+                          <th className="text-left py-3 px-4 font-medium text-gray-900">Instructor</th>
+                          <th className="text-left py-3 px-4 font-medium text-gray-900">Enrolled</th>
+                          <th className="text-left py-3 px-4 font-medium text-gray-900">Max Students</th>
+                          <th className="text-left py-3 px-4 font-medium text-gray-900">Price</th>
+                          <th className="text-left py-3 px-4 font-medium text-gray-900">Status</th>
+                          <th className="text-left py-3 px-4 font-medium text-gray-900">Actions</th>
+                        </>
+                      ) : (
+                        <>
+                          <th className="text-left py-3 px-4 font-medium text-gray-900">Name</th>
+                          <th className="text-left py-3 px-4 font-medium text-gray-900">Status</th>
+                          <th className="text-left py-3 px-4 font-medium text-gray-900">Actions</th>
+                        </>
+                      )}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredData.map((item: any, index: number) => (
+                      <tr key={item.id || index} className="border-b border-gray-100 hover:bg-gray-50">
+                        {categoryId === 'financial' ? (
                           <>
-                            <th className="text-left py-3 px-4 font-medium">Branch Name</th>
-                            <th className="text-left py-3 px-4 font-medium">Code</th>
-                            <th className="text-left py-3 px-4 font-medium">Location</th>
-                            <th className="text-left py-3 px-4 font-medium">Contact</th>
-                            <th className="text-left py-3 px-4 font-medium">Students</th>
-                            <th className="text-left py-3 px-4 font-medium">Coaches</th>
-                            <th className="text-left py-3 px-4 font-medium">Status</th>
-                            <th className="text-left py-3 px-4 font-medium">Actions</th>
+                            <td className="py-3 px-4 text-sm font-medium text-blue-600">
+                              {item.transaction_id || 'N/A'}
+                            </td>
+                            <td className="py-3 px-4 text-sm text-gray-900">
+                              {item.student_name || 'Unknown'}
+                            </td>
+                            <td className="py-3 px-4 text-sm text-gray-600">
+                              {item.course_name || 'Unknown'}
+                            </td>
+                            <td className="py-3 px-4 text-sm text-gray-600">
+                              {item.branch_name || 'Unknown'}
+                            </td>
+                            <td className="py-3 px-4 text-sm font-medium text-gray-900">
+                              ₹{item.amount?.toLocaleString() || '0'}
+                            </td>
+                            <td className="py-3 px-4 text-sm text-gray-600">
+                              {item.payment_method || 'Unknown'}
+                            </td>
+                            <td className="py-3 px-4">
+                              <Badge
+                                variant={
+                                  item.payment_status === 'paid' || item.payment_status === 'completed'
+                                    ? 'default'
+                                    : item.payment_status === 'pending'
+                                    ? 'secondary'
+                                    : 'destructive'
+                                }
+                              >
+                                {item.payment_status || item.status || 'pending'}
+                              </Badge>
+                            </td>
+                            <td className="py-3 px-4 text-sm text-gray-600">
+                              {item.payment_date ? new Date(item.payment_date).toLocaleDateString() : 'N/A'}
+                            </td>
                           </>
-                        )}
-                        {categoryId === 'student' && (
+                        ) : categoryId === 'branch' ? (
                           <>
-                            <th className="text-left py-3 px-4 font-medium">Student Name</th>
-                            <th className="text-left py-3 px-4 font-medium">Email</th>
-                            <th className="text-left py-3 px-4 font-medium">Course</th>
-                            <th className="text-left py-3 px-4 font-medium">Enrollment Date</th>
-                            <th className="text-left py-3 px-4 font-medium">Status</th>
-                            <th className="text-left py-3 px-4 font-medium">Actions</th>
+                            <td className="py-3 px-4 text-sm font-medium text-gray-900">
+                              {item.name}
+                            </td>
+                            <td className="py-3 px-4 text-sm text-gray-600">
+                              {item.location}
+                            </td>
+                            <td className="py-3 px-4 text-sm text-gray-600">
+                              {item.student_count || 0}
+                            </td>
+                            <td className="py-3 px-4 text-sm text-gray-600">
+                              {item.coach_count || 0}
+                            </td>
+                            <td className="py-3 px-4 text-sm text-gray-600">
+                              {item.course_count || 0}
+                            </td>
+                            <td className="py-3 px-4">
+                              <Badge variant={item.status === 'active' ? 'default' : 'secondary'}>
+                                {item.status}
+                              </Badge>
+                            </td>
+                            <td className="py-3 px-4">
+                              <div className="flex items-center gap-2">
+                                <Button variant="ghost" size="sm">
+                                  <Eye className="w-4 h-4" />
+                                </Button>
+                                <Button variant="ghost" size="sm">
+                                  <Edit className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            </td>
                           </>
-                        )}
-                        {categoryId === 'course' && (
+                        ) : categoryId === 'course' ? (
                           <>
-                            <th className="text-left py-3 px-4 font-medium">Course Name</th>
-                            <th className="text-left py-3 px-4 font-medium">Category</th>
-                            <th className="text-left py-3 px-4 font-medium">Duration</th>
-                            <th className="text-left py-3 px-4 font-medium">Students</th>
-                            <th className="text-left py-3 px-4 font-medium">Status</th>
-                            <th className="text-left py-3 px-4 font-medium">Actions</th>
+                            <td className="py-3 px-4 text-sm font-medium text-gray-900">
+                              {item.name}
+                            </td>
+                            <td className="py-3 px-4 text-sm text-gray-600">
+                              {item.category}
+                            </td>
+                            <td className="py-3 px-4 text-sm text-gray-600">
+                              {item.instructor_name || 'TBA'}
+                            </td>
+                            <td className="py-3 px-4 text-sm text-gray-600">
+                              {item.enrolled_students || item.active_enrollments || 0}
+                            </td>
+                            <td className="py-3 px-4 text-sm text-gray-600">
+                              {item.max_students || 0}
+                            </td>
+                            <td className="py-3 px-4 text-sm font-medium text-gray-900">
+                              ₹{item.pricing?.toLocaleString() || '0'}
+                            </td>
+                            <td className="py-3 px-4">
+                              <Badge variant={item.status === 'active' ? 'default' : 'secondary'}>
+                                {item.status}
+                              </Badge>
+                            </td>
+                            <td className="py-3 px-4">
+                              <div className="flex items-center gap-2">
+                                <Button variant="ghost" size="sm">
+                                  <Eye className="w-4 h-4" />
+                                </Button>
+                                <Button variant="ghost" size="sm">
+                                  <Edit className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            </td>
                           </>
-                        )}
-                        {categoryId === 'financial' && (
+                        ) : (
                           <>
-                            <th className="text-left py-3 px-4 font-medium">Transaction ID</th>
-                            <th className="text-left py-3 px-4 font-medium">Student</th>
-                            <th className="text-left py-3 px-4 font-medium">Amount</th>
-                            <th className="text-left py-3 px-4 font-medium">Date</th>
-                            <th className="text-left py-3 px-4 font-medium">Status</th>
-                            <th className="text-left py-3 px-4 font-medium">Actions</th>
-                          </>
-                        )}
-                        {categoryId === 'operational' && (
-                          <>
-                            <th className="text-left py-3 px-4 font-medium">Operation</th>
-                            <th className="text-left py-3 px-4 font-medium">Date</th>
-                            <th className="text-left py-3 px-4 font-medium">Type</th>
-                            <th className="text-left py-3 px-4 font-medium">Result</th>
-                            <th className="text-left py-3 px-4 font-medium">Status</th>
-                            <th className="text-left py-3 px-4 font-medium">Actions</th>
+                            <td className="py-3 px-4 text-sm font-medium text-gray-900">
+                              {item.name}
+                            </td>
+                            <td className="py-3 px-4">
+                              <Badge variant={item.status === 'active' ? 'default' : 'secondary'}>
+                                {item.status}
+                              </Badge>
+                            </td>
+                            <td className="py-3 px-4">
+                              <div className="flex items-center gap-2">
+                                <Button variant="ghost" size="sm">
+                                  <Eye className="w-4 h-4" />
+                                </Button>
+                                <Button variant="ghost" size="sm">
+                                  <Edit className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            </td>
                           </>
                         )}
                       </tr>
-                    </thead>
-                    <tbody>
-                      {filteredData.map((item, index) => (
-                        <tr key={item.id || index} className="border-b hover:bg-gray-50">
-                          {categoryId === 'branch' && (
-                            <>
-                              <td className="py-3 px-4 font-medium">{item.name || 'N/A'}</td>
-                              <td className="py-3 px-4">
-                                <span className="text-xs bg-gray-100 px-2 py-1 rounded">
-                                  {item.code || 'N/A'}
-                                </span>
-                              </td>
-                              <td className="py-3 px-4">
-                                <div className="text-sm">
-                                  <div className="font-medium">{item.location || 'N/A'}</div>
-                                  {item.address && (
-                                    <div className="text-gray-500 text-xs truncate max-w-[200px]">
-                                      {item.address}
-                                    </div>
-                                  )}
-                                </div>
-                              </td>
-                              <td className="py-3 px-4">
-                                <div className="text-sm">
-                                  {item.email && (
-                                    <div className="text-xs text-gray-600">{item.email}</div>
-                                  )}
-                                  {item.phone && (
-                                    <div className="text-xs text-gray-600">{item.phone}</div>
-                                  )}
-                                </div>
-                              </td>
-                              <td className="py-3 px-4">
-                                <div className="flex items-center space-x-1">
-                                  <Users className="w-3 h-3 text-blue-500" />
-                                  <span className="text-sm font-medium">{item.student_count || 0}</span>
-                                </div>
-                              </td>
-                              <td className="py-3 px-4">
-                                <div className="flex items-center space-x-1">
-                                  <Award className="w-3 h-3 text-green-500" />
-                                  <span className="text-sm font-medium">{item.coach_count || 0}</span>
-                                </div>
-                              </td>
-                              <td className="py-3 px-4">
-                                <Badge variant={item.status === 'active' ? 'default' : 'secondary'}>
-                                  {item.status || 'Unknown'}
-                                </Badge>
-                              </td>
-                              <td className="py-3 px-4">
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => router.push(`/branch-manager-dashboard/branches/${item.id}`)}
-                                >
-                                  <Eye className="w-4 h-4" />
-                                </Button>
-                              </td>
-                            </>
-                          )}
-                          {categoryId === 'student' && (
-                            <>
-                              <td className="py-3 px-4 font-medium">{item.name || item.full_name || 'N/A'}</td>
-                              <td className="py-3 px-4">{item.email || 'N/A'}</td>
-                              <td className="py-3 px-4">{item.course_name || 'N/A'}</td>
-                              <td className="py-3 px-4">{item.enrollment_date || item.created_at || 'N/A'}</td>
-                              <td className="py-3 px-4">
-                                <Badge variant={item.status === 'active' ? 'default' : 'secondary'}>
-                                  {item.status || 'Unknown'}
-                                </Badge>
-                              </td>
-                              <td className="py-3 px-4">
-                                <Button variant="ghost" size="sm">
-                                  <Eye className="w-4 h-4" />
-                                </Button>
-                              </td>
-                            </>
-                          )}
-                          {categoryId === 'course' && (
-                            <>
-                              <td className="py-3 px-4 font-medium">{item.name || item.course_name || 'N/A'}</td>
-                              <td className="py-3 px-4">{item.category || item.category_name || 'N/A'}</td>
-                              <td className="py-3 px-4">{item.duration || 'N/A'}</td>
-                              <td className="py-3 px-4">{item.student_count || item.enrolled_students || 0}</td>
-                              <td className="py-3 px-4">
-                                <Badge variant={item.status === 'active' ? 'default' : 'secondary'}>
-                                  {item.status || 'Unknown'}
-                                </Badge>
-                              </td>
-                              <td className="py-3 px-4">
-                                <Button variant="ghost" size="sm">
-                                  <Eye className="w-4 h-4" />
-                                </Button>
-                              </td>
-                            </>
-                          )}
-                          {categoryId === 'financial' && (
-                            <>
-                              <td className="py-3 px-4 font-medium">{item.transaction_id || item.id || 'N/A'}</td>
-                              <td className="py-3 px-4">{item.student_name || item.user_name || 'N/A'}</td>
-                              <td className="py-3 px-4 font-medium">₹{item.amount || 0}</td>
-                              <td className="py-3 px-4">{item.payment_date || item.created_at || 'N/A'}</td>
-                              <td className="py-3 px-4">
-                                <Badge variant={
-                                  item.status === 'paid' ? 'default' :
-                                  item.status === 'pending' ? 'secondary' :
-                                  'destructive'
-                                }>
-                                  {item.status || 'Unknown'}
-                                </Badge>
-                              </td>
-                              <td className="py-3 px-4">
-                                <Button variant="ghost" size="sm">
-                                  <Eye className="w-4 h-4" />
-                                </Button>
-                              </td>
-                            </>
-                          )}
-                          {categoryId === 'operational' && (
-                            <>
-                              <td className="py-3 px-4 font-medium">{item.operation || item.name || 'N/A'}</td>
-                              <td className="py-3 px-4">{item.date || item.created_at || 'N/A'}</td>
-                              <td className="py-3 px-4">{item.type || 'N/A'}</td>
-                              <td className="py-3 px-4">{item.result || 'N/A'}</td>
-                              <td className="py-3 px-4">
-                                <Badge variant={item.status === 'success' ? 'default' : 'secondary'}>
-                                  {item.status || 'Unknown'}
-                                </Badge>
-                              </td>
-                              <td className="py-3 px-4">
-                                <Button variant="ghost" size="sm">
-                                  <Eye className="w-4 h-4" />
-                                </Button>
-                              </td>
-                            </>
-                          )}
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             )}
           </CardContent>
         </Card>

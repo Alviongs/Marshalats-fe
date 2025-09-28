@@ -255,6 +255,12 @@ export default function BranchManagerIndividualReport() {
     loadReportData()
   }
 
+  // Retry loading data
+  const retryLoadData = () => {
+    setError(null)
+    loadReportData()
+  }
+
   // Get chart label based on report type
   const getChartLabel = () => {
     if (categoryId === 'financial') return 'Revenue (₹)'
@@ -262,6 +268,101 @@ export default function BranchManagerIndividualReport() {
     if (categoryId === 'course') return 'Enrollments'
     if (categoryId === 'master') return 'Master Count'
     return 'Performance'
+  }
+
+  // Fetch course popularity data from API
+  const fetchCoursePopularityData = async (token: string, branchId: string) => {
+    try {
+      console.log('🔍 Fetching course popularity data for branch:', branchId)
+
+      // Fetch course reports from the backend
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/reports/courses?branch_id=${branchId}&limit=100`, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      })
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error("Authentication failed. Please login again.")
+        }
+        throw new Error(`Failed to fetch course data: ${response.status}`)
+      }
+
+      const data = await response.json()
+      console.log('✅ Course Reports API response:', data)
+
+      const courseReports = data.course_reports || {}
+      const enrollmentStats = courseReports.course_enrollment_statistics || []
+      const completionStats = courseReports.course_completion_statistics || []
+
+      // Transform data for the report
+      const coursePopularityData = enrollmentStats.map((course: any) => {
+        const completionData = completionStats.find((comp: any) => comp._id === course._id)
+
+        return {
+          id: course._id,
+          title: course.title || 'Unknown Course',
+          code: course.code || 'N/A',
+          category_name: course.category_name || 'General',
+          total_enrollments: course.total_enrollments || 0,
+          active_enrollments: course.active_enrollments || 0,
+          completion_rate: completionData?.completion_rate || 0,
+          popularity_score: calculatePopularityScore(course.total_enrollments, course.active_enrollments, completionData?.completion_rate || 0),
+          enrollment_rate: course.total_enrollments > 0 ? ((course.active_enrollments / course.total_enrollments) * 100).toFixed(1) : '0.0'
+        }
+      }).sort((a: any, b: any) => b.popularity_score - a.popularity_score) // Sort by popularity
+
+      // Calculate summary statistics
+      const totalCourses = coursePopularityData.length
+      const totalEnrollments = coursePopularityData.reduce((sum: number, course: any) => sum + course.total_enrollments, 0)
+      const avgCompletionRate = totalCourses > 0
+        ? (coursePopularityData.reduce((sum: number, course: any) => sum + course.completion_rate, 0) / totalCourses).toFixed(1)
+        : '0.0'
+      const topPerformingCourses = coursePopularityData.filter((course: any) => course.popularity_score > 70).length
+
+      return {
+        title: "Course Popularity Analysis",
+        branch_id: branchId,
+        branch_name: currentBranchManager?.branch_name || "Branch",
+        generated_at: new Date().toISOString(),
+        data: {
+          summary: {
+            total_courses: totalCourses,
+            total_enrollments: totalEnrollments,
+            average_completion_rate: avgCompletionRate + '%',
+            top_performing_courses: topPerformingCourses
+          },
+          courses: coursePopularityData,
+          charts: [
+            {
+              type: "bar",
+              title: "Course Popularity Ranking",
+              data: coursePopularityData.slice(0, 10).map((course: any) => ({
+                name: course.title,
+                enrollments: course.total_enrollments,
+                completion_rate: course.completion_rate,
+                popularity_score: course.popularity_score
+              }))
+            }
+          ]
+        }
+      }
+    } catch (error) {
+      console.error('❌ Error fetching course popularity data:', error)
+      throw error
+    }
+  }
+
+  // Calculate popularity score based on enrollments and completion rate
+  const calculatePopularityScore = (totalEnrollments: number, activeEnrollments: number, completionRate: number) => {
+    // Weighted score: 40% total enrollments, 30% active enrollments, 30% completion rate
+    const enrollmentScore = Math.min((totalEnrollments / 50) * 40, 40) // Max 40 points for enrollments
+    const activeScore = Math.min((activeEnrollments / 30) * 30, 30) // Max 30 points for active enrollments
+    const completionScore = (completionRate / 100) * 30 // Max 30 points for completion rate
+
+    return Math.round(enrollmentScore + activeScore + completionScore)
   }
 
   // Load report data
@@ -272,14 +373,29 @@ export default function BranchManagerIndividualReport() {
     }
 
     setLoading(true)
+    setError(null)
     try {
-      // For now, generate mock data specific to the branch manager's branch
-      const mockData = generateMockReportData(reportId, branchManagerBranchId)
-      setReportData(mockData)
+      const token = BranchManagerAuth.getToken()
+      if (!token) {
+        throw new Error("Authentication token not found")
+      }
+
+      // Load real data based on report type
+      if (reportId === 'course-popularity-analysis') {
+        const courseData = await fetchCoursePopularityData(token, branchManagerBranchId)
+        setReportData(courseData)
+      } else {
+        // For other reports, use mock data for now
+        const mockData = generateMockReportData(reportId, branchManagerBranchId)
+        setReportData(mockData)
+      }
+
       toast.success("Report data loaded successfully")
     } catch (error) {
       console.error('Error loading report data:', error)
-      toast.error('Failed to load report data')
+      const errorMessage = error instanceof Error ? error.message : 'Failed to load report data'
+      setError(errorMessage)
+      toast.error(errorMessage)
     } finally {
       setLoading(false)
     }
@@ -501,59 +617,128 @@ export default function BranchManagerIndividualReport() {
                 <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">Error Loading Report</h3>
                 <p className="text-gray-600 mb-4">{error}</p>
-                <Button onClick={handleRefresh}>
-                  Try Again
-                </Button>
+                <div className="flex space-x-3 justify-center">
+                  <Button onClick={retryLoadData} disabled={loading}>
+                    {loading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Retrying...
+                      </>
+                    ) : (
+                      <>
+                        <RefreshCw className="w-4 h-4 mr-2" />
+                        Try Again
+                      </>
+                    )}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    onClick={() => router.push('/branch-manager-dashboard/reports')}
+                  >
+                    Back to Reports
+                  </Button>
+                </div>
               </div>
             </div>
           ) : reportData ? (
             <div className="space-y-6">
               {/* Summary Cards */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                <Card>
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-gray-600">Total Records</p>
-                        <p className="text-2xl font-bold text-gray-900">{reportData.data.summary.total_records}</p>
-                      </div>
-                      <FileText className="w-8 h-8 text-blue-600" />
-                    </div>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-gray-600">Active Records</p>
-                        <p className="text-2xl font-bold text-green-600">{reportData.data.summary.active_records}</p>
-                      </div>
-                      <TrendingUp className="w-8 h-8 text-green-500" />
-                    </div>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-gray-600">Growth Rate</p>
-                        <p className="text-2xl font-bold text-purple-600">{reportData.data.summary.growth_rate}</p>
-                      </div>
-                      <BarChart3 className="w-8 h-8 text-purple-500" />
-                    </div>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-gray-600">Branch</p>
-                        <p className="text-lg font-bold text-orange-600">{reportData.branch_name}</p>
-                      </div>
-                      <Building className="w-8 h-8 text-orange-500" />
-                    </div>
-                  </CardContent>
-                </Card>
+                {reportId === 'course-popularity-analysis' ? (
+                  <>
+                    <Card>
+                      <CardContent className="p-6">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-medium text-gray-600">Total Courses</p>
+                            <p className="text-2xl font-bold text-gray-900">{reportData.data.summary.total_courses}</p>
+                          </div>
+                          <BookOpen className="w-8 h-8 text-blue-600" />
+                        </div>
+                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardContent className="p-6">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-medium text-gray-600">Total Enrollments</p>
+                            <p className="text-2xl font-bold text-green-600">{reportData.data.summary.total_enrollments}</p>
+                          </div>
+                          <Users className="w-8 h-8 text-green-500" />
+                        </div>
+                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardContent className="p-6">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-medium text-gray-600">Avg Completion Rate</p>
+                            <p className="text-2xl font-bold text-purple-600">{reportData.data.summary.average_completion_rate}</p>
+                          </div>
+                          <TrendingUp className="w-8 h-8 text-purple-500" />
+                        </div>
+                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardContent className="p-6">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-medium text-gray-600">Top Performers</p>
+                            <p className="text-2xl font-bold text-orange-600">{reportData.data.summary.top_performing_courses}</p>
+                          </div>
+                          <BarChart3 className="w-8 h-8 text-orange-500" />
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </>
+                ) : (
+                  <>
+                    <Card>
+                      <CardContent className="p-6">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-medium text-gray-600">Total Records</p>
+                            <p className="text-2xl font-bold text-gray-900">{reportData.data.summary.total_records}</p>
+                          </div>
+                          <FileText className="w-8 h-8 text-blue-600" />
+                        </div>
+                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardContent className="p-6">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-medium text-gray-600">Active Records</p>
+                            <p className="text-2xl font-bold text-green-600">{reportData.data.summary.active_records}</p>
+                          </div>
+                          <TrendingUp className="w-8 h-8 text-green-500" />
+                        </div>
+                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardContent className="p-6">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-medium text-gray-600">Growth Rate</p>
+                            <p className="text-2xl font-bold text-purple-600">{reportData.data.summary.growth_rate}</p>
+                          </div>
+                          <BarChart3 className="w-8 h-8 text-purple-500" />
+                        </div>
+                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardContent className="p-6">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-medium text-gray-600">Branch</p>
+                            <p className="text-lg font-bold text-orange-600">{reportData.branch_name}</p>
+                          </div>
+                          <Building className="w-8 h-8 text-orange-500" />
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </>
+                )}
               </div>
 
               {/* Chart Visualization */}
@@ -586,9 +771,11 @@ export default function BranchManagerIndividualReport() {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center justify-between">
-                    <span>Detailed Data</span>
+                    <span>{reportId === 'course-popularity-analysis' ? 'Course Popularity Rankings' : 'Detailed Data'}</span>
                     <Badge variant="secondary">
-                      {reportData.data.charts[0]?.data?.length || 0} records
+                      {reportId === 'course-popularity-analysis'
+                        ? reportData.data.courses?.length || 0
+                        : reportData.data.charts[0]?.data?.length || 0} records
                     </Badge>
                   </CardTitle>
                 </CardHeader>
@@ -597,39 +784,122 @@ export default function BranchManagerIndividualReport() {
                     <table className="w-full">
                       <thead>
                         <tr className="border-b border-gray-200">
-                          <th className="text-left py-3 px-4 font-medium text-gray-900">Period</th>
-                          <th className="text-left py-3 px-4 font-medium text-gray-900">Value</th>
-                          <th className="text-left py-3 px-4 font-medium text-gray-900">Status</th>
-                          <th className="text-left py-3 px-4 font-medium text-gray-900">Actions</th>
+                          {reportId === 'course-popularity-analysis' ? (
+                            <>
+                              <th className="text-left py-3 px-4 font-medium text-gray-900">Rank</th>
+                              <th className="text-left py-3 px-4 font-medium text-gray-900">Course</th>
+                              <th className="text-left py-3 px-4 font-medium text-gray-900">Category</th>
+                              <th className="text-left py-3 px-4 font-medium text-gray-900">Total Enrollments</th>
+                              <th className="text-left py-3 px-4 font-medium text-gray-900">Active Enrollments</th>
+                              <th className="text-left py-3 px-4 font-medium text-gray-900">Completion Rate</th>
+                              <th className="text-left py-3 px-4 font-medium text-gray-900">Popularity Score</th>
+                              <th className="text-left py-3 px-4 font-medium text-gray-900">Actions</th>
+                            </>
+                          ) : (
+                            <>
+                              <th className="text-left py-3 px-4 font-medium text-gray-900">Period</th>
+                              <th className="text-left py-3 px-4 font-medium text-gray-900">Value</th>
+                              <th className="text-left py-3 px-4 font-medium text-gray-900">Status</th>
+                              <th className="text-left py-3 px-4 font-medium text-gray-900">Actions</th>
+                            </>
+                          )}
                         </tr>
                       </thead>
                       <tbody>
-                        {reportData.data.charts[0]?.data?.map((item: any, index: number) => (
-                          <tr key={index} className="border-b border-gray-100 hover:bg-gray-50">
-                            <td className="py-4 px-4">
-                              <span className="text-sm text-gray-900">{item.month}</span>
-                            </td>
-                            <td className="py-4 px-4">
-                              <span className="text-sm text-gray-900">{item.value}</span>
-                            </td>
-                            <td className="py-4 px-4">
-                              <Badge variant={item.value > 50 ? "default" : "secondary"}>
-                                {item.value > 50 ? 'High' : 'Low'}
-                              </Badge>
-                            </td>
-                            <td className="py-4 px-4">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => toast.info(`Viewing details for ${item.month}`)}
-                                className="flex items-center space-x-1"
-                              >
-                                <FileText className="w-3 h-3" />
-                                <span>View</span>
-                              </Button>
-                            </td>
-                          </tr>
-                        ))}
+                        {reportId === 'course-popularity-analysis' ? (
+                          reportData.data.courses?.map((course: any, index: number) => (
+                            <tr key={course.id || index} className="border-b border-gray-100 hover:bg-gray-50">
+                              <td className="py-4 px-4">
+                                <div className="flex items-center space-x-2">
+                                  <span className="text-lg font-bold text-blue-600">#{index + 1}</span>
+                                  {index < 3 && (
+                                    <Badge variant={index === 0 ? "default" : index === 1 ? "secondary" : "outline"}>
+                                      {index === 0 ? "🥇" : index === 1 ? "🥈" : "🥉"}
+                                    </Badge>
+                                  )}
+                                </div>
+                              </td>
+                              <td className="py-4 px-4">
+                                <div>
+                                  <div className="font-medium text-gray-900">{course.title}</div>
+                                  <div className="text-sm text-gray-500">{course.code}</div>
+                                </div>
+                              </td>
+                              <td className="py-4 px-4">
+                                <Badge variant="outline">{course.category_name}</Badge>
+                              </td>
+                              <td className="py-4 px-4">
+                                <div className="flex items-center space-x-1">
+                                  <Users className="w-4 h-4 text-blue-500" />
+                                  <span className="font-medium">{course.total_enrollments}</span>
+                                </div>
+                              </td>
+                              <td className="py-4 px-4">
+                                <div className="flex items-center space-x-1">
+                                  <Users className="w-4 h-4 text-green-500" />
+                                  <span className="font-medium">{course.active_enrollments}</span>
+                                </div>
+                              </td>
+                              <td className="py-4 px-4">
+                                <div className="flex items-center space-x-2">
+                                  <div className="w-16 bg-gray-200 rounded-full h-2">
+                                    <div
+                                      className="bg-green-500 h-2 rounded-full"
+                                      style={{ width: `${Math.min(course.completion_rate, 100)}%` }}
+                                    ></div>
+                                  </div>
+                                  <span className="text-sm font-medium">{course.completion_rate.toFixed(1)}%</span>
+                                </div>
+                              </td>
+                              <td className="py-4 px-4">
+                                <Badge
+                                  variant={course.popularity_score >= 80 ? "default" :
+                                          course.popularity_score >= 60 ? "secondary" : "outline"}
+                                >
+                                  {course.popularity_score}/100
+                                </Badge>
+                              </td>
+                              <td className="py-4 px-4">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => toast.info(`Viewing details for ${course.title}`)}
+                                  className="flex items-center space-x-1"
+                                >
+                                  <FileText className="w-3 h-3" />
+                                  <span>View</span>
+                                </Button>
+                              </td>
+                            </tr>
+                          ))
+                        ) : (
+                          reportData.data.charts[0]?.data?.map((item: any, index: number) => (
+                            <tr key={index} className="border-b border-gray-100 hover:bg-gray-50">
+                              <td className="py-4 px-4">
+                                <span className="text-sm text-gray-900">{item.month}</span>
+                              </td>
+                              <td className="py-4 px-4">
+                                <span className="text-sm text-gray-900">{item.value}</span>
+                              </td>
+                              <td className="py-4 px-4">
+                                <Badge variant={item.value > 50 ? "default" : "secondary"}>
+                                  {item.value > 50 ? 'High' : 'Low'}
+                                </Badge>
+                              </td>
+                              <td className="py-4 px-4">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => toast.info(`Viewing details for ${item.month}`)}
+                                  className="flex items-center space-x-1"
+                                >
+                                  <FileText className="w-3 h-3" />
+                                  <span>View</span>
+                                </Button>
+                              </td>
+                            </tr>
+                          ))
+                        )}
                       </tbody>
                     </table>
                   </div>
@@ -639,9 +909,30 @@ export default function BranchManagerIndividualReport() {
           ) : (
             <div className="flex items-center justify-center py-12">
               <div className="text-center">
-                <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">No Data Available</h3>
-                <p className="text-gray-600">No report data found for the selected filters.</p>
+                {reportId === 'course-popularity-analysis' ? (
+                  <>
+                    <BookOpen className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">No Course Data Available</h3>
+                    <p className="text-gray-600 mb-4">
+                      No courses or enrollment data found for your branch.
+                      Course popularity analysis requires active courses with student enrollments.
+                    </p>
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 max-w-md mx-auto">
+                      <p className="text-sm text-blue-800">
+                        <strong>To see course popularity data:</strong><br />
+                        • Ensure courses are created and active<br />
+                        • Students must be enrolled in courses<br />
+                        • Enrollment data must be available for analysis
+                      </p>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">No Data Available</h3>
+                    <p className="text-gray-600">No report data found for the selected filters.</p>
+                  </>
+                )}
               </div>
             </div>
           )}

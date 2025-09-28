@@ -282,9 +282,22 @@ function CategoryReportsPageContent() {
   const [customEndDate, setCustomEndDate] = useState("")
   const [showCustomDateInputs, setShowCustomDateInputs] = useState(false)
 
+  // Filter options state
+  const [filterOptions, setFilterOptions] = useState<any>({
+    branches: [],
+    payment_types: [],
+    payment_methods: [],
+    payment_statuses: [],
+    date_ranges: [],
+    filter_options: {
+      courses: [],
+      categories: []
+    }
+  })
+
   // Use enhanced API hook with retry mechanism
   const {
-    data: filterOptions,
+    data: baseFilterOptions,
     loading,
     error,
     retry: retryLoadOptions,
@@ -302,6 +315,13 @@ function CategoryReportsPageContent() {
       errorMessage: 'Failed to load filter options for this category.'
     }
   )
+
+  // Update filterOptions when baseFilterOptions changes (but not for financial category)
+  useEffect(() => {
+    if (baseFilterOptions && categoryId !== 'financial') {
+      setFilterOptions(baseFilterOptions)
+    }
+  }, [baseFilterOptions, categoryId])
 
   // Get category information with validation
   const category = useMemo(() => {
@@ -435,21 +455,31 @@ function CategoryReportsPageContent() {
 
       try {
         const token = TokenManager.getToken()
-        if (!token) return
+        if (!token) {
+          console.error('No authentication token available for financial filters')
+          return
+        }
 
+        console.log('🔍 Loading financial report filters...')
         const response = await reportsAPI.getFinancialReportFilters(token)
+        console.log('✅ Financial report filters response:', response)
 
         // Update filter options with financial-specific data
-        setFilterOptions(prev => ({
-          ...prev,
-          branches: response.filters.branches,
-          payment_types: response.filters.payment_types,
-          payment_methods: response.filters.payment_methods,
-          payment_statuses: response.filters.payment_statuses,
-          date_ranges: response.filters.date_ranges
-        }))
+        setFilterOptions(prev => {
+          const newOptions = {
+            ...prev,
+            branches: response.filters.branches || [],
+            payment_types: response.filters.payment_types || [],
+            payment_methods: response.filters.payment_methods || [],
+            payment_statuses: response.filters.payment_statuses || [],
+            date_ranges: response.filters.date_ranges || []
+          }
+          console.log('📊 Updated filter options:', newOptions)
+          return newOptions
+        })
       } catch (error) {
-        console.error('Error loading financial report filters:', error)
+        console.error('❌ Error loading financial report filters:', error)
+        toast.error('Failed to load financial report filter options')
       }
     }
 

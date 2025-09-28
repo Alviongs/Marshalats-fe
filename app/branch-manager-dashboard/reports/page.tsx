@@ -122,6 +122,9 @@ export default function BranchManagerReports() {
     // Special handling for master reports - go directly to master page
     if (categoryId === 'master') {
       router.push(`/branch-manager-dashboard/reports/master`)
+    } else if (categoryId === 'course') {
+      // Special handling for course reports - go directly to dedicated course page
+      router.push(`/branch-manager-dashboard/reports/course`)
     } else {
       router.push(`/branch-manager-dashboard/reports/${categoryId}`)
     }
