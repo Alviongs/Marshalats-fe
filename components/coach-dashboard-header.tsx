@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuPortal } from "@/components/ui/dropdown-menu"
-import { Menu, Home, BookOpen, User, Users, LogOut, Calendar, ClipboardList, TrendingUp, MessageSquare, Clock, ChevronDown, MoreVertical, DollarSign } from "lucide-react"
+import { Menu, Home, BookOpen, User, Users, LogOut, Calendar, TrendingUp, MessageSquare, ChevronDown, MoreVertical, DollarSign } from "lucide-react"
 
 interface CoachDashboardHeaderProps {
   currentPage?: string
@@ -96,20 +96,7 @@ export default function CoachDashboardHeader({
       exact: false,
       description: "Track attendance"
     },
-    {
-      name: "Schedule",
-      path: "/coach-dashboard/schedule",
-      icon: Clock,
-      exact: false,
-      description: "Class schedule"
-    },
-    {
-      name: "Assessments",
-      path: "/coach-dashboard/assessments",
-      icon: ClipboardList,
-      exact: false,
-      description: "Student assessments"
-    },
+
     {
       name: "Reports",
       path: "/coach-dashboard/reports",
@@ -247,12 +234,6 @@ export default function CoachDashboardHeader({
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="bg-white/95 backdrop-blur-md border border-gray-200/50 shadow-xl rounded-lg p-1 overflow-hidden">
                   <DropdownMenuItem
-                    onClick={() => handleDesktopNavigation("/coach-dashboard/settings")}
-                    className="hover:bg-gray-100/80 rounded-md transition-colors duration-200 font-medium text-gray-700 hover:text-gray-900"
-                  >
-                    Settings
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
                     onClick={() => handleDesktopNavigation("/coach-dashboard/help")}
                     className="hover:bg-gray-100/80 rounded-md transition-colors duration-200 font-medium text-gray-700 hover:text-gray-900"
                   >
@@ -293,12 +274,6 @@ export default function CoachDashboardHeader({
                       className="cursor-pointer hover:bg-gray-100/80 rounded-md px-4 py-3 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors duration-200"
                     >
                       Profile
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => handleDesktopNavigation("/coach-dashboard/settings")}
-                      className="cursor-pointer hover:bg-gray-100/80 rounded-md px-4 py-3 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors duration-200"
-                    >
-                      Settings
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       onClick={handleLogout}

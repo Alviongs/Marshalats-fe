@@ -277,14 +277,6 @@ export default function DashboardHeader({ currentPage = "Dashboard" }: Dashboard
                         >
                           Coach Attendance
                         </button>
-                        <button
-                          onClick={() => handleMobileNavigation("/dashboard/attendance/reports")}
-                          className={`w-full text-left px-3 py-1 rounded-md hover:bg-gray-100 text-sm text-gray-600 ${
-                            isActivePath("/dashboard/attendance/reports") ? "bg-yellow-50 text-yellow-700" : ""
-                          }`}
-                        >
-                          Reports & Analytics
-                        </button>
                       </div>
                       <button
                         onClick={() => handleMobileNavigation("/dashboard/reports")}
@@ -416,12 +408,6 @@ export default function DashboardHeader({ currentPage = "Dashboard" }: Dashboard
                   >
                     Coach Attendance
                   </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => router.push("/dashboard/attendance/reports")}
-                    className="hover:bg-gray-100/80 rounded-md transition-colors duration-200 font-medium text-gray-700 hover:text-gray-900"
-                  >
-                    Reports & Analytics
-                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
               <button
@@ -508,12 +494,6 @@ export default function DashboardHeader({ currentPage = "Dashboard" }: Dashboard
                       className="cursor-pointer hover:bg-gray-100/80 rounded-md px-4 py-3 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors duration-200"
                     >
                       Profile
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => router.push("/dashboard/settings")}
-                      className="cursor-pointer hover:bg-gray-100/80 rounded-md px-4 py-3 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors duration-200"
-                    >
-                      Settings
                     </DropdownMenuItem>
                     <div className="h-px bg-gray-200/60 my-2"></div>
                     <DropdownMenuItem
