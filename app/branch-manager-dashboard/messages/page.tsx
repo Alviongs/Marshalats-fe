@@ -11,39 +11,39 @@ import { Textarea } from "@/components/ui/textarea"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import CoachDashboardHeader from "@/components/coach-dashboard-header"
+import BranchManagerDashboardHeader from "@/components/branch-manager-dashboard-header"
 import { Send, Search, MessageCircle, Plus, Reply, Archive, Trash2, Loader2, Mail, MailOpen, Clock, User } from "lucide-react"
 import { format } from "date-fns"
 import messageAPI, { Conversation, Message, MessageRecipient, MessageStats } from "@/lib/messageAPI"
-import { checkCoachAuth } from "@/lib/coachAuth"
+import { BranchManagerAuth } from "@/lib/branchManagerAuth"
 
-export default function CoachMessagesPage() {
+export default function BranchManagerMessagesPage() {
   const router = useRouter()
-  const [coachData, setCoachData] = useState<any>(null)
+  const [branchManagerData, setBranchManagerData] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-
+  
   // Message state
   const [conversations, setConversations] = useState<Conversation[]>([])
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null)
   const [threadMessages, setThreadMessages] = useState<Message[]>([])
   const [messageStats, setMessageStats] = useState<MessageStats | null>(null)
   const [recipients, setRecipients] = useState<MessageRecipient[]>([])
-
+  
   // UI state
   const [activeTab, setActiveTab] = useState("inbox")
   const [searchTerm, setSearchTerm] = useState("")
   const [isComposeDialogOpen, setIsComposeDialogOpen] = useState(false)
   const [isLoadingMessages, setIsLoadingMessages] = useState(false)
   const [isLoadingThread, setIsLoadingThread] = useState(false)
-
+  
   // Compose message state
   const [composeRecipient, setComposeRecipient] = useState("")
   const [composeSubject, setComposeSubject] = useState("")
   const [composeContent, setComposeContent] = useState("")
   const [composePriority, setComposePriority] = useState<"low" | "normal" | "high" | "urgent">("normal")
   const [isSending, setIsSending] = useState(false)
-
+  
   // Reply state
   const [replyContent, setReplyContent] = useState("")
   const [isReplying, setIsReplying] = useState(false)
@@ -51,14 +51,19 @@ export default function CoachMessagesPage() {
   useEffect(() => {
     const initializeData = async () => {
       try {
-        // Check coach authentication
-        const authResult = checkCoachAuth()
-        if (!authResult.isAuthenticated || !authResult.coach) {
-          router.push("/coach/login")
+        // Check branch manager authentication
+        if (!BranchManagerAuth.isAuthenticated()) {
+          router.push("/branch-manager/login")
           return
         }
 
-        setCoachData(authResult.coach)
+        const user = BranchManagerAuth.getCurrentUser()
+        if (!user) {
+          router.push("/branch-manager/login")
+          return
+        }
+
+        setBranchManagerData(user)
 
         // Load initial data
         await Promise.all([
@@ -68,7 +73,7 @@ export default function CoachMessagesPage() {
         ])
 
       } catch (error) {
-        console.error("Error initializing coach messages:", error)
+        console.error("Error initializing branch manager messages:", error)
         setError("Failed to load messages. Please try again.")
       } finally {
         setLoading(false)
@@ -103,65 +108,7 @@ export default function CoachMessagesPage() {
 
   const loadRecipients = async () => {
     try {
-      console.log("🔍 DEBUG: Loading recipients for coach...")
-      console.log("🔍 DEBUG: Coach data:", coachData)
-
-      // Also check what's in localStorage for debugging
-      const token = localStorage.getItem("access_token") || localStorage.getItem("token")
-      if (token) {
-        try {
-          const parts = token.split('.')
-          if (parts.length === 3) {
-            const payload = JSON.parse(atob(parts[1] + '='.repeat((4 - parts[1].length % 4) % 4)))
-            console.log("🔍 DEBUG: JWT token payload:", payload)
-          }
-        } catch (e) {
-          console.warn("Could not decode JWT token:", e)
-        }
-      }
-
       const response = await messageAPI.getAvailableRecipients()
-      console.log("🔍 DEBUG: Recipients response:", response)
-      console.log("🔍 DEBUG: Total recipients:", response.recipients?.length || 0)
-
-      // Log recipients by type
-      const byType: Record<string, any[]> = {}
-      response.recipients?.forEach(recipient => {
-        const type = recipient.type
-        if (!byType[type]) byType[type] = []
-        byType[type].push(recipient)
-      })
-
-      console.log("🔍 DEBUG: Recipients by type:", byType)
-
-      // Specifically check for students
-      const students = response.recipients?.filter(r => r.type === "student") || []
-      console.log("🔍 DEBUG: Students found:", students.length)
-      students.forEach(student => {
-        console.log(`🔍 DEBUG: Student: ${student.name} (ID: ${student.id}, Branch: ${student.branch_id || 'None'})`)
-      })
-
-      // Specifically check for branch managers
-      const branchManagers = response.recipients?.filter(r => r.type === "branch_manager") || []
-      console.log("🔍 DEBUG: Branch managers found:", branchManagers.length)
-      branchManagers.forEach(bm => {
-        console.log(`🔍 DEBUG: Branch Manager: ${bm.name} (ID: ${bm.id}, Branch: ${bm.branch_id || 'None'})`)
-      })
-
-      // Check for superadmins
-      const superadmins = response.recipients?.filter(r => r.type === "superadmin") || []
-      console.log("🔍 DEBUG: Superadmins found:", superadmins.length)
-
-      // Check coach's branch assignment
-      if (coachData?.branch_id) {
-        console.log(`🔍 DEBUG: Coach branch ID: ${coachData.branch_id}`)
-        const studentsInBranch = students.filter(s => s.branch_id === coachData.branch_id)
-        console.log(`🔍 DEBUG: Students in coach's branch: ${studentsInBranch.length}`)
-      } else {
-        console.log("⚠️ DEBUG: Coach has no branch_id assigned")
-        console.log("🔍 DEBUG: Checking all coach data fields:", Object.keys(coachData || {}))
-      }
-
       setRecipients(response.recipients)
     } catch (error) {
       console.error("Error loading recipients:", error)
@@ -203,19 +150,12 @@ export default function CoachMessagesPage() {
         return
       }
 
-      console.log("🔍 DEBUG: Sending message to:", recipient)
-      console.log("🔍 DEBUG: Message details:", { subject: composeSubject, recipient_type: recipient.type })
-
       // Check if there's an existing conversation with this recipient and subject
       const existingConversation = conversations.find(conv => {
         const hasRecipient = conv.participants.some(p => p.user_id === composeRecipient)
         const sameSubject = conv.subject === composeSubject || conv.subject === `Re: ${composeSubject}`
         return hasRecipient && sameSubject && !conv.is_archived
       })
-
-      if (existingConversation) {
-        console.log("🔍 DEBUG: Found existing conversation:", existingConversation.thread_id)
-      }
 
       await messageAPI.sendMessage({
         recipient_id: composeRecipient,
@@ -257,11 +197,8 @@ export default function CoachMessagesPage() {
       if (!lastMessage) return
 
       // Determine recipient - find the other participant in the conversation
-      const currentUserId = coachData?.id
-      const currentUserName = coachData?.full_name
-
-      console.log("🔍 DEBUG: Reply - Current user ID:", currentUserId)
-      console.log("🔍 DEBUG: Reply - Conversation participants:", selectedConversation.participants)
+      const currentUserId = branchManagerData?.id
+      const currentUserName = branchManagerData?.full_name
 
       // Find the other participant in the conversation
       const otherParticipant = selectedConversation.participants.find(
@@ -269,36 +206,16 @@ export default function CoachMessagesPage() {
       )
 
       if (!otherParticipant) {
-        console.error("❌ DEBUG: Cannot find other participant in conversation")
         setError("Cannot determine message recipient")
         return
       }
 
-      console.log("🔍 DEBUG: Reply - Other participant:", otherParticipant)
-
       // Find the recipient in the recipients list
-      let recipient = recipients.find(r => r.id === otherParticipant.user_id)
-
-      // If recipient not found in current recipients list, create a temporary recipient object
-      // This can happen when replying to existing conversations where the participant
-      // might not be in the current filtered recipients list
+      const recipient = recipients.find(r => r.id === otherParticipant.user_id)
       if (!recipient) {
-        console.warn("⚠️ DEBUG: Recipient not found in current recipients list, creating temporary recipient")
-        console.log("🔍 DEBUG: Available recipients:", recipients.map(r => ({ id: r.id, name: r.name, type: r.type })))
-
-        // Create a temporary recipient object from the conversation participant data
-        recipient = {
-          id: otherParticipant.user_id,
-          name: otherParticipant.user_name,
-          email: otherParticipant.user_email,
-          type: otherParticipant.user_type,
-          branch_id: otherParticipant.branch_id
-        }
-
-        console.log("🔍 DEBUG: Created temporary recipient:", recipient)
+        setError("Recipient not found in available recipients")
+        return
       }
-
-      console.log("🔍 DEBUG: Reply - Using recipient:", recipient)
 
       // Normalize subject - remove "Re:" prefix if it exists to avoid "Re: Re:" chains
       let replySubject = selectedConversation.subject
@@ -317,7 +234,7 @@ export default function CoachMessagesPage() {
       })
 
       setReplyContent("")
-
+      
       // Reload thread messages
       await loadThreadMessages(selectedConversation.thread_id)
       await loadConversations()
@@ -332,9 +249,8 @@ export default function CoachMessagesPage() {
   }
 
   const handleLogout = () => {
-    localStorage.removeItem("coachToken")
-    localStorage.removeItem("coachData")
-    router.push("/coach/login")
+    BranchManagerAuth.clearAuthData()
+    router.push("/branch-manager/login")
   }
 
   // Filter conversations based on active tab and search
@@ -361,7 +277,7 @@ export default function CoachMessagesPage() {
     switch (userType) {
       case "student":
         return "bg-blue-100 text-blue-800"
-      case "branch_manager":
+      case "coach":
         return "bg-green-100 text-green-800"
       case "superadmin":
         return "bg-purple-100 text-purple-800"
@@ -374,8 +290,8 @@ export default function CoachMessagesPage() {
     switch (userType) {
       case "student":
         return "Student"
-      case "branch_manager":
-        return "Branch Manager"
+      case "coach":
+        return "Coach"
       case "superadmin":
         return "Admin"
       default:
@@ -386,14 +302,14 @@ export default function CoachMessagesPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <CoachDashboardHeader
-          currentPage="Messages"
-          coachName={coachData?.full_name || "Coach"}
+        <BranchManagerDashboardHeader 
+          branchManagerName={branchManagerData?.full_name || "Branch Manager"}
+          onLogout={handleLogout}
         />
         <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
           <div className="px-4 py-6 sm:px-0">
             <div className="flex items-center justify-center h-64">
-              <Loader2 className="h-8 w-8 animate-spin text-yellow-600" />
+              <Loader2 className="h-8 w-8 animate-spin text-green-600" />
             </div>
           </div>
         </main>
@@ -404,9 +320,9 @@ export default function CoachMessagesPage() {
   if (error && !conversations.length) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <CoachDashboardHeader
-          currentPage="Messages"
-          coachName={coachData?.full_name || "Coach"}
+        <BranchManagerDashboardHeader 
+          branchManagerName={branchManagerData?.full_name || "Branch Manager"}
+          onLogout={handleLogout}
         />
         <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
           <div className="px-4 py-6 sm:px-0">
@@ -430,22 +346,23 @@ export default function CoachMessagesPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <CoachDashboardHeader
-        currentPage="Messages"
-        coachName={coachData?.full_name || "Coach"}
+      <BranchManagerDashboardHeader
+        branchManagerName={branchManagerData?.full_name || "Branch Manager"}
+        onLogout={handleLogout}
       />
 
+      {/* Main Content */}
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
           {/* Page Header */}
           <div className="flex justify-between items-center mb-8">
             <div>
               <h1 className="text-3xl font-bold text-gray-900 mb-2">Messages</h1>
-              <p className="text-gray-600">Communication with students and administration</p>
+              <p className="text-gray-600">Communication with students, coaches, and administration</p>
             </div>
             <Dialog open={isComposeDialogOpen} onOpenChange={setIsComposeDialogOpen}>
               <DialogTrigger asChild>
-                <Button className="bg-yellow-600 hover:bg-yellow-700">
+                <Button className="bg-green-600 hover:bg-green-700">
                   <Plus className="w-4 h-4 mr-2" />
                   Compose Message
                 </Button>
@@ -636,49 +553,21 @@ export default function CoachMessagesPage() {
                   ) : (
                     <div className="space-y-0">
                       {filteredConversations.map((conversation) => {
-                        const otherParticipant = conversation.participants.find(p => p.user_id !== coachData?.id)
+                        const otherParticipant = conversation.participants.find(p => p.user_id !== branchManagerData?.id)
                         return (
                           <div
                             key={conversation.thread_id}
                             onClick={() => handleConversationSelect(conversation)}
                             className={`p-4 border-b cursor-pointer hover:bg-gray-50 transition-colors ${
                               conversation.unread_count > 0 ? "bg-blue-50 border-l-4 border-l-blue-500" : ""
-                            } ${selectedConversation?.thread_id === conversation.thread_id ? "bg-yellow-50" : ""}`}
+                            } ${selectedConversation?.thread_id === conversation.thread_id ? "bg-green-50" : ""}`}
                           >
                             <div className="flex justify-between items-start mb-2">
                               <div className="flex items-center space-x-2">
-                                {/* Role-specific icon */}
-                                {otherParticipant?.user_type === 'student' && (
-                                  <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
-                                    <span className="text-xs font-bold text-blue-600">S</span>
-                                  </div>
-                                )}
-                                {otherParticipant?.user_type === 'coach' && (
-                                  <div className="w-6 h-6 bg-yellow-100 rounded-full flex items-center justify-center">
-                                    <span className="text-xs font-bold text-yellow-600">C</span>
-                                  </div>
-                                )}
-                                {otherParticipant?.user_type === 'branch_manager' && (
-                                  <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center">
-                                    <span className="text-xs font-bold text-green-600">M</span>
-                                  </div>
-                                )}
-                                {otherParticipant?.user_type === 'superadmin' && (
-                                  <div className="w-6 h-6 bg-purple-100 rounded-full flex items-center justify-center">
-                                    <span className="text-xs font-bold text-purple-600">A</span>
-                                  </div>
-                                )}
-                                {!otherParticipant?.user_type && (
-                                  <User className="w-4 h-4 text-gray-400" />
-                                )}
-                                <div>
-                                  <p className="font-semibold text-sm text-gray-900">
-                                    {otherParticipant?.user_name || "Unknown"}
-                                  </p>
-                                  <p className="text-xs text-gray-500">
-                                    {getUserTypeLabel(otherParticipant?.user_type || "")}
-                                  </p>
-                                </div>
+                                <User className="w-4 h-4 text-gray-400" />
+                                <p className="font-semibold text-sm text-gray-900">
+                                  {otherParticipant?.user_name || "Unknown"}
+                                </p>
                               </div>
                               <div className="flex items-center space-x-2">
                                 {conversation.unread_count > 0 && (
@@ -686,6 +575,12 @@ export default function CoachMessagesPage() {
                                     {conversation.unread_count}
                                   </Badge>
                                 )}
+                                <Badge
+                                  variant="outline"
+                                  className={`text-xs ${getUserTypeColor(otherParticipant?.user_type || "")}`}
+                                >
+                                  {getUserTypeLabel(otherParticipant?.user_type || "")}
+                                </Badge>
                               </div>
                             </div>
                             <p className="font-medium text-sm text-gray-800 mb-1 truncate">{conversation.subject}</p>
@@ -723,7 +618,7 @@ export default function CoachMessagesPage() {
                       <div>
                         <CardTitle className="text-lg">{selectedConversation.subject}</CardTitle>
                         <CardDescription>
-                          Conversation with {selectedConversation.participants.find(p => p.user_id !== coachData?.id)?.user_name}
+                          Conversation with {selectedConversation.participants.find(p => p.user_id !== branchManagerData?.id)?.user_name}
                         </CardDescription>
                       </div>
                       <div className="flex items-center space-x-2">
@@ -748,52 +643,7 @@ export default function CoachMessagesPage() {
                         {/* Messages Thread */}
                         <div className="max-h-96 overflow-y-auto space-y-4 border rounded-lg p-4">
                           {threadMessages.map((message, index) => {
-                            // More reliable way to determine if message is from current user
-                            // Check if sender is a coach and name matches current coach
-                            const isFromCurrentUser = message.sender_type === 'coach' &&
-                              message.sender_name === coachData?.full_name
-
-                            // Debug logging for message identification
-                            if (index === 0) { // Only log for first message to avoid spam
-                              console.log("🔍 DEBUG: Message sender identification:", {
-                                messageSenderName: message.sender_name,
-                                messageSenderType: message.sender_type,
-                                coachName: coachData?.full_name,
-                                isFromCurrentUser: isFromCurrentUser
-                              })
-                            }
-
-                            // Determine sender role styling
-                            const getSenderRoleColor = (senderType: string) => {
-                              switch (senderType) {
-                                case 'student':
-                                  return 'bg-blue-500 text-white'
-                                case 'coach':
-                                  return 'bg-yellow-600 text-white'
-                                case 'branch_manager':
-                                  return 'bg-green-600 text-white'
-                                case 'superadmin':
-                                  return 'bg-purple-600 text-white'
-                                default:
-                                  return 'bg-gray-500 text-white'
-                              }
-                            }
-
-                            const getSenderRoleLabel = (senderType: string) => {
-                              switch (senderType) {
-                                case 'student':
-                                  return 'Student'
-                                case 'coach':
-                                  return 'Coach'
-                                case 'branch_manager':
-                                  return 'Branch Manager'
-                                case 'superadmin':
-                                  return 'Admin'
-                                default:
-                                  return 'User'
-                              }
-                            }
-
+                            const isFromCurrentUser = message.sender_name === branchManagerData?.full_name
                             return (
                               <div
                                 key={message.id}
@@ -801,56 +651,33 @@ export default function CoachMessagesPage() {
                               >
                                 <div className={`max-w-[70%] rounded-lg p-3 ${
                                   isFromCurrentUser
-                                    ? 'bg-yellow-600 text-white shadow-md'
-                                    : 'bg-white border border-gray-200 text-gray-900 shadow-sm'
+                                    ? 'bg-green-600 text-white'
+                                    : 'bg-gray-100 text-gray-900'
                                 }`}>
-                                  {/* Sender Info Header */}
-                                  <div className="flex items-center justify-between mb-2">
-                                    <div className="flex items-center space-x-2">
-                                      <p className={`text-xs font-semibold ${
-                                        isFromCurrentUser ? 'text-yellow-100' : 'text-gray-800'
-                                      }`}>
-                                        {message.sender_name}
-                                      </p>
-                                      <Badge
-                                        variant="outline"
-                                        className={`text-xs px-2 py-0.5 ${
-                                          isFromCurrentUser
-                                            ? 'border-yellow-300 text-yellow-100 bg-yellow-700'
-                                            : getSenderRoleColor(message.sender_type)
-                                        }`}
-                                      >
-                                        {getSenderRoleLabel(message.sender_type)}
-                                      </Badge>
-                                    </div>
+                                  <div className="flex items-center justify-between mb-1">
+                                    <p className={`text-xs font-medium ${
+                                      isFromCurrentUser ? 'text-green-100' : 'text-gray-600'
+                                    }`}>
+                                      {message.sender_name}
+                                    </p>
                                     <p className={`text-xs ${
-                                      isFromCurrentUser ? 'text-yellow-100' : 'text-gray-500'
+                                      isFromCurrentUser ? 'text-green-100' : 'text-gray-500'
                                     }`}>
                                       {format(new Date(message.created_at), "MMM d, h:mm a")}
                                     </p>
                                   </div>
-
-                                  {/* Message Content */}
                                   <p className="text-sm leading-relaxed">{message.content}</p>
-
-                                  {/* Priority Badge */}
                                   {message.priority !== 'normal' && (
-                                    <div className="mt-2">
-                                      <Badge
-                                        variant="outline"
-                                        className={`text-xs ${
-                                          message.priority === 'high' || message.priority === 'urgent'
-                                            ? isFromCurrentUser
-                                              ? 'border-red-300 text-red-100 bg-red-700'
-                                              : 'border-red-300 text-red-600 bg-red-50'
-                                            : isFromCurrentUser
-                                              ? 'border-yellow-300 text-yellow-100'
-                                              : 'border-gray-300 text-gray-600'
-                                        }`}
-                                      >
-                                        {message.priority.toUpperCase()}
-                                      </Badge>
-                                    </div>
+                                    <Badge
+                                      variant="outline"
+                                      className={`mt-2 text-xs ${
+                                        message.priority === 'high' || message.priority === 'urgent'
+                                          ? 'border-red-300 text-red-600'
+                                          : 'border-gray-300'
+                                      }`}
+                                    >
+                                      {message.priority}
+                                    </Badge>
                                   )}
                                 </div>
                               </div>
@@ -877,7 +704,7 @@ export default function CoachMessagesPage() {
                               <Button
                                 onClick={handleSendReply}
                                 disabled={isReplying || !replyContent.trim()}
-                                className="bg-yellow-600 hover:bg-yellow-700"
+                                className="bg-green-600 hover:bg-green-700"
                               >
                                 {isReplying ? (
                                   <>
@@ -929,7 +756,7 @@ export default function CoachMessagesPage() {
                         const admin = recipients.find(r => r.type === 'superadmin')
                         if (admin) {
                           setComposeRecipient(admin.id)
-                          setComposeSubject("Coach Inquiry")
+                          setComposeSubject("Branch Manager Inquiry")
                           setIsComposeDialogOpen(true)
                         }
                       }}
@@ -946,30 +773,30 @@ export default function CoachMessagesPage() {
                         const student = recipients.find(r => r.type === 'student')
                         if (student) {
                           setComposeRecipient(student.id)
-                          setComposeSubject("Training Update")
+                          setComposeSubject("Student Update")
                           setIsComposeDialogOpen(true)
                         }
                       }}
                     >
                       <MessageCircle className="w-4 h-4" />
-                      <span>Student Chat</span>
+                      <span>Message Student</span>
                     </Button>
                   )}
-                  {recipients.filter(r => r.type === 'branch_manager').length > 0 && (
+                  {recipients.filter(r => r.type === 'coach').length > 0 && (
                     <Button
                       variant="outline"
                       className="flex items-center space-x-2"
                       onClick={() => {
-                        const manager = recipients.find(r => r.type === 'branch_manager')
-                        if (manager) {
-                          setComposeRecipient(manager.id)
-                          setComposeSubject("Branch Update")
+                        const coach = recipients.find(r => r.type === 'coach')
+                        if (coach) {
+                          setComposeRecipient(coach.id)
+                          setComposeSubject("Coach Communication")
                           setIsComposeDialogOpen(true)
                         }
                       }}
                     >
                       <MessageCircle className="w-4 h-4" />
-                      <span>Branch Manager Chat</span>
+                      <span>Message Coach</span>
                     </Button>
                   )}
                 </div>

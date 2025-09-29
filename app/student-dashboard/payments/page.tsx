@@ -431,16 +431,16 @@ export default function StudentPaymentsPage() {
           </CardContent>
         </Card>
 
-        {/* Enrollments with Payment Details */}
+        {/* Course Enrollments Summary */}
         {enrollments.length > 0 && (
           <div className="mt-8">
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center">
                   <TrendingUp className="h-5 w-5 mr-2" />
-                  Course Enrollments & Payments
+                  Course Enrollments Summary
                 </CardTitle>
-                <CardDescription>Payment status for your enrolled courses</CardDescription>
+                <CardDescription>Overview of your enrolled courses and payment status</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
@@ -467,23 +467,31 @@ export default function StudentPaymentsPage() {
                         </div>
                       </div>
 
+                      {/* Payment Summary (without duplicating individual payments) */}
                       {enrollment.payments.length > 0 && (
                         <div className="mt-3 pt-3 border-t">
-                          <p className="text-sm font-medium text-gray-700 mb-2">Payment History:</p>
-                          <div className="space-y-2">
-                            {enrollment.payments.slice(0, 3).map((payment) => (
-                              <div key={payment.id} className="flex justify-between items-center text-sm">
-                                <span className="text-gray-600">
-                                  {studentPaymentAPI.formatPaymentType(payment.payment_type)} -
-                                  {payment.payment_date ? formatDate(payment.payment_date) : 'Pending'}
-                                </span>
-                                <div className="flex items-center space-x-2">
-                                  <span className="font-medium">{formatCurrency(payment.amount)}</span>
-                                  {getStatusBadge(payment.payment_status)}
-                                </div>
-                              </div>
-                            ))}
+                          <div className="flex justify-between items-center text-sm">
+                            <span className="text-gray-600">
+                              Payment Status: {enrollment.payments.length} payment{enrollment.payments.length !== 1 ? 's' : ''} made
+                            </span>
+                            <div className="flex items-center space-x-2">
+                              <span className="font-medium">
+                                Total Paid: {formatCurrency(
+                                  enrollment.payments
+                                    .filter(p => p.payment_status === 'paid')
+                                    .reduce((sum, p) => sum + p.amount, 0)
+                                )}
+                              </span>
+                              {enrollment.outstanding_balance === 0 ? (
+                                <Badge className="bg-green-100 text-green-800">Fully Paid</Badge>
+                              ) : (
+                                <Badge className="bg-yellow-100 text-yellow-800">Pending</Badge>
+                              )}
+                            </div>
                           </div>
+                          <p className="text-xs text-gray-500 mt-1">
+                            See detailed payment history in the table above
+                          </p>
                         </div>
                       )}
                     </div>

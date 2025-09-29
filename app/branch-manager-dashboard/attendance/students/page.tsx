@@ -1,731 +1,668 @@
 "use client"
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-    RadialBarChart,
-  RadialBar,
-  PolarAngleAxis,
-  ResponsiveContainer,
-} from "recharts"
+
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Search } from "lucide-react"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { useRouter } from "next/navigation"
-import { useState } from "react"
+import { Calendar } from "@/components/ui/calendar"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import {
+  Calendar as CalendarIcon,
+  Users,
+  CheckCircle,
+  XCircle,
+  Clock,
+  Search,
+  Download,
+  Loader2,
+  Save
+} from "lucide-react"
+import { format } from "date-fns"
+import { cn } from "@/lib/utils"
 import BranchManagerDashboardHeader from "@/components/branch-manager-dashboard-header"
+import { checkBranchManagerAuth, getBranchManagerAuthHeaders } from "@/lib/branchManagerAuth"
 
-const students = {
-  male: 6,
-  female: 4,
+interface AttendanceRecord {
+  id: string
+  student_name: string
+  student_id: string
+  course_name: string
+  course_id: string
+  branch_name: string
+  branch_id: string
+  date: string
+  status: "present" | "absent" | "late" | "not_marked"
+  check_in_time?: string
+  check_out_time?: string
+  notes?: string
+  email?: string
+  phone?: string
 }
 
-const total = students.male + students.female
-
-// ✅ Normalize values to percentages
-const genderData = [
-  {
-    name: "Male",
-    value: (students.male / total) * 100,
-    fill: "#3B82F6", // blue
-  },
-  {
-    name: "Female",
-    value: (students.female / total) * 100,
-    fill: "#A855F7", // purple
-  },
-]
+interface AttendanceStats {
+  total_students: number
+  present_today: number
+  absent_today: number
+  late_today: number
+  attendance_rate: number
+}
 
 export default function BranchManagerStudentAttendancePage() {
   const router = useRouter()
-  const [selectedFilter, setSelectedFilter] = useState("filter")
-  const [selectedMonth, setSelectedMonth] = useState("april")
-  const [activeTab, setActiveTab] = useState("day")
+  const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([])
+  const [filteredRecords, setFilteredRecords] = useState<AttendanceRecord[]>([])
+  const [attendanceStats, setAttendanceStats] = useState<AttendanceStats | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
+  const [branchManagerData, setBranchManagerData] = useState<any>(null)
 
-  const attendanceData = [
-  { week: "Jan week-1", Present: 40, Absent: 20 },
-  { week: "Jan week-2", Present: 30, Absent: 35 },
-  { week: "Jan week-3", Present: 35, Absent: 15 },
-  { week: "Jan week-4", Present: 25, Absent: 30 },
-  { week: "Feb week-1", Present: 45, Absent: 25 },
+  const [searchTerm, setSearchTerm] = useState("")
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date())
+  const [datePickerOpen, setDatePickerOpen] = useState(false)
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
+  const [saveStatus, setSaveStatus] = useState<{[key: string]: 'saving' | 'success' | 'error'}>({})
+  const [bulkSaving, setBulkSaving] = useState(false)
 
-]
+  // Fetch attendance data for selected date
+  const fetchAttendanceData = async (branchManagerId: string) => {
+    try {
+      setLoading(true)
+      setError(null)
 
-const genderData = [
-  { name: "Male", value: 311, fill: "#3B82F6" },   // Blue
-  { name: "Female", value: 333, fill: "#A855F7" }, // Purple
-]
+      const authResult = checkBranchManagerAuth()
+      if (!authResult.isAuthenticated || !authResult.user) {
+        setError("Authentication required")
+        return
+      }
 
-  const dailyAttendanceData = [
-    {
-      name: "Krishna Kumar Jit",
-      course: "Martial arts",
-      branch: "Madhapur",
-      present: "Yes",
-      absent: "No",
-      leave: "No",
-      notes: "Double punch",
-    },
-    {
-      name: "Arun.K",
-      course: "Martial arts",
-      branch: "Malkajgiri",
-      present: "-",
-      absent: "No",
-      leave: "No",
-      notes: "Missed punch",
-    },
-    {
-      name: "Priya Sharma",
-      course: "Karate",
-      branch: "Madhapur",
-      present: "Yes",
-      absent: "No",
-      leave: "No",
-      notes: "Perfect form",
-    },
-    {
-      name: "Raj Patel",
-      course: "Kung Fu",
-      branch: "Yapral",
-      present: "No",
-      absent: "Yes",
-      leave: "No",
-      notes: "Sick leave",
-    },
-    {
-      name: "Sneha Reddy",
-      course: "Taekwondo",
-      branch: "Tarnaka",
-      present: "Yes",
-      absent: "No",
-      leave: "No",
-      notes: "Excellent kicks",
-    },
-    {
-      name: "Vikram Singh",
-      course: "Boxing",
-      branch: "Balaji Nagar",
-      present: "Yes",
-      absent: "No",
-      leave: "No",
-      notes: "Good technique",
-    },
-  ]
+      const headers = getBranchManagerAuthHeaders()
+      const dateStr = format(selectedDate, 'yyyy-MM-dd')
 
-  const weeklyAttendanceData = [
-    {
-      name: "Krishna Kumar Jit",
-      course: "Martial arts",
-      branch: "Madhapur",
-      present: "5/7",
-      absent: "2/7",
-      leave: "0/7",
-      notes: "Good week",
-    },
-    {
-      name: "Arun.K",
-      course: "Martial arts",
-      branch: "Malkajgiri",
-      present: "4/7",
-      absent: "3/7",
-      leave: "0/7",
-      notes: "Needs improvement",
-    },
-    {
-      name: "Priya Sharma",
-      course: "Karate",
-      branch: "Madhapur",
-      present: "7/7",
-      absent: "0/7",
-      leave: "0/7",
-      notes: "Perfect attendance",
-    },
-    {
-      name: "Raj Patel",
-      course: "Kung Fu",
-      branch: "Yapral",
-      present: "3/7",
-      absent: "3/7",
-      leave: "1/7",
-      notes: "Medical leave",
-    },
-    {
-      name: "Sneha Reddy",
-      course: "Taekwondo",
-      branch: "Tarnaka",
-      present: "6/7",
-      absent: "1/7",
-      leave: "0/7",
-      notes: "Consistent",
-    },
-  ]
+      console.log(`🔄 Fetching attendance data for date: ${dateStr}`)
 
-  const monthlyAttendanceData = [
-    {
-      name: "Krishna Kumar Jit",
-      course: "Martial arts",
-      branch: "Madhapur",
-      present: "22/30",
-      absent: "6/30",
-      leave: "2/30",
-      notes: "73% attendance",
-    },
-    {
-      name: "Arun.K",
-      course: "Martial arts",
-      branch: "Malkajgiri",
-      present: "18/30",
-      absent: "10/30",
-      leave: "2/30",
-      notes: "60% attendance",
-    },
-    {
-      name: "Priya Sharma",
-      course: "Karate",
-      branch: "Madhapur",
-      present: "28/30",
-      absent: "2/30",
-      leave: "0/30",
-      notes: "93% attendance",
-    },
-    {
-      name: "Raj Patel",
-      course: "Kung Fu",
-      branch: "Yapral",
-      present: "15/30",
-      absent: "12/30",
-      leave: "3/30",
-      notes: "50% attendance",
-    },
-    {
-      name: "Sneha Reddy",
-      course: "Taekwondo",
-      branch: "Tarnaka",
-      present: "25/30",
-      absent: "3/30",
-      leave: "2/30",
-      notes: "83% attendance",
-    },
-  ]
+      // Use the unified attendance endpoint
+      const response = await fetch(`http://31.97.224.169:8003/api/attendance/students?date=${dateStr}`, {
+        method: 'GET',
+        headers
+      })
 
-  const getAttendanceData = () => {
-    switch (activeTab) {
-      case "day":
-        return dailyAttendanceData
-      case "week":
-        return weeklyAttendanceData
-      case "month":
-        return monthlyAttendanceData
-      default:
-        return dailyAttendanceData
+      if (response.ok) {
+        const data = await response.json()
+        console.log("✅ Attendance data received:", data)
+
+        const records: AttendanceRecord[] = (data.students || []).map((student: any) => ({
+          id: `${student.student_id}-${student.course_id}`,
+          student_id: student.student_id,
+          student_name: student.student_name,
+          course_id: student.course_id,
+          course_name: student.course_name,
+          branch_id: student.branch_id,
+          branch_name: student.branch_name,
+          email: student.email,
+          phone: student.phone,
+          status: student.attendance?.status || "not_marked",
+          check_in_time: student.attendance?.check_in_time ? 
+            new Date(student.attendance.check_in_time).toLocaleTimeString('en-US', {
+              hour: '2-digit',
+              minute: '2-digit',
+              hour12: true
+            }) : undefined,
+          check_out_time: student.attendance?.check_out_time ?
+            new Date(student.attendance.check_out_time).toLocaleTimeString('en-US', {
+              hour: '2-digit',
+              minute: '2-digit',
+              hour12: true
+            }) : undefined,
+          notes: student.attendance?.notes || "",
+          date: dateStr
+        }))
+
+        setAttendanceRecords(records)
+        setFilteredRecords(records)
+
+        // Calculate stats
+        const stats: AttendanceStats = {
+          total_students: records.length,
+          present_today: records.filter(r => r.status === "present").length,
+          absent_today: records.filter(r => r.status === "absent").length,
+          late_today: records.filter(r => r.status === "late").length,
+          attendance_rate: records.length > 0 ?
+            (records.filter(r => r.status === "present" || r.status === "late").length / records.length) * 100 : 0
+        }
+        setAttendanceStats(stats)
+
+      } else {
+        const errorText = await response.text()
+        console.error("❌ Failed to fetch attendance data:", errorText)
+        setError(`Failed to load attendance data: ${response.status}`)
+      }
+
+    } catch (error) {
+      console.error("❌ Error fetching attendance data:", error)
+      setError(`Failed to load attendance data: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    } finally {
+      setLoading(false)
     }
   }
 
-  const getFilteredData = () => {
-    const data = getAttendanceData()
-
-    if (selectedFilter === "branch") {
-      // Filter by branch if needed
-      return data
-    } else if (selectedFilter === "course") {
-      // Filter by course if needed
-      return data
-    }
-
-    return data
-  }
-
-  const handleReportDownload = (studentName: string) => {
-    const studentData = getFilteredData().find((student) => student.name === studentName)
-
-    if (!studentData) {
-      console.log(`[v0] Student data not found for ${studentName}`)
+  // Initialize component
+  useEffect(() => {
+    const authResult = checkBranchManagerAuth()
+    if (!authResult.isAuthenticated) {
+      console.log("Branch manager not authenticated")
+      router.push("/branch-manager/login")
       return
     }
 
-    // Create PDF content
-    const generatePDFContent = () => {
-      const currentDate = new Date().toLocaleDateString()
-      const reportPeriod = activeTab.charAt(0).toUpperCase() + activeTab.slice(1)
-
-      return `
-ROCK MARTIAL ARTS ACADEMY
-Student Attendance Report
-
-Generated on: ${currentDate}
-Report Period: ${reportPeriod}ly Report
-Month: ${selectedMonth.charAt(0).toUpperCase() + selectedMonth.slice(1)} 2025
-
-STUDENT INFORMATION
-Name: ${studentData.name}
-Course: ${studentData.course}
-Branch: ${studentData.branch}
-
-ATTENDANCE SUMMARY
-Present: ${studentData.present}
-Absent: ${studentData.absent}
-Leave: ${studentData.leave}
-Notes: ${studentData.notes}
-
-ATTENDANCE STATISTICS
-${
-  activeTab === "day"
-    ? "Daily Attendance Status"
-    : activeTab === "week"
-      ? "Weekly Attendance Summary"
-      : "Monthly Attendance Overview"
-}
-
-Performance Notes:
-${studentData.notes}
-
-This report was generated automatically by the Rock Martial Arts Academy attendance management system.
-
-For any queries, please contact the administration office.
-      `.trim()
+    if (authResult.user) {
+      setBranchManagerData(authResult.user)
+      fetchAttendanceData(authResult.user.id)
+    } else {
+      setError("Branch manager information not found")
+      setLoading(false)
     }
+  }, [router, selectedDate])
 
-    // Create and download PDF using browser's built-in functionality
-    const pdfContent = generatePDFContent()
-    const blob = new Blob([pdfContent], { type: "text/plain" })
-    const url = window.URL.createObjectURL(blob)
+  // Handle attendance marking
+  const handleMarkAttendance = async (recordId: string, status: "present" | "absent" | "late") => {
+    try {
+      setSaveStatus(prev => ({ ...prev, [recordId]: 'saving' }))
 
-    const link = document.createElement("a")
-    link.href = url
-    link.download = `${studentName.replace(/\s+/g, "_")}_Attendance_Report_${activeTab}_${selectedMonth}_2025.txt`
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-    window.URL.revokeObjectURL(url)
+      console.log("🔄 Marking attendance for record:", recordId, "status:", status)
 
-    console.log(`[v0] Downloaded attendance report for ${studentName}`)
+      const authResult = checkBranchManagerAuth()
+      if (!authResult.isAuthenticated || !authResult.user) {
+        setSaveStatus(prev => ({ ...prev, [recordId]: 'error' }))
+        setError("Authentication required")
+        return
+      }
+
+      const record = attendanceRecords.find(r => r.id === recordId)
+      if (!record) {
+        setSaveStatus(prev => ({ ...prev, [recordId]: 'error' }))
+        setError("Attendance record not found")
+        return
+      }
+
+      // Update local state immediately for better UX
+      setAttendanceRecords(prev =>
+        prev.map(r =>
+          r.id === recordId
+            ? {
+                ...r,
+                status,
+                check_in_time: status !== "absent" ? new Date().toLocaleTimeString('en-US', {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  hour12: true
+                }) : undefined
+              }
+            : r
+        )
+      )
+
+      setFilteredRecords(prev =>
+        prev.map(r =>
+          r.id === recordId
+            ? {
+                ...r,
+                status,
+                check_in_time: status !== "absent" ? new Date().toLocaleTimeString('en-US', {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  hour12: true
+                }) : undefined
+              }
+            : r
+        )
+      )
+
+      // Update attendance stats
+      const updatedRecords = attendanceRecords.map(r =>
+        r.id === recordId ? { ...r, status } : r
+      )
+
+      const stats: AttendanceStats = {
+        total_students: updatedRecords.length,
+        present_today: updatedRecords.filter(r => r.status === "present").length,
+        absent_today: updatedRecords.filter(r => r.status === "absent").length,
+        late_today: updatedRecords.filter(r => r.status === "late").length,
+        attendance_rate: updatedRecords.length > 0 ?
+          (updatedRecords.filter(r => r.status === "present" || r.status === "late").length / updatedRecords.length) * 100 : 0
+      }
+      setAttendanceStats(stats)
+
+      // Mark as having unsaved changes
+      setHasUnsavedChanges(true)
+      setSaveStatus(prev => ({ ...prev, [recordId]: 'success' }))
+      console.log("📝 Attendance status updated locally - marked as unsaved for bulk save")
+
+      // Clear save status after 3 seconds
+      setTimeout(() => {
+        setSaveStatus(prev => {
+          const newStatus = { ...prev }
+          delete newStatus[recordId]
+          return newStatus
+        })
+      }, 3000)
+
+    } catch (error) {
+      console.error("❌ Error marking attendance:", error)
+      setSaveStatus(prev => ({ ...prev, [recordId]: 'error' }))
+      setError(`Failed to mark attendance: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    }
   }
 
-  const handleViewReport = () => {
-    const allStudentsData = getFilteredData()
-    const currentDate = new Date().toLocaleDateString()
-    const reportPeriod = activeTab.charAt(0).toUpperCase() + activeTab.slice(1)
-
-    const generateSummaryReport = () => {
-      let reportContent = `
-ROCK MARTIAL ARTS ACADEMY
-${reportPeriod}ly Attendance Summary Report
-
-Generated on: ${currentDate}
-Report Period: ${selectedMonth.charAt(0).toUpperCase() + selectedMonth.slice(1)} 2025
-Filter: ${selectedFilter === "filter" ? "All Students" : selectedFilter}
-
-ATTENDANCE OVERVIEW
-Total Students: ${allStudentsData.length}
-Report Type: ${reportPeriod}ly Summary
-
-STUDENT ATTENDANCE DETAILS
-${"=".repeat(80)}
-`
-
-      allStudentsData.forEach((student, index) => {
-        reportContent += `
-${index + 1}. ${student.name}
-   Course: ${student.course}
-   Branch: ${student.branch}
-   Present: ${student.present} | Absent: ${student.absent} | Leave: ${student.leave}
-   Notes: ${student.notes}
-   ${"-".repeat(60)}
-`
-      })
-
-      reportContent += `
-${"=".repeat(80)}
-SUMMARY STATISTICS
-- Total Records: ${allStudentsData.length}
-- Report Generated: ${currentDate}
-- Period: ${reportPeriod}ly
-- Month: ${selectedMonth.charAt(0).toUpperCase() + selectedMonth.slice(1)} 2025
-
-This comprehensive report includes all student attendance data for the selected period.
-For detailed individual reports, use the Report button next to each student's record.
-
-Rock Martial Arts Academy - Attendance Management System
-      `.trim()
-
-      return reportContent
+  // Handle search
+  useEffect(() => {
+    if (!searchTerm) {
+      setFilteredRecords(attendanceRecords)
+    } else {
+      const filtered = attendanceRecords.filter(record =>
+        record.student_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        record.course_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        record.branch_name.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+      setFilteredRecords(filtered)
     }
+  }, [searchTerm, attendanceRecords])
 
-    const summaryContent = generateSummaryReport()
-    const blob = new Blob([summaryContent], { type: "text/plain" })
-    const url = window.URL.createObjectURL(blob)
+  // Bulk save all changes
+  const handleBulkSave = async () => {
+    if (!hasUnsavedChanges) return
 
-    const link = document.createElement("a")
-    link.href = url
-    link.download = `Attendance_Summary_Report_${activeTab}_${selectedMonth}_2025.txt`
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-    window.URL.revokeObjectURL(url)
+    try {
+      setBulkSaving(true)
+      setError(null)
 
-    console.log(`[v0] Downloaded summary attendance report for ${reportPeriod}`)
+      const authResult = checkBranchManagerAuth()
+      if (!authResult.isAuthenticated || !authResult.user) {
+        setError("Authentication required")
+        return
+      }
+
+      const headers = getBranchManagerAuthHeaders()
+      let successCount = 0
+      let errorCount = 0
+
+      console.log("💾 Starting bulk save of attendance records...")
+
+      for (const record of attendanceRecords) {
+        if (record.status === "not_marked") continue
+
+        const attendanceData = {
+          user_id: record.student_id,
+          user_type: "student",
+          course_id: record.course_id,
+          branch_id: record.branch_id,
+          attendance_date: `${format(selectedDate, 'yyyy-MM-dd')}T${new Date().toTimeString().split(' ')[0]}`,
+          status: record.status,
+          check_in_time: record.status !== "absent" ? new Date().toISOString() : null,
+          check_out_time: null,
+          notes: `Marked by branch manager: ${authResult.user.full_name || authResult.user.email}`
+        }
+
+        console.log(`💾 Saving attendance for ${record.student_name} with status: ${record.status}`)
+
+        const response = await fetch(`http://31.97.224.169:8003/api/attendance/mark`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify(attendanceData)
+        })
+
+        if (response.ok) {
+          successCount++
+          console.log(`✅ Successfully saved attendance for ${record.student_name}`)
+        } else {
+          errorCount++
+          const errorText = await response.text()
+          console.warn(`❌ Failed to save attendance for ${record.student_name}: ${response.status} ${errorText}`)
+        }
+      }
+
+      if (successCount > 0) {
+        setSuccessMessage(`Successfully saved ${successCount} attendance records`)
+        setHasUnsavedChanges(false)
+      }
+
+      if (errorCount > 0) {
+        setError(`Failed to save ${errorCount} attendance records`)
+      }
+
+      console.log(`📊 Bulk save completed: ${successCount} success, ${errorCount} errors`)
+
+    } catch (error) {
+      console.error("❌ Error during bulk save:", error)
+      setError(`Failed to save attendance records: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    } finally {
+      setBulkSaving(false)
+    }
   }
 
-  const renderAttendanceTable = () => {
-    const data = getFilteredData()
+  // Export attendance data to CSV
+  const handleExportAttendance = () => {
+    try {
+      const csvHeaders = [
+        'Student Name',
+        'Email',
+        'Course',
+        'Branch',
+        'Date',
+        'Status',
+        'Check-in Time',
+        'Notes'
+      ]
 
-    return (
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b text-[#6B7A99]">
-              <th className="text-left py-3">Student Name</th>
-              <th className="text-left py-3">Course</th>
-              <th className="text-left py-3">Branch</th>
-              <th className="text-left py-3">Present</th>
-              <th className="text-left py-3">Absent</th>
-              <th className="text-left py-3">Leave</th>
-              <th className="text-left py-3">Notes</th>
-              <th className="text-left py-3">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {data.map((student, index) => (
-              <tr key={index} className="border-b text-[#6B7A99]">
-                <td className="py-3 font-semibold">{student.name}</td>
-                <td className="py-3 font-semibold">{student.course}</td>
-                <td className="py-3 font-semibold">{student.branch}</td>
-                <td className="py-3">{student.present}</td>
-                <td className="py-3">{student.absent}</td>
-                <td className="py-3">{student.leave}</td>
-                <td className="py-3">
-                  <span
-                    className={`text-sm ${
-                      student.notes.includes("Perfect") ||
-                      student.notes.includes("Excellent") ||
-                      student.notes.includes("Good")
-                        ? "text-green-600"
-                        : student.notes.includes("Missed") ||
-                            student.notes.includes("Sick") ||
-                            student.notes.includes("improvement")
-                          ? "text-red-600"
-                          : "text-gray-600"
-                    }`}
-                  >
-                    {student.notes}
-                  </span>
-                </td>
-                <td className="py-3">
-                  <Button
-                    className="bg-yellow-400 hover:bg-yellow-500 text-black text-xs px-3 py-1"
-                    onClick={() => handleReportDownload(student.name)}
-                  >
-                    Report
-                  </Button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    )
+      const csvData = filteredRecords.map(record => [
+        record.student_name,
+        record.email || '',
+        record.course_name,
+        record.branch_name,
+        format(selectedDate, 'yyyy-MM-dd'),
+        record.status === 'not_marked' ? 'Not Marked' : record.status.charAt(0).toUpperCase() + record.status.slice(1),
+        record.check_in_time || '',
+        record.notes || ''
+      ])
+
+      const csvContent = [
+        csvHeaders.join(','),
+        ...csvData.map(row => row.map(cell => `"${cell}"`).join(','))
+      ].join('\n')
+
+      const blob = new Blob([csvContent], { type: 'text/csv' })
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `student_attendance_${format(selectedDate, 'yyyy-MM-dd')}.csv`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      window.URL.revokeObjectURL(url)
+
+      console.log("Student attendance data exported successfully")
+    } catch (error) {
+      console.error("Error exporting attendance:", error)
+      setError("Failed to export attendance data")
+    }
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 overflow-x-hidden">
-      <BranchManagerDashboardHeader currentPage="Student Attendance" />
-
-      <main className="w-full p-4 lg:p-6 overflow-x-hidden xl:px-12">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold text-[#0A1629]">Attendance Tracker</h1>
+    <div className="min-h-screen bg-gray-50">
+      <BranchManagerDashboardHeader />
+      
+      <div className="container mx-auto px-4 py-8">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Student Attendance</h1>
+          <p className="text-gray-600">Manage student attendance for your branches</p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Main Content */}
-          <div className="lg:col-span-3 space-y-6">
-            {/* Statistics Cards */}
-            <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-5 gap-4">
-              <Card className="shaddow-md">
-                <CardContent className="px-6 py-4 h-full">
-                  <div className="text-start">
-                    <p className="text-sm text-[#9593A8] mb-3">Total No. students</p>
-                    <p className="text-2xl text-[#403C6B] font-bold">347</p>
-                    <p className="text-xs text-[#9593A8]">In last 24 hours</p>
-                  </div>
-                </CardContent>
-              </Card>
+        {/* Error and Success Messages */}
+        {error && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-red-800">{error}</p>
+          </div>
+        )}
 
-              <Card className="shaddow-md">
-                <CardContent className="px-6 py-4 h-full">
-                  <div className="text-start">
-                    <p className="text-sm text-[#9593A8] mb-3">Absent today</p>
-                    <p className="text-2xl text-[#403C6B] font-bold">43</p>
-                    <p className="text-xs text-[#9593A8]">In last 24 hours</p>
-                  </div>
-                </CardContent>
-              </Card>
+        {successMessage && (
+          <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+            <p className="text-green-800">{successMessage}</p>
+          </div>
+        )}
 
-              <Card className="shaddow-md">
-                <CardContent className="px-6 py-4 h-full">
-                  <div className="text-start">
-                    <p className="text-sm text-[#9593A8] mb-3">Present Today</p>
-                    <p className="text-2xl text-[#403C6B] font-bold">344</p>
-                    <p className="text-xs text-[#9593A8]">In last 24 hours</p>
-                  </div>
-                </CardContent>
-              </Card>
+        {/* Controls */}
+        <div className="mb-6 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+            {/* Date Picker */}
+            <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-[240px] justify-start text-left font-normal",
+                    !selectedDate && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {selectedDate ? format(selectedDate, "PPP") : <span>Pick a date</span>}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={selectedDate}
+                  onSelect={(date) => {
+                    if (date) {
+                      setSelectedDate(date)
+                      setDatePickerOpen(false)
+                    }
+                  }}
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
 
-              <Card className="shaddow-md">
-                <CardContent className="px-6 py-4 h-full">
-                  <div className="text-start">
-                    <p className="text-sm text-[#9593A8] mb-3">Leave request</p>
-                    <p className="text-2xl text-[#403C6B] font-bold">9</p>
-                    <p className="text-xs text-[#9593A8]">In last 24 hours</p>
-                  </div>
-                </CardContent>
-              </Card>
+            {/* Search */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <Input
+                placeholder="Search students..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 w-[300px]"
+              />
             </div>
+          </div>
 
-            {/* Attendance Status Chart */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <Card className="shadow-md">
-                <CardHeader>
-                  <div className="flex justify-between items-center text-[#0A1629]">
-                    <CardTitle>Attendance Status - April-2025</CardTitle>
-                    <Button variant="link" className="text-blue-600 border border-gray-200" onClick={handleViewReport}>
-                      View Report
-                    </Button>
-                  </div>
-                </CardHeader>
-                <CardContent>
-
-                     {/* ✅ Recharts Bar Chart */}
-    <div className="h-64 w-full">
-      <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={attendanceData} barSize={18}>
-          <CartesianGrid strokeDasharray="3 3" vertical={false} />
-          <XAxis dataKey="week" />
-          <Tooltip />
-          <Legend />
-          <Bar dataKey="Present" fill="#3B82F6" radius={[4, 4, 0, 0]} />
-          <Bar dataKey="Absent" fill="#EF4444" radius={[4, 4, 0, 0]} />
-        </BarChart>
-      </ResponsiveContainer>
-    </div>
-                </CardContent>
-              </Card>
-
- <Card>
-      <CardHeader>
-        <CardTitle>Students</CardTitle>
-        <p className="text-sm text-[#7D8592]">
-          Total Student Gender Distribution
-        </p>
-      </CardHeader>
-      <CardContent>
-        {/* Circular Gender Chart */}
-        <div className="flex items-center justify-center mb-4">
-          <div className="relative w-40 h-40">
-            <ResponsiveContainer width="100%" height="100%">
-              <RadialBarChart
-                cx="50%"
-                cy="50%"
-                innerRadius="70%"
-                outerRadius="100%"
-                barSize={12}
-                data={genderData}
-                startAngle={90}
-                endAngle={-270}
+          {/* Action Buttons */}
+          <div className="flex gap-2">
+            <Button
+              onClick={handleExportAttendance}
+              variant="outline"
+              className="border-gray-300"
+            >
+              <Download className="mr-2 h-4 w-4" />
+              Export CSV
+            </Button>
+            {hasUnsavedChanges && (
+              <Button
+                onClick={handleBulkSave}
+                disabled={bulkSaving}
+                className="bg-blue-600 hover:bg-blue-700"
               >
-                <PolarAngleAxis
-                  type="number"
-                  domain={[0, 100]} // ✅ 100% total
-                  angleAxisId={0}
-                  tick={false}
-                />
-                <RadialBar
-                  dataKey="value"
-                  cornerRadius={5}
-                  background={{ fill: "#E5E7EB" }}
-                />
-              </RadialBarChart>
-            </ResponsiveContainer>
-
-            {/* Center icons */}
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="flex space-x-2">
-                <span className="text-2xl text-blue-500">♂</span>
-                <span className="text-2xl text-purple-500">♀</span>
-              </div>
-            </div>
+                {bulkSaving ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <Save className="mr-2 h-4 w-4" />
+                    Save All Changes
+                  </>
+                )}
+              </Button>
+            )}
           </div>
         </div>
 
-        {/* Counts */}
-        <div className="grid grid-cols-2 gap-4 text-center">
-          <div>
-            <p className="text-2xl font-bold text-blue-500">{students.male}</p>
-            <p className="text-sm text-gray-600">Male</p>
-          </div>
-          <div>
-            <p className="text-2xl font-bold text-purple-500">{students.female}</p>
-            <p className="text-sm text-gray-600">Female</p>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-            </div>
-
-            {/* Student Wise Attendance */}
+        {/* Statistics Cards */}
+        {attendanceStats && (
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
             <Card>
-              <CardHeader>
-                <div className="flex justify-between items-center">
-                  <CardTitle className="text-[#0A1629] text-lg">student wise attendance</CardTitle>
-                  <div className="flex items-center space-x-2">
-                    <Button variant="link" className="text-blue-600 border border-gray-200" onClick={handleViewReport}>
-                      View Report
-                    </Button>
-                    <Select value={selectedFilter} onValueChange={setSelectedFilter}>
-                        <SelectTrigger className="w-24 bg-[#F1F1F1] text-[#9593A8]">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="filter">Filter by</SelectItem>
-                        <SelectItem value="branch">Branch</SelectItem>
-                        <SelectItem value="course">Course</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-                      <SelectTrigger className="w-32 bg-[#F1F1F1] text-[#9593A8]">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="april">April 2025</SelectItem>
-                        <SelectItem value="march">March 2025</SelectItem>
-                        <SelectItem value="may">May 2025</SelectItem>
-                      </SelectContent>
-                    </Select>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Total Students</p>
+                    <p className="text-2xl font-bold text-gray-900">{attendanceStats.total_students}</p>
                   </div>
+                  <Users className="h-8 w-8 text-blue-600" />
                 </div>
-              </CardHeader>
-              <CardContent>
-                <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                  <TabsList className="grid w-full grid-cols-4">
-                    <TabsTrigger
-                      value="day"
-                      className="data-[state=active]:bg-yellow-400 data-[state=active]:text-black"
-                    >
-                      Day
-                    </TabsTrigger>
-                    <TabsTrigger
-                      value="week"
-                      className="data-[state=active]:bg-yellow-400 data-[state=active]:text-black"
-                    >
-                      Week
-                    </TabsTrigger>
-                    <TabsTrigger
-                      value="month"
-                      className="data-[state=active]:bg-yellow-400 data-[state=active]:text-black"
-                    >
-                      Month
-                    </TabsTrigger>
-                    <TabsTrigger
-                      value="customize"
-                      className="data-[state=active]:bg-yellow-400 data-[state=active]:text-black"
-                    >
-                      Customize
-                    </TabsTrigger>
-                  </TabsList>
-
-                  <TabsContent value="day" className="mt-4">
-                    {renderAttendanceTable()}
-                  </TabsContent>
-
-                  <TabsContent value="week" className="mt-4">
-                    {renderAttendanceTable()}
-                  </TabsContent>
-
-                  <TabsContent value="month" className="mt-4">
-                    {renderAttendanceTable()}
-                  </TabsContent>
-
-                  <TabsContent value="customize" className="mt-4">
-                    <div className="space-y-4">
-                      <div className="flex items-center space-x-4">
-                        <Input type="date" className="w-40" placeholder="Start Date" />
-                        <Input type="date" className="w-40" placeholder="End Date" />
-                        <Button className="bg-yellow-400 hover:bg-yellow-500 text-black">Apply Filter</Button>
-                      </div>
-                      {renderAttendanceTable()}
-                    </div>
-                  </TabsContent>
-                </Tabs>
               </CardContent>
             </Card>
-          </div>
 
-          {/* Recent Activity Sidebar */}
-          <div className="lg:col-span-1">
             <Card>
-              <CardHeader>
-                <CardTitle className="text-[#0A1629]">Recent Activity</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {[
-                    {
-                      type: "Super Admin",
-                      action: "Collected a Paid amount of 7500 from",
-                      id: "9948203546",
-                      time: "20 Apr 2025, 06:24:36 PM",
-                    },
-                    {
-                      type: "Student",
-                      action: "Today's attendance recorded 19-04-2025",
-                      time: "19 Apr 2025, 06:24:36 AM",
-                    },
-                    {
-                      type: "Student",
-                      action:
-                        "Today's attendance recorded, double punch, Madhapur branch, Sreekamth ch student 19-04-2025",
-                      time: "19 Apr 2025, 06:24:36 AM",
-                    },
-                    {
-                      type: "Super Admin",
-                      action: "Collected a Paid amount of 7500 from",
-                      id: "9948203546",
-                      time: "20 Apr 2025, 06:24:36 PM",
-                    },
-                    {
-                      type: "Student",
-                      action: "Today's attendance recorded 19-04-2025",
-                      time: "19 Apr 2025, 06:24:36 AM",
-                    },
-                  ].map((activity, index) => (
-                    <div key={index} className="border-b pb-3 last:border-b-0">
-                      <div className="flex items-start space-x-2">
-                        {/* <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div> */}
-                        <div className="flex-1">
-                          <p className="text-sm font-medium text-[#1B83FE]">{activity.type}</p>
-                          <p className="text-xs text-black mt-1">
-                            {activity.action}{" "}
-                            {activity.id && <span className="font-medium">Confirm {activity.id}</span>}
-                          </p>
-                          <p className="text-xs text-[#9593A8] mt-1">{activity.time}</p>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Present Today</p>
+                    <p className="text-2xl font-bold text-green-600">{attendanceStats.present_today}</p>
+                  </div>
+                  <CheckCircle className="h-8 w-8 text-green-600" />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Absent Today</p>
+                    <p className="text-2xl font-bold text-red-600">{attendanceStats.absent_today}</p>
+                  </div>
+                  <XCircle className="h-8 w-8 text-red-600" />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Late Today</p>
+                    <p className="text-2xl font-bold text-yellow-600">{attendanceStats.late_today}</p>
+                  </div>
+                  <Clock className="h-8 w-8 text-yellow-600" />
                 </div>
               </CardContent>
             </Card>
           </div>
-        </div>
-      </main>
+        )}
+
+        {/* Attendance Table */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center justify-between">
+              <span>Student Attendance - {format(selectedDate, "MMMM d, yyyy")}</span>
+              {hasUnsavedChanges && (
+                <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">
+                  Unsaved Changes
+                </Badge>
+              )}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+                <span className="ml-2 text-gray-600">Loading attendance data...</span>
+              </div>
+            ) : filteredRecords.length === 0 ? (
+              <div className="text-center py-12">
+                <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-600">No students found for the selected date</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-gray-200">
+                      <th className="text-left py-3 px-4 font-medium text-gray-900">Student</th>
+                      <th className="text-left py-3 px-4 font-medium text-gray-900">Course</th>
+                      <th className="text-left py-3 px-4 font-medium text-gray-900">Branch</th>
+                      <th className="text-left py-3 px-4 font-medium text-gray-900">Status</th>
+                      <th className="text-left py-3 px-4 font-medium text-gray-900">Check-in Time</th>
+                      <th className="text-left py-3 px-4 font-medium text-gray-900">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredRecords.map((record) => (
+                      <tr key={record.id} className="border-b border-gray-100 hover:bg-gray-50">
+                        <td className="py-4 px-4">
+                          <div>
+                            <p className="font-medium text-gray-900">{record.student_name}</p>
+                            <p className="text-sm text-gray-500">{record.email}</p>
+                          </div>
+                        </td>
+                        <td className="py-4 px-4">
+                          <p className="text-gray-900">{record.course_name}</p>
+                        </td>
+                        <td className="py-4 px-4">
+                          <p className="text-gray-900">{record.branch_name}</p>
+                        </td>
+                        <td className="py-4 px-4">
+                          <Badge
+                            variant={
+                              record.status === "present" ? "default" :
+                              record.status === "absent" ? "destructive" :
+                              record.status === "late" ? "secondary" : "outline"
+                            }
+                            className={
+                              record.status === "present" ? "bg-green-100 text-green-800 hover:bg-green-200" :
+                              record.status === "absent" ? "bg-red-100 text-red-800 hover:bg-red-200" :
+                              record.status === "late" ? "bg-yellow-100 text-yellow-800 hover:bg-yellow-200" :
+                              "bg-gray-100 text-gray-800 hover:bg-gray-200"
+                            }
+                          >
+                            {record.status === "not_marked" ? "Not Marked" : record.status.charAt(0).toUpperCase() + record.status.slice(1)}
+                          </Badge>
+                        </td>
+                        <td className="py-4 px-4">
+                          <p className="text-gray-900">{record.check_in_time || "-"}</p>
+                        </td>
+                        <td className="py-4 px-4">
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              variant={record.status === "present" ? "default" : "outline"}
+                              onClick={() => handleMarkAttendance(record.id, "present")}
+                              disabled={saveStatus[record.id] === 'saving'}
+                              className={record.status === "present" ? "bg-green-600 hover:bg-green-700" : ""}
+                            >
+                              {saveStatus[record.id] === 'saving' && record.status === "present" ? (
+                                <Loader2 className="h-3 w-3 animate-spin" />
+                              ) : (
+                                <CheckCircle className="h-3 w-3" />
+                              )}
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant={record.status === "absent" ? "destructive" : "outline"}
+                              onClick={() => handleMarkAttendance(record.id, "absent")}
+                              disabled={saveStatus[record.id] === 'saving'}
+                            >
+                              {saveStatus[record.id] === 'saving' && record.status === "absent" ? (
+                                <Loader2 className="h-3 w-3 animate-spin" />
+                              ) : (
+                                <XCircle className="h-3 w-3" />
+                              )}
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant={record.status === "late" ? "secondary" : "outline"}
+                              onClick={() => handleMarkAttendance(record.id, "late")}
+                              disabled={saveStatus[record.id] === 'saving'}
+                              className={record.status === "late" ? "bg-yellow-600 hover:bg-yellow-700 text-white" : ""}
+                            >
+                              {saveStatus[record.id] === 'saving' && record.status === "late" ? (
+                                <Loader2 className="h-3 w-3 animate-spin" />
+                              ) : (
+                                <Clock className="h-3 w-3" />
+                              )}
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   )
 }

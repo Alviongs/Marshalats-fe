@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import StudentDashboardLayout from "@/components/student-dashboard-layout"
 import { CardSkeleton } from "@/components/ui/loading-skeleton"
 import { ErrorBoundary } from "@/components/error-boundary"
@@ -128,20 +129,48 @@ export default function StudentCoursesPage() {
       // Transform backend data to match frontend expectations
       const enrolledCourses = data.enrolled_courses || []
       console.log("Enrolled courses count:", enrolledCourses.length)
-      const transformedCourses = enrolledCourses.map((item: any) => {
+
+      // Filter and validate courses - ensure only active enrollments for this student
+      const validCourses = enrolledCourses.filter((item: any) => {
         const enrollment = item.enrollment
         const course = item.course
+
+        // Validate required data
+        if (!enrollment || !course || !course.id) {
+          console.warn("Invalid course data:", item)
+          return false
+        }
+
+        // Ensure enrollment belongs to current student
+        if (enrollment.student_id && enrollment.student_id !== studentId) {
+          console.warn("Course enrollment doesn't belong to current student:", enrollment.student_id, "vs", studentId)
+          return false
+        }
+
+        return true
+      })
+
+      console.log("Valid courses after filtering:", validCourses.length)
+
+      const transformedCourses = validCourses.map((item: any) => {
+        const enrollment = item.enrollment
+        const course = item.course
+
+        // Calculate progress based on enrollment data or use placeholder
+        const progressPercentage = enrollment.progress || Math.floor(Math.random() * 100)
+        const totalLessons = course.total_lessons || 20
+        const completedLessons = Math.floor(totalLessons * (progressPercentage / 100))
 
         return {
           id: course.id,
           title: course.title || course.name || "Untitled Course",
           instructor: course.instructor || "TBA",
           level: course.difficulty_level || "Beginner",
-          progress: Math.floor(Math.random() * 100), // TODO: Get real progress from backend
-          totalLessons: course.total_lessons || 20,
-          completedLessons: Math.floor((course.total_lessons || 20) * (Math.random() * 0.8)), // TODO: Get real progress
+          progress: progressPercentage,
+          totalLessons: totalLessons,
+          completedLessons: completedLessons,
           nextClass: enrollment.is_active ? "Check schedule" : "Completed",
-          location: enrollment.branch_details?.name || "TBA",
+          location: enrollment.branch_details?.name || item.branch_details?.name || "TBA",
           duration: `${course.duration_months || 3} months`,
           status: enrollment.is_active ? "active" : "completed",
           rating: 4.5, // TODO: Get real rating from backend
@@ -149,14 +178,37 @@ export default function StudentCoursesPage() {
           image: "/placeholder.svg",
           enrollment_date: enrollment.enrollment_date,
           start_date: enrollment.start_date,
-          end_date: enrollment.end_date
+          end_date: enrollment.end_date,
+          // Additional validation fields
+          isValid: true,
+          studentId: enrollment.student_id || studentId
         }
       })
 
       console.log("Transformed courses:", transformedCourses)
       console.log("Setting courses state with:", transformedCourses.length, "courses")
 
-      setCourses(transformedCourses)
+      // Debug: Log each course for verification
+      transformedCourses.forEach((course : any, index : number) => {
+        console.log(`Course ${index + 1}:`, {
+          title: course.title,
+          instructor: course.instructor,
+          level: course.level,
+          status: course.status,
+          location: course.location,
+          duration: course.duration
+        })
+      })
+
+      // Final validation before setting state
+      if (transformedCourses.length === 0 && enrolledCourses.length > 0) {
+        console.warn("All courses were filtered out - possible data validation issue")
+        setError("Course data validation failed. Please contact support if this persists.")
+        setCourses([])
+      } else {
+        setCourses(transformedCourses)
+      }
+
       setLoading(false)
     } catch (error) {
       console.error("Error loading courses:", error)
@@ -212,11 +264,21 @@ export default function StudentCoursesPage() {
         pageTitle="My Courses"
         pageDescription="Track your martial arts training progress"
       >
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <CardSkeleton key={i} showAvatar={true} lines={4} />
-          ))}
-        </div>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-xl font-semibold text-gray-900">Loading Courses...</CardTitle>
+            <CardDescription>
+              Please wait while we fetch your enrolled courses
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <CardSkeleton key={i} showAvatar={true} lines={2} />
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       </StudentDashboardLayout>
     )
   }
@@ -303,87 +365,104 @@ export default function StudentCoursesPage() {
             </Card>
           </div>
 
-          {/* Courses Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {courses.map((course) => (
-              <Card key={course.id} className="group hover:shadow-xl transition-all duration-300 hover:-translate-y-1 overflow-hidden">
-                <div className="relative">
-                  <div className="h-48 bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
-                    <BookOpen className="w-16 h-16 text-gray-400" />
-                  </div>
-                  <div className="absolute top-4 right-4">
-                    <Badge className={`${getStatusColor(course.status)} border`}>
-                      {course.status === 'active' ? 'Active' :
-                       course.status === 'completed' ? 'Completed' : 'Inactive'}
-                    </Badge>
-                  </div>
-                  <div className="absolute top-4 left-4">
-                    <Badge className={`${getLevelColor(course.level)} border`}>
-                      {course.level}
-                    </Badge>
-                  </div>
-                </div>
-
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors">
-                    {course.title}
-                  </CardTitle>
-                  <CardDescription className="text-gray-600">
-                    {course.description}
-                  </CardDescription>
-                </CardHeader>
-
-                <CardContent className="space-y-4">
-                  {/* Instructor Info */}
-                  <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
-                      <User className="w-5 h-5 text-gray-600" />
-                    </div>
-                    <div>
-                      <p className="font-medium text-gray-900">{course.instructor}</p>
-                      <div className="flex items-center space-x-1">
-                        <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                        <span className="text-sm text-gray-600">{course.rating}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Progress */}
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">Progress</span>
-                      <span className="font-medium">{course.progress}%</span>
-                    </div>
-                    <Progress value={course.progress} className="h-2" />
-                    <div className="flex justify-between text-xs text-gray-500">
-                      <span>{course.completedLessons} of {course.totalLessons} lessons</span>
-                      <span>{course.duration}</span>
-                    </div>
-                  </div>
-
-                  {/* Course Details */}
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div className="flex items-center space-x-2">
-                      <Clock className="w-4 h-4 text-gray-400" />
-                      <span className="text-gray-600">{course.nextClass}</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <MapPin className="w-4 h-4 text-gray-400" />
-                      <span className="text-gray-600">{course.location}</span>
-                    </div>
-                  </div>
-
-                  {/* Action Button */}
-                  <Button
-                    className="w-full mt-4"
-                    variant={course.status === 'completed' ? 'outline' : 'default'}
-                  >
-                    {course.status === 'completed' ? 'View Certificate' : 'Continue Learning'}
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+          {/* Courses Table */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-xl font-semibold text-gray-900">Enrolled Courses</CardTitle>
+              <CardDescription>
+                View and manage your enrolled martial arts courses
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-[250px] min-w-[200px]">Course Name</TableHead>
+                      <TableHead className="hidden sm:table-cell">Instructor</TableHead>
+                      <TableHead className="hidden md:table-cell">Difficulty</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="hidden lg:table-cell">Branch/Location</TableHead>
+                      <TableHead className="hidden md:table-cell">Duration</TableHead>
+                      <TableHead className="hidden sm:table-cell">Progress</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {courses.map((course) => (
+                      <TableRow key={course.id} className="hover:bg-gray-50">
+                        <TableCell className="font-medium">
+                          <div className="flex items-center space-x-3">
+                            <div className="w-10 h-10 bg-gradient-to-br from-blue-100 to-blue-200 rounded-lg flex items-center justify-center">
+                              <BookOpen className="w-5 h-5 text-blue-600" />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="font-semibold text-gray-900 truncate">{course.title}</div>
+                              <div className="text-sm text-gray-500 truncate sm:hidden">
+                                {course.instructor} • {course.level}
+                              </div>
+                              <div className="text-sm text-gray-500 truncate hidden sm:block">
+                                {course.description}
+                              </div>
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell className="hidden sm:table-cell">
+                          <div className="flex items-center space-x-2">
+                            <User className="w-4 h-4 text-gray-400" />
+                            <span className="text-gray-900">{course.instructor}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="hidden md:table-cell">
+                          <Badge className={`${getLevelColor(course.level)} border`}>
+                            {course.level}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge className={`${getStatusColor(course.status)} border`}>
+                            {course.status === 'active' ? 'Active' :
+                             course.status === 'completed' ? 'Completed' : 'Inactive'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="hidden lg:table-cell">
+                          <div className="flex items-center space-x-2">
+                            <MapPin className="w-4 h-4 text-gray-400" />
+                            <span className="text-gray-700">{course.location}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="hidden md:table-cell">
+                          <div className="flex items-center space-x-2">
+                            <Clock className="w-4 h-4 text-gray-400" />
+                            <span className="text-gray-700">{course.duration}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="hidden sm:table-cell">
+                          <div className="space-y-1">
+                            <div className="flex justify-between text-sm">
+                              <span className="text-gray-600">{course.progress}%</span>
+                            </div>
+                            <Progress value={course.progress} className="h-2 w-20" />
+                            <div className="text-xs text-gray-500">
+                              {course.completedLessons}/{course.totalLessons} lessons
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button
+                            size="sm"
+                            variant={course.status === 'completed' ? 'outline' : 'default'}
+                            className="text-xs"
+                          >
+                            {course.status === 'completed' ? 'Certificate' : 'Continue'}
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
 
           {/* Debug Info */}
           {process.env.NODE_ENV === 'development' && (
@@ -400,19 +479,21 @@ export default function StudentCoursesPage() {
 
           {/* Empty State */}
           {courses.length === 0 && !loading && (
-            <Card className="text-center py-16">
-              <CardContent>
+            <Card>
+              <CardContent className="text-center py-16">
                 <div className="w-24 h-24 mx-auto mb-6 bg-gray-100 rounded-full flex items-center justify-center">
                   <BookOpen className="w-12 h-12 text-gray-400" />
                 </div>
                 <h3 className="text-xl font-semibold text-gray-900 mb-2">No courses enrolled</h3>
                 <p className="text-gray-600 mb-6">You haven't enrolled in any courses yet. Start your martial arts journey today!</p>
-                <Button onClick={() => router.push('/courses')} className="bg-[#FFC403] hover:bg-[#FFC403]/90 text-white">
-                  Browse Courses
-                </Button>
-                <Button onClick={handleRetry} variant="outline" className="ml-2">
-                  Retry Loading
-                </Button>
+                <div className="space-x-2">
+                  <Button onClick={() => router.push('/courses')}>
+                    Browse Courses
+                  </Button>
+                  <Button onClick={handleRetry} variant="outline">
+                    Retry Loading
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           )}

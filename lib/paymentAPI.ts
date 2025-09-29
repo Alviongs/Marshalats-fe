@@ -207,6 +207,60 @@ class PaymentAPI extends BaseAPI {
   }
 
   /**
+   * Export payments as CSV
+   */
+  async exportPayments(filters: {
+    status?: string
+    payment_type?: string
+    branch_id?: string
+    start_date?: string
+    end_date?: string
+    format?: string
+  } = {}, token?: string): Promise<void> {
+    const authToken = token || TokenManager.getToken()
+
+    // Build query parameters
+    const params = new URLSearchParams()
+    if (filters.status && filters.status !== 'all') params.append('status', filters.status)
+    if (filters.payment_type && filters.payment_type !== 'all') params.append('payment_type', filters.payment_type)
+    if (filters.branch_id && filters.branch_id !== 'all') params.append('branch_id', filters.branch_id)
+    if (filters.start_date) params.append('start_date', filters.start_date)
+    if (filters.end_date) params.append('end_date', filters.end_date)
+    params.append('format', filters.format || 'csv')
+
+    try {
+      const response = await fetch(`${this.baseURL}/api/payments/export?${params.toString()}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${authToken}`,
+          'Content-Type': 'application/json'
+        }
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.detail || `Export failed: ${response.status}`)
+      }
+
+      const data = await response.json()
+
+      // Create and download the file
+      const blob = new Blob([data.content], { type: data.content_type })
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = data.filename
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      window.URL.revokeObjectURL(url)
+    } catch (error) {
+      console.error('Export error:', error)
+      throw error
+    }
+  }
+
+  /**
    * Format payment method for display
    */
   formatPaymentMethod(method: string): string {

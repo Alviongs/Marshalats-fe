@@ -1,11 +1,11 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Bell, DollarSign, User, Clock, Check } from "lucide-react"
+import { Bell, DollarSign, User, Clock, Check, MessageCircle, Mail } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu"
 import { Badge } from "@/components/ui/badge"
-import { notificationAPI, PaymentNotification } from "@/lib/notificationAPI"
+import { notificationAPI, PaymentNotification, MessageNotification } from "@/lib/notificationAPI"
 import { useRouter } from "next/navigation"
 
 interface NotificationDropdownProps {
@@ -14,7 +14,7 @@ interface NotificationDropdownProps {
 
 export default function NotificationDropdown({ className = "" }: NotificationDropdownProps) {
   const router = useRouter()
-  const [notifications, setNotifications] = useState<PaymentNotification[]>([])
+  const [notifications, setNotifications] = useState<(PaymentNotification | MessageNotification)[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
   const [isLoading, setIsLoading] = useState(false)
   const [isOpen, setIsOpen] = useState(false)
@@ -23,9 +23,12 @@ export default function NotificationDropdown({ className = "" }: NotificationDro
   const fetchNotifications = async () => {
     try {
       setIsLoading(true)
-      const data = await notificationAPI.getPaymentNotifications(0, 20)
+      const data = await notificationAPI.getNotifications(0, 20)
       setNotifications(data)
-      setUnreadCount(data.filter(n => !n.is_read).length)
+
+      // Calculate unread count
+      const unreadNotifications = data.filter(n => !n.is_read)
+      setUnreadCount(unreadNotifications.length)
     } catch (error) {
       console.error('Error fetching notifications:', error)
     } finally {
@@ -109,9 +112,23 @@ export default function NotificationDropdown({ className = "" }: NotificationDro
         return <DollarSign className="w-4 h-4 text-green-600" />
       case 'new_student':
         return <User className="w-4 h-4 text-blue-600" />
+      case 'new_message':
+        return <Mail className="w-4 h-4 text-blue-600" />
+      case 'message_reply':
+        return <MessageCircle className="w-4 h-4 text-green-600" />
       default:
         return <Bell className="w-4 h-4 text-gray-600" />
     }
+  }
+
+  // Check if notification is a payment notification
+  const isPaymentNotification = (notification: PaymentNotification | MessageNotification): notification is PaymentNotification => {
+    return 'payment_id' in notification
+  }
+
+  // Check if notification is a message notification
+  const isMessageNotification = (notification: PaymentNotification | MessageNotification): notification is MessageNotification => {
+    return 'message_id' in notification
   }
 
   // Get priority color
@@ -178,6 +195,26 @@ export default function NotificationDropdown({ className = "" }: NotificationDro
                   if (!notification.is_read) {
                     markAsRead(notification.id)
                   }
+
+                  // Navigate based on notification type
+                  if (isMessageNotification(notification)) {
+                    // Navigate to messages page
+                    const currentPath = window.location.pathname
+                    if (currentPath.includes('/branch-manager-dashboard')) {
+                      router.push('/branch-manager-dashboard/messages')
+                    } else if (currentPath.includes('/student-dashboard')) {
+                      router.push('/student-dashboard/messages')
+                    } else if (currentPath.includes('/coach-dashboard')) {
+                      router.push('/coach-dashboard/messages')
+                    } else {
+                      router.push('/dashboard/messages')
+                    }
+                  } else if (isPaymentNotification(notification)) {
+                    // Navigate to payments or dashboard
+                    router.push('/dashboard/payments')
+                  }
+
+                  setIsOpen(false)
                 }}
               >
                 <div className="flex items-start space-x-3 w-full">
@@ -201,9 +238,14 @@ export default function NotificationDropdown({ className = "" }: NotificationDro
                         <Clock className="w-3 h-3" />
                         <span>{formatTimeAgo(notification.created_at)}</span>
                       </div>
-                      {notification.amount && (
+                      {isPaymentNotification(notification) && notification.amount && (
                         <span className="text-xs font-medium text-green-600">
                           ₹{notification.amount.toLocaleString()}
+                        </span>
+                      )}
+                      {isMessageNotification(notification) && (
+                        <span className="text-xs text-gray-500">
+                          From: {notification.sender_name}
                         </span>
                       )}
                     </div>

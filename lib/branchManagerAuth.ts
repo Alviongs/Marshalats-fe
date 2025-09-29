@@ -7,6 +7,7 @@ export interface BranchManagerUser {
   role: 'branch_manager'
   branch_id?: string
   branch_name?: string
+  managed_branches?: string[]  // Array of branch IDs managed by this branch manager
 }
 
 export interface BranchManagerLoginResponse {
@@ -39,7 +40,8 @@ export const BranchManagerAuth = {
         phone: branch_manager.phone,
         role: "branch_manager",
         branch_id: branch_manager.branch_assignment?.branch_id || branch_manager.branch_id,
-        branch_name: branch_manager.branch_assignment?.branch_name || branch_manager.branch_name
+        branch_name: branch_manager.branch_assignment?.branch_name || branch_manager.branch_name,
+        managed_branches: branch_manager.managed_branches || []
       }
     }
 
@@ -61,7 +63,8 @@ export const BranchManagerAuth = {
       phone: branch_manager.phone,
       role: "branch_manager",
       branch_id: branch_manager.branch_assignment?.branch_id || branch_manager.branch_id,
-      branch_name: branch_manager.branch_assignment?.branch_name || branch_manager.branch_name
+      branch_name: branch_manager.branch_assignment?.branch_name || branch_manager.branch_name,
+      managed_branches: branch_manager.managed_branches || []
     }
     localStorage.setItem("branch_manager", JSON.stringify(userData))
     localStorage.setItem("user", JSON.stringify(userData)) // For compatibility
@@ -152,6 +155,45 @@ export const BranchManagerAuth = {
     const tokenValid = BranchManagerAuth.isTokenValid()
 
     return !!(user && user.role === "branch_manager" && tokenValid)
+  },
+
+  // Fetch and update managed branches for the current branch manager
+  fetchManagedBranches: async (): Promise<string[]> => {
+    try {
+      const token = BranchManagerAuth.getToken()
+      const user = BranchManagerAuth.getCurrentUser()
+
+      if (!token || !user) {
+        console.error('No authentication token or user found')
+        return []
+      }
+
+      // Fetch branches using the branch manager's token
+      const response = await fetch('/api/branches', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      })
+
+      if (!response.ok) {
+        console.error('Failed to fetch branches:', response.status)
+        return []
+      }
+
+      const data = await response.json()
+      const branches = data.branches || []
+      const managedBranchIds = branches.map((branch: any) => branch.id)
+
+      // Update the stored user data with managed branches
+      const updatedUser = { ...user, managed_branches: managedBranchIds }
+      BranchManagerAuth.setCurrentUser(updatedUser)
+
+      return managedBranchIds
+    } catch (error) {
+      console.error('Error fetching managed branches:', error)
+      return []
+    }
   },
 
   // Logout function

@@ -4,7 +4,7 @@ import jwt from 'jsonwebtoken'
 
 // Database connection
 const MONGO_URL = process.env.MONGO_URL || "mongodb://localhost:27017"
-const DATABASE_NAME = "student_management_db"
+const DATABASE_NAME = "marshalats"
 
 export async function GET(request: NextRequest) {
   let client: MongoClient | null = null

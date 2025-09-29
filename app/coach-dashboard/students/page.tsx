@@ -155,7 +155,8 @@ export default function StudentsListPage() {
       }
 
       const data = await response.json()
-      console.log("✅ Fetched students for branch:", data)
+      console.log("✅ STUDENTS PAGE: Fetched students for branch:", data)
+      console.log("✅ STUDENTS PAGE: Number of students:", data.students?.length || 0)
 
       // Handle different response formats
       const studentsData = data.students || []

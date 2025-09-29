@@ -28,7 +28,7 @@ export default function NotificationsPage() {
       setError(null)
       
       const skip = (page - 1) * itemsPerPage
-      const data = await notificationAPI.getPaymentNotifications(skip, itemsPerPage)
+      const data = await notificationAPI.getNotifications(skip, itemsPerPage) as PaymentNotification[]
       
       setNotifications(data)
       setTotalNotifications(data.length) // This might need adjustment based on API response structure

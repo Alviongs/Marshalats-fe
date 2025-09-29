@@ -91,35 +91,87 @@ export interface FinancialSummary {
 
 export interface StudentReportData {
   enrollment_statistics: Array<{
-    _id: string
     total_students: number
     course_info: {
+      id: string
       title: string
       code: string
+      description: string
+      difficulty_level: string
+      category_id: string
+      instructor_id?: string
+      student_requirements?: {
+        max_students: number
+        min_age: number
+        max_age: number
+        prerequisites: string[]
+      }
+      course_content?: {
+        syllabus: string
+        equipment_required: string[]
+      }
+      pricing?: {
+        currency: string
+        amount: number
+        branch_specific_pricing: boolean
+      }
+      settings?: {
+        offers_certification: boolean
+        active: boolean
+      }
+      created_at: string
+      updated_at: string
     }
   }>
   attendance_statistics: Array<{
-    _id: string
     attendance_percentage: number
   }>
   students_by_branch: Array<{
-    _id: string
     total_students: number
     branch_info: {
-      name: string
+      id: string
+      branch: {
+        name: string
+        code: string
+        email: string
+        phone: string
+        address: {
+          line1: string
+          area: string
+          city: string
+          state: string
+          pincode: string
+          country: string
+        }
+      }
+      manager_id: string
+      operational_details: {
+        courses_offered: string[]
+        timings: Array<{
+          day: string
+          open: string
+          close: string
+        }>
+        holidays: string[]
+      }
+      assignments: {
+        accessories_available: boolean
+        courses: string[]
+        branch_admins: string[]
+      }
+      bank_details: {
+        bank_name: string
+        account_number: string
+        upi_id: string
+      }
+      is_active: boolean
+      created_at: string
+      updated_at: string
+      location_id: string
       location: string
+      name: string
+      state: string
     }
-  }>
-  students?: Array<{
-    id: string
-    name: string
-    email: string
-    course: string
-    branch: string
-    status: string
-    enrollment_date: string
-    phone?: string
-    address?: string
   }>
 }
 
@@ -274,6 +326,14 @@ export interface FinancialReportFiltersResponse {
 
 export interface StudentReportsResponse {
   student_reports: StudentReportData
+  filters_applied: {
+    branch_id: string | null
+    course_id: string | null
+    start_date: string | null
+    end_date: string | null
+    user_role: string
+    managed_branches: string[]
+  }
   generated_at: string
 }
 
@@ -670,9 +730,19 @@ class ReportsAPI extends BaseAPI {
         if (value) params.append(key, value)
       })
     }
-    
+
     const endpoint = `/api/reports/students${params.toString() ? `?${params.toString()}` : ''}`
     return await this.makeRequest(endpoint, {
+      method: 'GET',
+      token
+    })
+  }
+
+  /**
+   * Get student report filter options (branch-specific for branch managers)
+   */
+  async getStudentReportFilters(token: string): Promise<any> {
+    return await this.makeRequest('/api/reports/students/filters', {
       method: 'GET',
       token
     })
