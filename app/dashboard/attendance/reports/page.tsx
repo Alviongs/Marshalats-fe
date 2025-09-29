@@ -135,7 +135,7 @@ export default function AttendanceReportsPage() {
       if (!SuperAdminAuth.isAuthenticated()) return
 
       const headers = SuperAdminAuth.getAuthHeaders()
-      const response = await fetch('http://31.97.224.169:8003/api/branches', {
+      const response = await fetch('http://localhost:8003/api/branches', {
         method: 'GET',
         headers
       })

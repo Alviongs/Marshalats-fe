@@ -21,7 +21,8 @@ import {
   ArrowRight,
   Target,
   Zap,
-  Star
+  Star,
+  AlertCircle
 } from "lucide-react"
 
 export default function StudentDashboard() {
@@ -32,6 +33,9 @@ export default function StudentDashboard() {
   const [recentActivity, setRecentActivity] = useState<any[]>([])
   const [upcomingEvents, setUpcomingEvents] = useState<any[]>([])
   const [quickActions, setQuickActions] = useState<any[]>([])
+  const [attendanceData, setAttendanceData] = useState<any>(null)
+  const [enrollmentData, setEnrollmentData] = useState<any[]>([])
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     // Check if user is logged in
@@ -43,10 +47,14 @@ export default function StudentDashboard() {
       return
     }
 
-    // Simulate loading comprehensive student data
+    // Load comprehensive student data from APIs
     const loadData = async () => {
       try {
+        setLoading(true)
+        setError(null)
+
         let userData: any = {}
+        let profileData: any = null
 
         if (user) {
           userData = JSON.parse(user)
@@ -62,39 +70,118 @@ export default function StudentDashboard() {
           }
         }
 
-        // Set comprehensive student data
-        setStudentData({
-          name: userData.full_name || `${userData.first_name} ${userData.last_name}` || userData.name || "John Doe",
-          email: userData.email || "john.doe@example.com",
-          studentId: "STU-2024-001",
-          joinDate: "2024-01-15",
-          belt: "Blue Belt",
-          nextBelt: "Purple Belt",
-          profileImage: "/placeholder.svg",
-          course: userData.course?.course_id || "Karate"
+        const headers = {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+
+        console.log("🔄 Fetching student profile data...")
+
+        // Fetch student profile data
+        const profileResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/auth/profile`, {
+          method: 'GET',
+          headers
         })
 
-        // Set dashboard statistics
-        setDashboardStats({
-          enrolledCourses: 3,
-          completedClasses: 24,
-          upcomingClasses: 5,
-          overallProgress: 75,
-          attendanceRate: 92,
-          totalHours: 48,
-          achievements: 8,
-          rank: 12,
-          streakDays: 15,
-          nextClassTime: "Today, 6:00 PM"
+        if (profileResponse.ok) {
+          const profileResult = await profileResponse.json()
+          profileData = profileResult.profile
+
+          console.log("✅ Profile data received:", profileData)
+
+          setStudentData({
+            name: profileData.full_name || `${profileData.first_name} ${profileData.last_name}` || "Student",
+            email: profileData.email || "student@example.com",
+            studentId: profileData.id || "STU-UNKNOWN",
+            joinDate: profileData.created_at ? new Date(profileData.created_at).toLocaleDateString() : "Unknown",
+            belt: "Blue Belt", // This could be added to profile later
+            nextBelt: "Purple Belt", // This could be added to profile later
+            profileImage: "/placeholder.svg",
+            course: profileData.enrollments?.[0]?.course_name || "No Course",
+            phone: profileData.phone || "",
+            dateOfBirth: profileData.date_of_birth || "",
+            gender: profileData.gender || ""
+          })
+
+          setEnrollmentData(profileData.enrollments || [])
+        } else {
+          console.error("❌ Profile API failed:", profileResponse.status, profileResponse.statusText)
+          throw new Error(`Failed to fetch profile: ${profileResponse.status}`)
+        }
+
+        console.log("🔄 Fetching attendance data...")
+
+        // Fetch attendance data
+        const attendanceResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/attendance/student/my-attendance`, {
+          method: 'GET',
+          headers
         })
 
-        // Set recent activity
-        setRecentActivity([
-          { id: 1, type: "class", title: "Karate Basics", date: "2024-01-20", status: "completed", icon: BookOpen },
-          { id: 2, type: "achievement", title: "Perfect Attendance", date: "2024-01-19", status: "earned", icon: Award },
-          { id: 3, type: "payment", title: "Monthly Fee", date: "2024-01-18", status: "paid", icon: CreditCard },
-          { id: 4, type: "class", title: "Advanced Techniques", date: "2024-01-17", status: "completed", icon: Target }
-        ])
+        let attendanceResult: any = null
+
+        if (attendanceResponse.ok) {
+          attendanceResult = await attendanceResponse.json()
+          setAttendanceData(attendanceResult)
+
+          console.log("✅ Attendance data received:", attendanceResult)
+
+          // Set dashboard statistics based on real data
+          setDashboardStats({
+            enrolledCourses: profileData?.enrollments?.length || 0,
+            completedClasses: attendanceResult.statistics?.attended || 0,
+            upcomingClasses: 5, // This could be calculated from schedule data
+            overallProgress: 75, // This could be calculated based on course progress
+            attendanceRate: attendanceResult.statistics?.percentage || 0,
+            totalHours: Math.round((attendanceResult.statistics?.attended || 0) * 1.5), // Assuming 1.5 hours per class
+            achievements: 8, // This could be calculated from achievements data
+            rank: 12, // This could be calculated from performance data
+            streakDays: 15, // This could be calculated from consecutive attendance
+            nextClassTime: "Today, 6:00 PM", // This could come from schedule data
+            totalClasses: attendanceResult.statistics?.total_classes || 0,
+            absentClasses: attendanceResult.statistics?.absent || 0,
+            lateClasses: attendanceResult.statistics?.late || 0
+          })
+        } else {
+          console.error("❌ Attendance API failed:", attendanceResponse.status, attendanceResponse.statusText)
+
+          // Fallback to basic stats if attendance fetch fails
+          setDashboardStats({
+            enrolledCourses: profileData?.enrollments?.length || 0,
+            completedClasses: 0,
+            upcomingClasses: 0,
+            overallProgress: 0,
+            attendanceRate: 0,
+            totalHours: 0,
+            achievements: 0,
+            rank: 0,
+            streakDays: 0,
+            nextClassTime: "No upcoming classes",
+            totalClasses: 0,
+            absentClasses: 0,
+            lateClasses: 0
+          })
+        }
+
+        // Set recent activity based on attendance data
+        const recentAttendance = attendanceResult?.attendance_records?.slice(0, 4) || []
+        const activityList = recentAttendance.map((record: any, index: number) => ({
+          id: index + 1,
+          type: "class",
+          title: record.course || "Class",
+          date: record.date || "Unknown",
+          status: record.status === "present" ? "completed" : record.status,
+          icon: record.status === "present" ? BookOpen : record.status === "late" ? Clock : Target,
+          branch: record.branch || "Unknown Branch"
+        }))
+
+        // Add some default activities if no attendance data
+        if (activityList.length === 0) {
+          activityList.push(
+            { id: 1, type: "enrollment", title: "Course Enrollment", date: profileData?.created_at ? new Date(profileData.created_at).toLocaleDateString() : "Unknown", status: "completed", icon: BookOpen, branch: "N/A" }
+          )
+        }
+
+        setRecentActivity(activityList)
 
         // Set upcoming events
         setUpcomingEvents([
@@ -111,9 +198,25 @@ export default function StudentDashboard() {
           { id: 4, title: "Make Payment", description: "Pay fees and dues", icon: CreditCard, href: "/student-dashboard/payments", color: "orange" }
         ])
 
-        setLoading(false)
-      } catch (error) {
+      } catch (error: any) {
         console.error("Error loading dashboard data:", error)
+        setError(error.message || "Failed to load dashboard data")
+
+        // Set fallback data for basic functionality
+        if (user) {
+          const userData = JSON.parse(user)
+          setStudentData({
+            name: userData.full_name || `${userData.first_name} ${userData.last_name}` || "Student",
+            email: userData.email || "student@example.com",
+            studentId: userData.id || "STU-UNKNOWN",
+            joinDate: "Unknown",
+            belt: "Blue Belt",
+            nextBelt: "Purple Belt",
+            profileImage: "/placeholder.svg",
+            course: "Unknown Course"
+          })
+        }
+      } finally {
         setLoading(false)
       }
     }
@@ -167,6 +270,42 @@ export default function StudentDashboard() {
     )
   }
 
+  // Show error state if there's an error but we have some basic data
+  if (error && !studentData) {
+    return (
+      <StudentDashboardLayout
+        studentName="Student"
+        onLogout={handleLogout}
+        pageTitle="Dashboard"
+        pageDescription="Unable to load dashboard data"
+      >
+        <div className="space-y-6">
+          <Card className="border-red-200 bg-red-50">
+            <CardContent className="p-6">
+              <div className="flex items-center space-x-3">
+                <div className="p-2 bg-red-100 rounded-full">
+                  <AlertCircle className="w-5 h-5 text-red-600" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-red-800">Error Loading Dashboard</h3>
+                  <p className="text-sm text-red-600 mt-1">{error}</p>
+                  <Button
+                    onClick={() => window.location.reload()}
+                    variant="outline"
+                    size="sm"
+                    className="mt-3 border-red-300 text-red-700 hover:bg-red-100"
+                  >
+                    Retry
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </StudentDashboardLayout>
+    )
+  }
+
   return (
     <StudentDashboardLayout
       studentName={studentData?.name || "Student"}
@@ -175,6 +314,22 @@ export default function StudentDashboard() {
       pageDescription={`Welcome back, ${studentData?.name || "Student"}! Here's your training overview.`}
     >
       <div className="space-y-8">
+        {/* Error Warning Banner */}
+        {error && studentData && (
+          <Card className="border-yellow-200 bg-yellow-50">
+            <CardContent className="p-4">
+              <div className="flex items-center space-x-3">
+                <AlertCircle className="w-5 h-5 text-yellow-600" />
+                <div>
+                  <p className="text-sm text-yellow-800">
+                    Some data may not be up to date. {error}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Stats Overview */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {/* Enrolled Courses */}

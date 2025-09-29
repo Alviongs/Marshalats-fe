@@ -65,7 +65,7 @@ export default function SelectCoursePage() {
     const fetchCategories = async () => {
       try {
         setIsLoading(true)
-        const response = await fetch('http://31.97.224.169:8003/api/categories/public/details?active_only=true')
+        const response = await fetch('http://localhost:8003/api/categories/public/details?active_only=true')
         
         if (!response.ok) {
           throw new Error('Failed to fetch categories')
@@ -98,7 +98,7 @@ export default function SelectCoursePage() {
         setIsLoadingCourses(true)
         setError(null) // Clear any previous errors
 
-        const response = await fetch(`http://31.97.224.169:8003/api/courses/public/by-category/${formData.category_id}?active_only=true`)
+        const response = await fetch(`http://localhost:8003/api/courses/public/by-category/${formData.category_id}?active_only=true`)
 
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`)
