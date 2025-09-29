@@ -177,33 +177,7 @@ export default function BranchManagerReports() {
                     {category.description}
                   </p>
                   
-                  {/* Sample Reports Preview */}
-                  <div className="space-y-2">
-                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
-                      Available Reports:
-                    </p>
-                    {category.reports.slice(0, 3).map((report) => {
-                      const ReportIcon = report.icon
-                      return (
-                        <div 
-                          key={report.id} 
-                          className="flex items-center space-x-2 text-xs text-gray-600 hover:text-blue-600 transition-colors"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            handleReportClick(category.id, report.id)
-                          }}
-                        >
-                          <ReportIcon className="w-3 h-3" />
-                          <span className="truncate">{report.name}</span>
-                        </div>
-                      )
-                    })}
-                    {category.reports.length > 3 && (
-                      <div className="text-xs text-blue-600 font-medium">
-                        +{category.reports.length - 3} more reports
-                      </div>
-                    )}
-                  </div>
+
                 </CardContent>
               </Card>
             )
