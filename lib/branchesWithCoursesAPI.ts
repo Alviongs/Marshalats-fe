@@ -121,7 +121,7 @@ export async function fetchBranchesWithCourses(
 
   const queryString = params.toString()
   // Use backend API instead of frontend mock API
-  const url = `http://31.97.224.169:8003/api/branches-with-courses${queryString ? `?${queryString}` : ''}`
+  const url = `http://localhost:8003/api/branches-with-courses${queryString ? `?${queryString}` : ''}`
 
   const response = await fetch(url, {
     method: 'GET',
