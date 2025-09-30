@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuPortal } from "@/components/ui/dropdown-menu"
-import { Menu, Home, BookOpen, User, Users, LogOut, Calendar, ClipboardList, TrendingUp, MessageSquare, Clock, ChevronDown, MoreVertical, DollarSign } from "lucide-react"
+import { Menu, Home, BookOpen, User, Users, LogOut, Calendar, TrendingUp, MessageSquare, ChevronDown, MoreVertical, DollarSign, ClipboardCheck, BarChart3 } from "lucide-react"
 
 interface CoachDashboardHeaderProps {
   currentPage?: string
@@ -96,20 +96,7 @@ export default function CoachDashboardHeader({
       exact: false,
       description: "Track attendance"
     },
-    {
-      name: "Schedule",
-      path: "/coach-dashboard/schedule",
-      icon: Clock,
-      exact: false,
-      description: "Class schedule"
-    },
-    {
-      name: "Assessments",
-      path: "/coach-dashboard/assessments",
-      icon: ClipboardList,
-      exact: false,
-      description: "Student assessments"
-    },
+
     {
       name: "Reports",
       path: "/coach-dashboard/reports",
@@ -238,27 +225,49 @@ export default function CoachDashboardHeader({
                 )
               })}
 
-              {/* More Menu Dropdown */}
+              {/* Quick Actions Dropdown */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="mb-3 text-gray-600 hover:text-gray-800 p-2 cursor-pointer rounded-lg hover:bg-gray-100/80 transition-all duration-200 hover:shadow-sm">
+                  <button className="pb-2 px-2 text-gray-700 hover:text-gray-900 cursor-pointer rounded-lg bg-gray-50 hover:bg-gray-100 transition-all duration-200 shadow-sm hover:shadow-md flex items-center justify-center border border-gray-200 hover:border-gray-300 flex-shrink-0 min-w-[40px]">
                     <MoreVertical className="w-5 h-5" />
                   </button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent className="bg-white/95 backdrop-blur-md border border-gray-200/50 shadow-xl rounded-lg p-1 overflow-hidden">
-                  <DropdownMenuItem
-                    onClick={() => handleDesktopNavigation("/coach-dashboard/settings")}
-                    className="hover:bg-gray-100/80 rounded-md transition-colors duration-200 font-medium text-gray-700 hover:text-gray-900"
+                <DropdownMenuPortal>
+                  <DropdownMenuContent
+                    align="end"
+                    className="w-56 z-[1000] bg-white/95 backdrop-blur-md border border-gray-200/50 shadow-xl rounded-lg p-2 overflow-hidden"
+                    sideOffset={8}
                   >
-                    Settings
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => handleDesktopNavigation("/coach-dashboard/help")}
-                    className="hover:bg-gray-100/80 rounded-md transition-colors duration-200 font-medium text-gray-700 hover:text-gray-900"
-                  >
-                    Help & Support
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
+                    <DropdownMenuItem
+                      onClick={() => handleDesktopNavigation("/coach-dashboard/attendance")}
+                      className="cursor-pointer hover:bg-gray-100/80 rounded-md px-4 py-3 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors duration-200"
+                    >
+                      <ClipboardCheck className="w-4 h-4 mr-2" />
+                      Mark Attendance
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => handleDesktopNavigation("/coach-dashboard/students")}
+                      className="cursor-pointer hover:bg-gray-100/80 rounded-md px-4 py-3 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors duration-200"
+                    >
+                      <Users className="w-4 h-4 mr-2" />
+                      View Students
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => handleDesktopNavigation("/coach-dashboard/reports")}
+                      className="cursor-pointer hover:bg-gray-100/80 rounded-md px-4 py-3 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors duration-200"
+                    >
+                      <BarChart3 className="w-4 h-4 mr-2" />
+                      Progress Reports
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => handleDesktopNavigation("/coach-dashboard/messages")}
+                      className="cursor-pointer hover:bg-gray-100/80 rounded-md px-4 py-3 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors duration-200"
+                    >
+                      <MessageSquare className="w-4 h-4 mr-2" />
+                      Messages
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenuPortal>
               </DropdownMenu>
             </nav>
           </div>
@@ -293,12 +302,6 @@ export default function CoachDashboardHeader({
                       className="cursor-pointer hover:bg-gray-100/80 rounded-md px-4 py-3 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors duration-200"
                     >
                       Profile
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => handleDesktopNavigation("/coach-dashboard/settings")}
-                      className="cursor-pointer hover:bg-gray-100/80 rounded-md px-4 py-3 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors duration-200"
-                    >
-                      Settings
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       onClick={handleLogout}

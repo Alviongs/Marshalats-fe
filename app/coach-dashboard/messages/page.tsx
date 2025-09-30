@@ -52,8 +52,18 @@ export default function CoachMessagesPage() {
     const initializeData = async () => {
       try {
         // Check coach authentication
+        console.log('🔍 DEBUG: Initializing coach messages page...')
         const authResult = checkCoachAuth()
+        console.log('🔍 DEBUG: Coach auth result:', {
+          isAuthenticated: authResult.isAuthenticated,
+          hasCoach: !!authResult.coach,
+          hasToken: !!authResult.token,
+          coachId: authResult.coach?.id,
+          tokenPreview: authResult.token?.substring(0, 20) + '...'
+        })
+
         if (!authResult.isAuthenticated || !authResult.coach) {
+          console.log('🔍 DEBUG: Coach not authenticated, redirecting to login')
           router.push("/coach/login")
           return
         }
@@ -61,6 +71,7 @@ export default function CoachMessagesPage() {
         setCoachData(authResult.coach)
 
         // Load initial data
+        console.log('🔍 DEBUG: Loading initial message data...')
         await Promise.all([
           loadConversations(),
           loadMessageStats(),
@@ -82,11 +93,43 @@ export default function CoachMessagesPage() {
   const loadConversations = async () => {
     try {
       setIsLoadingMessages(true)
+      setError(null) // Clear previous errors
+      console.log("🔍 DEBUG: Loading conversations for coach...")
+
       const response = await messageAPI.getConversations(0, 50)
-      setConversations(response.conversations)
+      console.log("🔍 DEBUG: Conversations response:", response)
+
+      setConversations(response.conversations || [])
     } catch (error) {
       console.error("Error loading conversations:", error)
-      setError("Failed to load conversations")
+
+      // Provide more specific error messages based on error type
+      if (error instanceof Error) {
+        if (error.message.includes('401') || error.message.includes('Unauthorized')) {
+          setError("Authentication failed. Please log out and log back in.")
+          console.log("🔍 DEBUG: Authentication error - redirecting to login")
+          setTimeout(() => router.push("/coach/login"), 2000)
+          return
+        } else if (error.message.includes('403') || error.message.includes('Forbidden')) {
+          setError("You don't have permission to access messages. Please contact your administrator.")
+        } else if (error.message.includes('404')) {
+          console.log("🔍 DEBUG: 404 error detected, loading sample data")
+          loadSampleData()
+          return
+        } else if (error.message.includes('500')) {
+          setError("Server error occurred. Please try again later or contact support.")
+        } else if (error.message.includes('Network')) {
+          setError("Network connection error. Please check your internet connection and try again.")
+        } else {
+          // For other errors, provide a generic message but still try sample data
+          console.log("🔍 DEBUG: API error detected, loading sample data as fallback")
+          setError("Unable to connect to messaging service. Showing demo data.")
+          loadSampleData()
+          return
+        }
+      } else {
+        setError("An unexpected error occurred while loading messages.")
+      }
     } finally {
       setIsLoadingMessages(false)
     }
@@ -94,10 +137,20 @@ export default function CoachMessagesPage() {
 
   const loadMessageStats = async () => {
     try {
+      console.log("🔍 DEBUG: Loading message stats for coach...")
       const response = await messageAPI.getMessageStats()
+      console.log("🔍 DEBUG: Message stats response:", response)
       setMessageStats(response.stats)
     } catch (error) {
       console.error("Error loading message stats:", error)
+      // Set default stats if API is not available
+      setMessageStats({
+        total_messages: 0,
+        unread_messages: 0,
+        sent_messages: 0,
+        received_messages: 0,
+        archived_messages: 0
+      })
     }
   }
 
@@ -162,10 +215,153 @@ export default function CoachMessagesPage() {
         console.log("🔍 DEBUG: Checking all coach data fields:", Object.keys(coachData || {}))
       }
 
-      setRecipients(response.recipients)
+      setRecipients(response.recipients || [])
     } catch (error) {
       console.error("Error loading recipients:", error)
+      // Set empty recipients array if API is not available
+      setRecipients([])
     }
+  }
+
+  // Load sample data for demo when API is not available
+  const loadSampleData = () => {
+    console.log("🔍 DEBUG: Loading sample message data for coach demo")
+
+    // Sample conversations
+    const sampleConversations: Conversation[] = [
+      {
+        thread_id: "thread-1",
+        subject: "Welcome to Karate Class",
+        participants: [
+          {
+            user_id: "student-1",
+            user_type: "student",
+            user_name: "Rahul Kumar",
+            user_email: "rahul@example.com",
+            branch_id: coachData?.branch_id
+          },
+          {
+            user_id: coachData?.id || "coach-1",
+            user_type: "coach",
+            user_name: coachData?.full_name || "Coach",
+            user_email: coachData?.email || "coach@example.com",
+            branch_id: coachData?.branch_id
+          }
+        ],
+        message_count: 3,
+        last_message: {
+          id: "msg-1",
+          sender_name: "Rahul Kumar",
+          sender_type: "student",
+          recipient_name: coachData?.full_name || "Coach",
+          recipient_type: "coach",
+          subject: "Welcome to Karate Class",
+          content: "Thank you for the warm welcome! I'm excited to start learning karate.",
+          priority: "normal",
+          status: "delivered",
+          is_read: false,
+          is_archived: false,
+          is_reply: true,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        },
+        last_message_at: new Date().toISOString()
+      },
+      {
+        thread_id: "thread-2",
+        subject: "Schedule Change Request",
+        participants: [
+          {
+            user_id: "student-2",
+            user_type: "student",
+            user_name: "Priya Sharma",
+            user_email: "priya@example.com",
+            branch_id: coachData?.branch_id
+          },
+          {
+            user_id: coachData?.id || "coach-1",
+            user_type: "coach",
+            user_name: coachData?.full_name || "Coach",
+            user_email: coachData?.email || "coach@example.com",
+            branch_id: coachData?.branch_id
+          }
+        ],
+        message_count: 2,
+        last_message: {
+          id: "msg-2",
+          sender_name: "Priya Sharma",
+          sender_type: "student",
+          recipient_name: coachData?.full_name || "Coach",
+          recipient_type: "coach",
+          subject: "Schedule Change Request",
+          content: "Hi Coach, I need to change my class timing from morning to evening. Is that possible?",
+          priority: "normal",
+          status: "delivered",
+          is_read: false,
+          is_archived: false,
+          is_reply: false,
+          created_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // 2 hours ago
+          updated_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString()
+        },
+        last_message_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString()
+      }
+    ]
+
+    // Sample recipients
+    const sampleRecipients: MessageRecipient[] = [
+      {
+        id: "student-1",
+        name: "Rahul Kumar",
+        email: "rahul@example.com",
+        type: "student",
+        branch_id: coachData?.branch_id,
+        is_active: true
+      },
+      {
+        id: "student-2",
+        name: "Priya Sharma",
+        email: "priya@example.com",
+        type: "student",
+        branch_id: coachData?.branch_id,
+        is_active: true
+      },
+      {
+        id: "student-3",
+        name: "Amit Patel",
+        email: "amit@example.com",
+        type: "student",
+        branch_id: coachData?.branch_id,
+        is_active: true
+      },
+      {
+        id: "bm-1",
+        name: "Branch Manager",
+        email: "manager@example.com",
+        type: "branch_manager",
+        branch_id: coachData?.branch_id,
+        is_active: true
+      },
+      {
+        id: "admin-1",
+        name: "Super Admin",
+        email: "admin@example.com",
+        type: "superadmin",
+        is_active: true
+      }
+    ]
+
+    setConversations(sampleConversations)
+    setRecipients(sampleRecipients)
+    setMessageStats({
+      total_messages: 5,
+      unread_messages: 2,
+      sent_messages: 3,
+      received_messages: 2,
+      archived_messages: 0
+    })
+
+    // Show demo notice
+    setError("Demo Mode: Message system is being configured. You're viewing sample data to see how the messaging interface will work once the backend is fully deployed.")
   }
 
   const loadThreadMessages = async (threadId: string) => {
@@ -217,14 +413,18 @@ export default function CoachMessagesPage() {
         console.log("🔍 DEBUG: Found existing conversation:", existingConversation.thread_id)
       }
 
-      await messageAPI.sendMessage({
+      const messageData = {
         recipient_id: composeRecipient,
         recipient_type: recipient.type,
         subject: composeSubject,
         content: composeContent,
         priority: composePriority,
         thread_id: existingConversation?.thread_id  // Use existing thread if found
-      })
+      }
+
+      console.log("🔍 DEBUG: Sending message with data:", messageData)
+      const result = await messageAPI.sendMessage(messageData)
+      console.log("🔍 DEBUG: Message sent successfully:", result)
 
       // Reset form
       setComposeRecipient("")
@@ -233,13 +433,34 @@ export default function CoachMessagesPage() {
       setComposePriority("normal")
       setIsComposeDialogOpen(false)
 
+      // Show success message
+      setError(null)
+
       // Reload conversations
       await loadConversations()
       await loadMessageStats()
 
     } catch (error) {
       console.error("Error sending message:", error)
-      setError("Failed to send message. Please try again.")
+
+      // Provide specific error messages based on error type
+      if (error instanceof Error) {
+        if (error.message.includes('401') || error.message.includes('Unauthorized')) {
+          setError("Authentication failed. Please log out and log back in to send messages.")
+        } else if (error.message.includes('403') || error.message.includes('Forbidden')) {
+          setError("You don't have permission to send messages to this recipient.")
+        } else if (error.message.includes('400') || error.message.includes('Bad Request')) {
+          setError("Invalid message data. Please check all fields and try again.")
+        } else if (error.message.includes('500')) {
+          setError("Server error occurred while sending message. Please try again later.")
+        } else if (error.message.includes('Network')) {
+          setError("Network connection error. Please check your internet connection and try again.")
+        } else {
+          setError(`Failed to send message: ${error.message}`)
+        }
+      } else {
+        setError("Failed to send message. Please try again.")
+      }
     } finally {
       setIsSending(false)
     }
@@ -325,7 +546,25 @@ export default function CoachMessagesPage() {
 
     } catch (error) {
       console.error("Error sending reply:", error)
-      setError("Failed to send reply. Please try again.")
+
+      // Provide specific error messages for replies
+      if (error instanceof Error) {
+        if (error.message.includes('401') || error.message.includes('Unauthorized')) {
+          setError("Authentication failed. Please log out and log back in to send replies.")
+        } else if (error.message.includes('403') || error.message.includes('Forbidden')) {
+          setError("You don't have permission to reply to this message.")
+        } else if (error.message.includes('400') || error.message.includes('Bad Request')) {
+          setError("Invalid reply data. Please check your message and try again.")
+        } else if (error.message.includes('500')) {
+          setError("Server error occurred while sending reply. Please try again later.")
+        } else if (error.message.includes('Network')) {
+          setError("Network connection error. Please check your internet connection and try again.")
+        } else {
+          setError(`Failed to send reply: ${error.message}`)
+        }
+      } else {
+        setError("Failed to send reply. Please try again.")
+      }
     } finally {
       setIsReplying(false)
     }
@@ -401,7 +640,8 @@ export default function CoachMessagesPage() {
     )
   }
 
-  if (error && !conversations.length) {
+  // Only show error screen if there's an error AND no conversations (including sample data)
+  if (error && !conversations.length && !error.includes("Demo Mode")) {
     return (
       <div className="min-h-screen bg-gray-50">
         <CoachDashboardHeader
@@ -414,7 +654,7 @@ export default function CoachMessagesPage() {
               <CardContent className="flex items-center justify-center h-96">
                 <div className="text-center">
                   <div className="text-red-500 mb-4">⚠️</div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">Error Loading Messages</h3>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">Message System Unavailable</h3>
                   <p className="text-gray-500 mb-4">{error}</p>
                   <Button onClick={() => window.location.reload()}>
                     Try Again
@@ -437,6 +677,25 @@ export default function CoachMessagesPage() {
 
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
+          {/* Demo Mode Notice */}
+          {error && error.includes("Demo Mode") && (
+            <div className="mb-6">
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div className="flex items-start">
+                  <div className="flex-shrink-0">
+                    <MessageCircle className="w-5 h-5 text-blue-600 mt-0.5" />
+                  </div>
+                  <div className="ml-3">
+                    <h3 className="text-sm font-medium text-blue-800">Demo Mode Active</h3>
+                    <p className="text-sm text-blue-700 mt-1">
+                      {error}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Page Header */}
           <div className="flex justify-between items-center mb-8">
             <div>

@@ -262,12 +262,6 @@ export default function StudentDashboardHeader({
                     >
                       Profile
                     </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => handleNavigation("/student-dashboard/settings")}
-                      className="cursor-pointer hover:bg-gray-100/80 rounded-md px-4 py-3 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors duration-200"
-                    >
-                      Settings
-                    </DropdownMenuItem>
                     <div className="h-px bg-gray-200/60 my-2"></div>
                     <DropdownMenuItem
                       onClick={handleLogout}

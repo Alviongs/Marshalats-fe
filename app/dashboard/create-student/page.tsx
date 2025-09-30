@@ -248,43 +248,9 @@ export default function CreateStudent() {
         // Load coaches - Note: This endpoint may require authentication in the future
         setIsLoadingCoaches(true)
 
-        // For now, we'll use mock data since the coaches endpoint requires authentication
-        // In the future, you can implement a public coaches endpoint or use authentication
-        const mockCoaches = [
-          {
-            id: "coach-1",
-            first_name: "John",
-            last_name: "Smith",
-            full_name: "John Smith",
-            email: "john.smith@example.com",
-            phone: "+1234567890",
-            areas_of_expertise: ["Karate", "Self Defense"],
-            is_active: true
-          },
-          {
-            id: "coach-2",
-            first_name: "Sarah",
-            last_name: "Johnson",
-            full_name: "Sarah Johnson",
-            email: "sarah.johnson@example.com",
-            phone: "+1234567891",
-            areas_of_expertise: ["Taekwondo", "Competition Training"],
-            is_active: true
-          },
-          {
-            id: "coach-3",
-            first_name: "Mike",
-            last_name: "Chen",
-            full_name: "Mike Chen",
-            email: "mike.chen@example.com",
-            phone: "+1234567892",
-            areas_of_expertise: ["Martial Arts", "Kickboxing"],
-            is_active: true
-          }
-        ]
-
-        setCoaches(mockCoaches)
-        setFilteredCoaches(mockCoaches)
+        // Coaches will be loaded dynamically when course is selected
+        setCoaches([])
+        setFilteredCoaches([])
 
         // Uncomment this when you have a public coaches endpoint:
         // const coachesResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/coaches/public/all?active_only=true`)
@@ -324,27 +290,52 @@ export default function CreateStudent() {
     }
   }, [formData.category, courses])
 
-  // Filter coaches based on selected course/category
+  // Load coaches when course is selected
   useEffect(() => {
-    if (coaches.length > 0) {
-      let filtered = coaches
-
-      // If a category is selected, filter coaches by expertise
-      if (formData.category) {
-        const selectedCategory = categories.find(cat => cat.id === formData.category)
-        if (selectedCategory) {
-          filtered = coaches.filter(coach =>
-            coach.areas_of_expertise.some(expertise =>
-              expertise.toLowerCase().includes(selectedCategory.name.toLowerCase()) ||
-              selectedCategory.name.toLowerCase().includes(expertise.toLowerCase())
-            )
-          )
-        }
+    const loadCoachesForCourse = async () => {
+      if (!formData.course) {
+        setCoaches([])
+        setFilteredCoaches([])
+        return
       }
 
-      setFilteredCoaches(filtered)
+      try {
+        setIsLoadingCoaches(true)
+        console.log('📡 Loading coaches for course:', formData.course)
+
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/coaches/public/by-course/${formData.course}`)
+
+        if (response.ok) {
+          const data = await response.json()
+          console.log('✅ Coaches loaded:', data.coaches?.length || 0, 'coaches')
+          setCoaches(data.coaches || [])
+          setFilteredCoaches(data.coaches || [])
+        } else {
+          console.error('❌ Failed to load coaches for course:', response.status)
+          setCoaches([])
+          setFilteredCoaches([])
+          toast({
+            title: "Warning",
+            description: "Failed to load coaches for selected course.",
+            variant: "destructive",
+          })
+        }
+      } catch (error) {
+        console.error('Error loading coaches for course:', error)
+        setCoaches([])
+        setFilteredCoaches([])
+        toast({
+          title: "Error",
+          description: "Failed to load coaches. Please try again.",
+          variant: "destructive",
+        })
+      } finally {
+        setIsLoadingCoaches(false)
+      }
     }
-  }, [formData.category, coaches, categories])
+
+    loadCoachesForCourse()
+  }, [formData.course, toast])
 
   // Load branches when location changes
   useEffect(() => {

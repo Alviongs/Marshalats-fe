@@ -143,9 +143,9 @@ export default function DashboardHeader({ currentPage = "Dashboard" }: Dashboard
   return (
     <header className="bg-white shadow-sm border border-gray-200/80 backdrop-blur-sm mx-4 xl:mx-12 mt-6 rounded-lg">
       <div className="w-full px-4 lg:px-6 py-2">
-        <div className="flex justify-between items-center h-auto roboto">
+        <div className="flex justify-between items-center h-auto roboto gap-4">
           {/* Logo and Navigation */}
-          <div className="flex items-center space-x-2 min-w-0">
+          <div className="flex items-center space-x-2 min-w-0 flex-1">
             <div className="  flex-shrink-0">
               <img
                 src="/footer_logo.png"
@@ -277,14 +277,6 @@ export default function DashboardHeader({ currentPage = "Dashboard" }: Dashboard
                         >
                           Coach Attendance
                         </button>
-                        <button
-                          onClick={() => handleMobileNavigation("/dashboard/attendance/reports")}
-                          className={`w-full text-left px-3 py-1 rounded-md hover:bg-gray-100 text-sm text-gray-600 ${
-                            isActivePath("/dashboard/attendance/reports") ? "bg-yellow-50 text-yellow-700" : ""
-                          }`}
-                        >
-                          Reports & Analytics
-                        </button>
                       </div>
                       <button
                         onClick={() => handleMobileNavigation("/dashboard/reports")}
@@ -312,10 +304,10 @@ export default function DashboardHeader({ currentPage = "Dashboard" }: Dashboard
               </SheetContent>
             </Sheet>
 
-            <nav className="hidden lg:flex items-center space-x-5 xl:space-x-4">
+            <nav className="hidden lg:flex items-center space-x-2 xl:space-x-3 2xl:space-x-4">
               <button
                 onClick={() => router.push("/dashboard")}
-                className={`pb-2 px-1 text-sm font-semibold whitespace-nowrap cursor-pointer border-b-2 transition-all duration-300 hover:scale-105 ${
+                className={`pb-2 px-1 text-xs lg:text-sm font-semibold whitespace-nowrap cursor-pointer border-b-2 transition-all duration-300 hover:scale-105 ${
                   pathname === "/dashboard"
                     ? "text-gray-900 border-yellow-400 shadow-sm items-center"
                     : "text-gray-600 hover:text-gray-900 border-transparent hover:border-gray-300"
@@ -325,7 +317,7 @@ export default function DashboardHeader({ currentPage = "Dashboard" }: Dashboard
               </button>
               <button
                 onClick={() => router.push("/dashboard/branches")}
-                className={`pb-2 px-1 text-sm font-semibold whitespace-nowrap cursor-pointer border-b-2 transition-all duration-300 hover:scale-105 ${
+                className={`pb-2 px-1 text-xs lg:text-sm font-semibold whitespace-nowrap cursor-pointer border-b-2 transition-all duration-300 hover:scale-105 ${
                   isActivePath("/dashboard/branches")
                     ? "text-gray-900 border-yellow-400 shadow-sm"
                     : "text-gray-600 hover:text-gray-900 border-transparent hover:border-gray-300"
@@ -335,7 +327,7 @@ export default function DashboardHeader({ currentPage = "Dashboard" }: Dashboard
               </button>
               <button
                 onClick={() => router.push("/dashboard/coaches")}
-                className={`pb-2 px-1 text-sm font-semibold whitespace-nowrap cursor-pointer border-b-2 transition-all duration-300 hover:scale-105 ${
+                className={`pb-2 px-1 text-xs lg:text-sm font-semibold whitespace-nowrap cursor-pointer border-b-2 transition-all duration-300 hover:scale-105 ${
                   isActivePath("/dashboard/coaches")
                     ? "text-gray-900 border-yellow-400 shadow-sm"
                     : "text-gray-600 hover:text-gray-900 border-transparent hover:border-gray-300"
@@ -345,7 +337,7 @@ export default function DashboardHeader({ currentPage = "Dashboard" }: Dashboard
               </button>
               <button
                 onClick={() => router.push("/dashboard/branch-managers")}
-                className={`pb-2 px-1 text-sm font-semibold whitespace-nowrap cursor-pointer border-b-2 transition-all duration-300 hover:scale-105 ${
+                className={`pb-2 px-1 text-xs lg:text-sm font-semibold whitespace-nowrap cursor-pointer border-b-2 transition-all duration-300 hover:scale-105 ${
                   isActivePath("/dashboard/branch-managers")
                     ? "text-gray-900 border-yellow-400 shadow-sm"
                     : "text-gray-600 hover:text-gray-900 border-transparent hover:border-gray-300"
@@ -355,7 +347,7 @@ export default function DashboardHeader({ currentPage = "Dashboard" }: Dashboard
               </button>
               <button
                 onClick={() => router.push("/dashboard/students")}
-                className={`pb-2 px-1 text-sm font-semibold whitespace-nowrap cursor-pointer border-b-2 transition-all duration-300 hover:scale-105 ${
+                className={`pb-2 px-1 text-xs lg:text-sm font-semibold whitespace-nowrap cursor-pointer border-b-2 transition-all duration-300 hover:scale-105 ${
                   isActivePath("/dashboard/students")
                     ? "text-gray-900 border-yellow-400 shadow-sm"
                     : "text-gray-600 hover:text-gray-900 border-transparent hover:border-gray-300"
@@ -366,7 +358,7 @@ export default function DashboardHeader({ currentPage = "Dashboard" }: Dashboard
 
               <button
                 onClick={() => router.push("/dashboard/messages")}
-                className={`pb-2 px-1 text-sm font-semibold whitespace-nowrap cursor-pointer border-b-2 transition-all duration-300 hover:scale-105 ${
+                className={`pb-2 px-1 text-xs lg:text-sm font-semibold whitespace-nowrap cursor-pointer border-b-2 transition-all duration-300 hover:scale-105 ${
                   isActivePath("/dashboard/messages")
                     ? "text-gray-900 border-yellow-400 shadow-sm"
                     : "text-gray-600 hover:text-gray-900 border-transparent hover:border-gray-300"
@@ -377,7 +369,7 @@ export default function DashboardHeader({ currentPage = "Dashboard" }: Dashboard
 
               <button
                 onClick={() => router.push("/dashboard/courses")}
-                className={`pb-2 px-1 text-sm font-semibold whitespace-nowrap cursor-pointer border-b-2 transition-all duration-300 hover:scale-105 ${
+                className={`pb-2 px-1 text-xs lg:text-sm font-semibold whitespace-nowrap cursor-pointer border-b-2 transition-all duration-300 hover:scale-105 ${
                   isActivePath("/dashboard/courses")
                     ? "text-gray-900 border-yellow-400 shadow-sm"
                     : "text-gray-600 hover:text-gray-900 border-transparent hover:border-gray-300"
@@ -388,7 +380,7 @@ export default function DashboardHeader({ currentPage = "Dashboard" }: Dashboard
 
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className={`pb-2 px-1 text-sm font-semibold whitespace-nowrap flex items-center cursor-pointer border-b-2 transition-all duration-300 hover:scale-105 ${
+                  <button className={`pb-2 px-1 text-xs lg:text-sm font-semibold whitespace-nowrap flex items-center cursor-pointer border-b-2 transition-all duration-300 hover:scale-105 ${
                     isActivePath("/dashboard/attendance")
                       ? "text-gray-900 border-yellow-400 shadow-sm"
                       : "text-gray-600 hover:text-gray-900 border-transparent hover:border-gray-300"
@@ -397,36 +389,36 @@ export default function DashboardHeader({ currentPage = "Dashboard" }: Dashboard
                     <ChevronDown className="w-3 h-3 ml-1 transition-transform duration-200 group-hover:rotate-180" />
                   </button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent className="bg-white/95 backdrop-blur-md border border-gray-200/50 shadow-xl rounded-lg p-1 overflow-hidden">
-                  <DropdownMenuItem
-                    onClick={() => router.push("/dashboard/attendance")}
-                    className="hover:bg-gray-100/80 rounded-md transition-colors duration-200 font-medium text-gray-700 hover:text-gray-900"
+                <DropdownMenuPortal>
+                  <DropdownMenuContent
+                    align="start"
+                    className="w-56 z-[1000] bg-white/95 backdrop-blur-md border border-gray-200/50 shadow-xl rounded-lg p-2 overflow-hidden"
+                    sideOffset={8}
                   >
-                    Overview
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => router.push("/dashboard/attendance/students")}
-                    className="hover:bg-gray-100/80 rounded-md transition-colors duration-200 font-medium text-gray-700 hover:text-gray-900"
-                  >
-                    Student Attendance
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => router.push("/dashboard/attendance/coaches")}
-                    className="hover:bg-gray-100/80 rounded-md transition-colors duration-200 font-medium text-gray-700 hover:text-gray-900"
-                  >
-                    Coach Attendance
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => router.push("/dashboard/attendance/reports")}
-                    className="hover:bg-gray-100/80 rounded-md transition-colors duration-200 font-medium text-gray-700 hover:text-gray-900"
-                  >
-                    Reports & Analytics
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
+                    <DropdownMenuItem
+                      onClick={() => router.push("/dashboard/attendance")}
+                      className="cursor-pointer hover:bg-gray-100/80 rounded-md px-4 py-3 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors duration-200"
+                    >
+                      Overview
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => router.push("/dashboard/attendance/students")}
+                      className="cursor-pointer hover:bg-gray-100/80 rounded-md px-4 py-3 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors duration-200"
+                    >
+                      Student Attendance
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => router.push("/dashboard/attendance/coaches")}
+                      className="cursor-pointer hover:bg-gray-100/80 rounded-md px-4 py-3 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors duration-200"
+                    >
+                      Coach Attendance
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenuPortal>
               </DropdownMenu>
               <button
                 onClick={() => router.push("/dashboard/reports")}
-                className={`pb-2 px-1 text-sm font-semibold whitespace-nowrap cursor-pointer border-b-2 transition-all duration-300 hover:scale-105 ${
+                className={`pb-2 px-1 text-xs lg:text-sm font-semibold whitespace-nowrap cursor-pointer border-b-2 transition-all duration-300 hover:scale-105 ${
                   isActivePath("/dashboard/reports")
                     ? "text-gray-900 border-yellow-400 shadow-sm"
                     : "text-gray-600 hover:text-gray-900 border-transparent hover:border-gray-300"
@@ -436,35 +428,41 @@ export default function DashboardHeader({ currentPage = "Dashboard" }: Dashboard
               </button>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="mb-3 text-gray-600 hover:text-gray-800 p-2 cursor-pointer rounded-lg hover:bg-gray-100/80 transition-all duration-200 hover:shadow-sm">
+                  <button className="pb-2 px-2 text-gray-700 hover:text-gray-900 cursor-pointer rounded-lg bg-gray-50 hover:bg-gray-100 transition-all duration-200 shadow-sm hover:shadow-md flex items-center justify-center border border-gray-200 hover:border-gray-300 flex-shrink-0 min-w-[40px]">
                     <MoreVertical className="w-5 h-5" />
                   </button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent className="bg-white/95 backdrop-blur-md border border-gray-200/50 shadow-xl rounded-lg p-1 overflow-hidden">
-                  <DropdownMenuItem
-                    onClick={() => router.push("/dashboard/categories")}
-                    className="hover:bg-gray-100/80 rounded-md transition-colors duration-200 font-medium text-gray-700 hover:text-gray-900"
+                <DropdownMenuPortal>
+                  <DropdownMenuContent
+                    align="end"
+                    className="w-56 z-[1000] bg-white/95 backdrop-blur-md border border-gray-200/50 shadow-xl rounded-lg p-2 overflow-hidden"
+                    sideOffset={8}
                   >
-                    Categories Management
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => router.push("/dashboard/payment-tracking")}
-                    className="hover:bg-gray-100/80 rounded-md transition-colors duration-200 font-medium text-gray-700 hover:text-gray-900"
-                  >
-                    Payment Tracking
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
+                    <DropdownMenuItem
+                      onClick={() => router.push("/dashboard/categories")}
+                      className="cursor-pointer hover:bg-gray-100/80 rounded-md px-4 py-3 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors duration-200"
+                    >
+                      Categories Management
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => router.push("/dashboard/payment-tracking")}
+                      className="cursor-pointer hover:bg-gray-100/80 rounded-md px-4 py-3 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors duration-200"
+                    >
+                      Payment Tracking
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenuPortal>
               </DropdownMenu>
             </nav>
           </div>
 
           {/* Search and User Controls */}
-          <div className="flex items-center space-x-3 lg:space-x-2 flex-shrink-0">
-            <div className="relative hidden xl:block" ref={searchContainerRef}>
+          <div className="flex items-center space-x-2 lg:space-x-3 flex-shrink-0">
+            <div className="relative hidden lg:block" ref={searchContainerRef}>
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-4 h-4" />
               <Input
-                placeholder="Try searching: User Name, Course Name, User ID"
-                className="pl-10 w-64 xl:w-80 bg-gray-50/80 border-gray-200/60 focus:bg-white focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400/20 transition-all duration-200 rounded-lg shadow-sm"
+                placeholder="Search..."
+                className="pl-10 w-40 lg:w-44 xl:w-48 bg-gray-50/80 border-gray-200/60 focus:bg-white focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400/20 transition-all duration-200 rounded-lg shadow-sm text-sm"
                 value={searchQuery}
                 onChange={handleSearchChange}
                 onKeyDown={handleSearchKeyPress}
@@ -493,7 +491,7 @@ export default function DashboardHeader({ currentPage = "Dashboard" }: Dashboard
                       <AvatarImage src="/placeholder.svg" />
                       <AvatarFallback className="bg-gradient-to-br from-yellow-400 to-yellow-500 text-white font-semibold text-xs">SA</AvatarFallback>
                     </Avatar>
-                    <span className="text-xs font-semibold text-gray-800 hidden xl:inline">Super admin</span>
+                    <span className="text-xs font-semibold text-gray-800 hidden lg:inline">Super admin</span>
                     <ChevronDown className="w-3 h-3 text-gray-600 transition-transform duration-200 group-hover:rotate-180" />
                   </Button>
                 </DropdownMenuTrigger>
@@ -508,12 +506,6 @@ export default function DashboardHeader({ currentPage = "Dashboard" }: Dashboard
                       className="cursor-pointer hover:bg-gray-100/80 rounded-md px-4 py-3 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors duration-200"
                     >
                       Profile
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => router.push("/dashboard/settings")}
-                      className="cursor-pointer hover:bg-gray-100/80 rounded-md px-4 py-3 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors duration-200"
-                    >
-                      Settings
                     </DropdownMenuItem>
                     <div className="h-px bg-gray-200/60 my-2"></div>
                     <DropdownMenuItem

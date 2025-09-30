@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Calendar as CalendarComponent } from "@/components/ui/calendar"
 import { Badge } from "@/components/ui/badge"
-import BranchManagerHeader from "@/components/branch-manager-header"
+import BranchManagerHeader from "@/components/branch-manager-dashboard-header"
 import { checkBranchManagerAuth, getBranchManagerAuthHeaders } from "@/lib/branchManagerAuth"
 
 interface AttendanceReport {
@@ -87,9 +87,9 @@ export default function BranchManagerAttendanceReportsPage() {
 
       // Load students, courses, and branches for filtering
       const [studentsRes, coursesRes, branchesRes] = await Promise.all([
-        fetch('http://31.97.224.169:8003/api/students/search', { headers }),
-        fetch('http://31.97.224.169:8003/api/courses', { headers }),
-        fetch('http://31.97.224.169:8003/api/branches', { headers })
+        fetch('http://localhost:8003/api/students/search', { headers }),
+        fetch('http://localhost:8003/api/courses', { headers }),
+        fetch('http://localhost:8003/api/branches', { headers })
       ])
 
       if (studentsRes.ok) {
@@ -135,7 +135,7 @@ export default function BranchManagerAttendanceReportsPage() {
 
       console.log(`🔄 Fetching attendance reports with filters:`, filters)
 
-      const response = await fetch(`http://31.97.224.169:8003/api/attendance/reports?${params.toString()}`, {
+      const response = await fetch(`http://localhost:8003/api/attendance/reports?${params.toString()}`, {
         method: 'GET',
         headers
       })

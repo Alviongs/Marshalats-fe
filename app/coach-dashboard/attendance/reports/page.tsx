@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Calendar as CalendarComponent } from "@/components/ui/calendar"
 import { Badge } from "@/components/ui/badge"
-import CoachHeader from "@/components/coach-header"
+import CoachHeader from "@/components/coach-dashboard-header"
 import { checkCoachAuth, getCoachAuthHeaders } from "@/lib/coachAuth"
 
 interface AttendanceReport {

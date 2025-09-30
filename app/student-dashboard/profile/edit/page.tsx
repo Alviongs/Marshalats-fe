@@ -8,10 +8,10 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import StudentDashboardLayout from "@/components/student-dashboard-layout"
-import { Save, Upload, ArrowLeft, AlertCircle, CheckCircle } from "lucide-react"
+import { Save, ArrowLeft, AlertCircle, CheckCircle } from "lucide-react"
 import { studentProfileAPI, type StudentProfile, type StudentProfileUpdateData } from "@/lib/studentProfileAPI"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 
@@ -378,31 +378,6 @@ export default function EditStudentProfilePage() {
         )}
 
         <div className="space-y-6">
-          {/* Profile Picture */}
-          <Card>
-            <CardHeader className="text-[#7D8592]">
-              <CardTitle className="text-[#4F5077]">Profile Picture</CardTitle>
-              <CardDescription>Update your profile photo</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center space-x-6">
-                <Avatar className="w-24 h-24">
-                  <AvatarImage src="/placeholder.svg" />
-                  <AvatarFallback className="bg-gradient-to-br from-yellow-400 to-yellow-500 text-white text-2xl font-bold">
-                    {formData.first_name?.charAt(0)?.toUpperCase() || "S"}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <Button variant="outline" className="flex items-center space-x-2 text-[#7D8592]">
-                      <Upload className="w-4 h-4" />
-                      <span className="">Upload New Photo</span>
-                    </Button>
-                    <p className="text-sm text-gray-400 mt-2">JPG, PNG or GIF. Max size 2MB.</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
             {/* Personal Information */}
             <Card>
               <CardHeader>

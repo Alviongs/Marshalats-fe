@@ -340,8 +340,8 @@ export default function BranchManagersListPage() {
 
   // Filter managers based on search term
   const filteredManagers = branchManagers.filter(manager =>
-    manager.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    manager.contact_info.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    manager.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (manager.contact_info?.email || manager.email || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
     manager.branch_assignment?.branch_name?.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
@@ -537,13 +537,13 @@ export default function BranchManagersListPage() {
                           <Avatar className="w-10 h-10">
                             <AvatarImage src="/placeholder.svg" />
                             <AvatarFallback>
-                              {manager.personal_info.first_name[0]}{manager.personal_info.last_name[0]}
+                              {manager.full_name ? manager.full_name.split(' ').map(n => n[0]).join('').toUpperCase() : 'BM'}
                             </AvatarFallback>
                           </Avatar>
                           <div>
                             <p className="font-medium text-gray-900">{manager.full_name}</p>
                             <p className="text-sm text-gray-500">
-                              {new Date(manager.created_at).toLocaleDateString()}
+                              {manager.created_at ? new Date(manager.created_at).toLocaleDateString() : 'No date'}
                             </p>
                           </div>
                         </div>
@@ -559,14 +559,14 @@ export default function BranchManagersListPage() {
                         
                         <div className="col-span-2 flex items-center">
                           <div>
-                            <p className="text-sm text-gray-900">{manager.contact_info.email}</p>
-                            <p className="text-sm text-gray-500">{manager.contact_info.phone}</p>
+                            <p className="text-sm text-gray-900">{manager.contact_info?.email || manager.email || 'No email'}</p>
+                            <p className="text-sm text-gray-500">{manager.contact_info?.phone || 'No phone'}</p>
                           </div>
                         </div>
                         
                         <div className="col-span-2 flex items-center">
                           <p className="text-sm text-gray-900">
-                            {manager.professional_info.designation || 'Branch Manager'}
+                            {manager.professional_info?.designation || 'Branch Manager'}
                           </p>
                         </div>
                         

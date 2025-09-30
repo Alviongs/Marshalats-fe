@@ -50,7 +50,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar as CalendarComponent } from "@/components/ui/calendar"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import DashboardHeader from "@/components/dashboard-header"
-import { SuperAdminAuth } from "@/lib/auth"
+import { TokenManager } from "@/lib/tokenManager"
 
 interface AttendanceOverviewStats {
   total_students: number
@@ -112,83 +112,144 @@ export default function AttendanceOverviewPage() {
       setLoading(true)
       setError(null)
 
-      if (!SuperAdminAuth.isAuthenticated()) {
+      if (!TokenManager.isAuthenticated()) {
         setError("Authentication required")
         return
       }
 
-      const headers = SuperAdminAuth.getAuthHeaders()
+      // Check if user is superadmin
+      const user = TokenManager.getUser()
+      if (!user || user.role !== "superadmin") {
+        setError("Superadmin access required")
+        return
+      }
+
+      const headers = TokenManager.getAuthHeaders()
       const dateStr = format(selectedDate, 'yyyy-MM-dd')
 
       console.log(`🔄 Fetching attendance overview for date: ${dateStr}`)
 
-      // Fetch students data
-      const studentsResponse = await fetch(`http://31.97.224.169:8003/api/attendance/students?date=${dateStr}`, {
+      // Fetch attendance statistics from the dedicated endpoint with date filtering
+      const statsResponse = await fetch(`http://localhost:8003/api/attendance/stats?date=${dateStr}`, {
         method: 'GET',
         headers
       })
 
-      // Fetch coaches data
-      const coachesResponse = await fetch('http://31.97.224.169:8003/api/coaches', {
+      // Fetch students attendance data
+      const studentsResponse = await fetch(`http://localhost:8003/api/attendance/students?date=${dateStr}`, {
         method: 'GET',
         headers
       })
 
-      // Fetch branches data
-      const branchesResponse = await fetch('http://31.97.224.169:8003/api/branches', {
+      // Fetch coaches attendance data
+      const coachesResponse = await fetch(`http://localhost:8003/api/attendance/coaches?date=${dateStr}`, {
         method: 'GET',
         headers
       })
 
+      // Fetch branches data for branch-wise statistics
+      const branchesResponse = await fetch('http://localhost:8003/api/branches', {
+        method: 'GET',
+        headers
+      })
+
+      let statsData = null
       let studentData = []
       let coachData = []
       let branchData = []
 
+      // Process stats response
+      if (statsResponse.ok) {
+        statsData = await statsResponse.json()
+        console.log("📊 Stats data received:", statsData)
+      } else {
+        console.warn("⚠️ Stats endpoint failed:", statsResponse.status)
+      }
+
+      // Process students response
       if (studentsResponse.ok) {
         const data = await studentsResponse.json()
         studentData = data.students || []
+        console.log(`📚 Students data received: ${studentData.length} students`)
+      } else {
+        console.warn("⚠️ Students endpoint failed:", studentsResponse.status)
       }
 
+      // Process coaches response
       if (coachesResponse.ok) {
         const data = await coachesResponse.json()
         coachData = data.coaches || []
+        console.log(`👨‍🏫 Coaches data received: ${coachData.length} coaches`)
+      } else {
+        console.warn("⚠️ Coaches endpoint failed:", coachesResponse.status)
       }
 
+      // Process branches response
       if (branchesResponse.ok) {
         const data = await branchesResponse.json()
         branchData = data.branches || []
+        console.log(`🏢 Branches data received: ${branchData.length} branches`)
+      } else {
+        console.warn("⚠️ Branches endpoint failed:", branchesResponse.status)
       }
 
-      // Calculate statistics
-      const studentStats = {
-        total: studentData.length,
-        present: studentData.filter((s: any) => s.attendance?.status === "present").length,
-        absent: studentData.filter((s: any) => s.attendance?.status === "absent").length,
-        late: studentData.filter((s: any) => s.attendance?.status === "late").length
-      }
+      // Use stats data if available, otherwise calculate from student data
+      let overviewStats: AttendanceOverviewStats
 
-      const coachStats = {
-        total: coachData.length,
-        present: 0, // We'll assume coaches are not marked yet
-        absent: 0,
-        late: 0
-      }
+      if (statsData) {
+        // Use the backend stats API data
+        overviewStats = {
+          total_students: statsData.total_students || 0,
+          total_coaches: statsData.total_coaches || 0,
+          student_present_today: statsData.today_present_students || 0,
+          student_absent_today: Math.max(0, (statsData.total_students || 0) - (statsData.today_present_students || 0)),
+          student_late_today: 0, // Not provided by current API
+          coach_present_today: statsData.today_present_coaches || 0,
+          coach_absent_today: Math.max(0, (statsData.total_coaches || 0) - (statsData.today_present_coaches || 0)),
+          coach_late_today: 0, // Not provided by current API
+          overall_attendance_rate: 0,
+          student_attendance_rate: statsData.average_student_attendance || 0,
+          coach_attendance_rate: statsData.average_coach_attendance || 0
+        }
 
-      const overviewStats: AttendanceOverviewStats = {
-        total_students: studentStats.total,
-        total_coaches: coachStats.total,
-        student_present_today: studentStats.present,
-        student_absent_today: studentStats.absent,
-        student_late_today: studentStats.late,
-        coach_present_today: coachStats.present,
-        coach_absent_today: coachStats.absent,
-        coach_late_today: coachStats.late,
-        overall_attendance_rate: studentStats.total > 0 ? 
-          ((studentStats.present + studentStats.late) / studentStats.total) * 100 : 0,
-        student_attendance_rate: studentStats.total > 0 ? 
-          ((studentStats.present + studentStats.late) / studentStats.total) * 100 : 0,
-        coach_attendance_rate: coachStats.total > 0 ? 
-          ((coachStats.present + coachStats.late) / coachStats.total) * 100 : 0
+        // Calculate overall attendance rate
+        const totalPeople = overviewStats.total_students + overviewStats.total_coaches
+        if (totalPeople > 0) {
+          const totalPresent = overviewStats.student_present_today + overviewStats.coach_present_today
+          overviewStats.overall_attendance_rate = (totalPresent / totalPeople) * 100
+        }
+      } else {
+        // Fallback: calculate from student and coach data
+        const studentStats = {
+          total: studentData.length,
+          present: studentData.filter((s: any) => s.attendance?.status === "present").length,
+          absent: studentData.filter((s: any) => s.attendance?.status === "absent" || !s.attendance).length,
+          late: studentData.filter((s: any) => s.attendance?.status === "late").length
+        }
+
+        const coachStats = {
+          total: coachData.length,
+          present: coachData.filter((c: any) => c.attendance?.status === "present").length,
+          absent: coachData.filter((c: any) => c.attendance?.status === "absent" || !c.attendance).length,
+          late: coachData.filter((c: any) => c.attendance?.status === "late").length
+        }
+
+        overviewStats = {
+          total_students: studentStats.total,
+          total_coaches: coachStats.total,
+          student_present_today: studentStats.present,
+          student_absent_today: studentStats.absent,
+          student_late_today: studentStats.late,
+          coach_present_today: coachStats.present,
+          coach_absent_today: coachStats.absent,
+          coach_late_today: coachStats.late,
+          overall_attendance_rate: (studentStats.total + coachStats.total) > 0 ?
+            ((studentStats.present + studentStats.late + coachStats.present + coachStats.late) / (studentStats.total + coachStats.total)) * 100 : 0,
+          student_attendance_rate: studentStats.total > 0 ?
+            ((studentStats.present + studentStats.late) / studentStats.total) * 100 : 0,
+          coach_attendance_rate: coachStats.total > 0 ?
+            ((coachStats.present + coachStats.late) / coachStats.total) * 100 : 0
+        }
       }
 
       setStats(overviewStats)
@@ -196,22 +257,32 @@ export default function AttendanceOverviewPage() {
       // Calculate branch-wise statistics
       const branchStatsData: BranchStats[] = branchData.map((branch: any) => {
         const branchStudents = studentData.filter((s: any) => s.branch_id === branch.id)
-        const branchCoaches = coachData.filter((c: any) => c.branch_id === branch.id)
         const presentStudents = branchStudents.filter((s: any) => s.attendance?.status === "present").length
-        
+
+        const branchCoaches = coachData.filter((c: any) => c.branch_id === branch.id)
+        const presentCoaches = branchCoaches.filter((c: any) => c.attendance?.status === "present").length
+
+        const totalPeople = branchStudents.length + branchCoaches.length
+        const totalPresent = presentStudents + presentCoaches
+
         return {
           id: branch.id,
           name: branch.branch?.name || branch.name || 'Unknown Branch',
           total_students: branchStudents.length,
           total_coaches: branchCoaches.length,
           student_present: presentStudents,
-          coach_present: 0, // Placeholder
-          attendance_rate: branchStudents.length > 0 ? (presentStudents / branchStudents.length) * 100 : 0
+          coach_present: presentCoaches,
+          attendance_rate: totalPeople > 0 ? (totalPresent / totalPeople) * 100 : 0
         }
       }).filter(branch => branch.total_students > 0 || branch.total_coaches > 0)
 
       setBranchStats(branchStatsData)
       console.log("✅ Attendance overview data loaded successfully")
+
+      // Show helpful message if no data
+      if (overviewStats.total_students === 0 && overviewStats.total_coaches === 0) {
+        console.log("ℹ️ No students or coaches found. This might be expected if no enrollments exist.")
+      }
 
     } catch (error) {
       console.error("❌ Error fetching attendance overview:", error)
@@ -265,6 +336,24 @@ export default function AttendanceOverviewPage() {
           <Alert className="mb-6 border-red-200 bg-red-50">
             <AlertCircle className="h-4 w-4 text-red-600" />
             <AlertDescription className="text-red-800">{error}</AlertDescription>
+          </Alert>
+        )}
+
+        {/* Empty State Info */}
+        {!loading && !error && stats.total_students === 0 && stats.total_coaches === 0 && (
+          <Alert className="mb-6 border-blue-200 bg-blue-50">
+            <AlertCircle className="h-4 w-4 text-blue-600" />
+            <AlertDescription className="text-blue-800">
+              <strong>No attendance data available.</strong> This could be because:
+              <ul className="mt-2 ml-4 list-disc">
+                <li>No students are enrolled in courses</li>
+                <li>No attendance records have been created yet</li>
+                <li>No coaches are assigned to branches</li>
+              </ul>
+              <p className="mt-2">
+                To get started, ensure students are enrolled in courses and attendance is being tracked.
+              </p>
+            </AlertDescription>
           </Alert>
         )}
 
@@ -334,6 +423,9 @@ export default function AttendanceOverviewPage() {
                   <p className="text-xs text-green-600">
                     {stats.student_present_today} present today
                   </p>
+                  {stats.total_students === 0 && (
+                    <p className="text-xs text-gray-400 mt-1">No enrolled students</p>
+                  )}
                 </div>
               </div>
             </CardContent>
@@ -349,6 +441,9 @@ export default function AttendanceOverviewPage() {
                   <p className="text-xs text-green-600">
                     {stats.coach_present_today} present today
                   </p>
+                  {stats.total_coaches === 0 && (
+                    <p className="text-xs text-gray-400 mt-1">No active coaches</p>
+                  )}
                 </div>
               </div>
             </CardContent>
@@ -366,6 +461,9 @@ export default function AttendanceOverviewPage() {
                   <p className="text-xs text-gray-500">
                     {stats.student_present_today + stats.student_late_today} of {stats.total_students}
                   </p>
+                  {stats.total_students === 0 && (
+                    <p className="text-xs text-gray-400 mt-1">No data available</p>
+                  )}
                 </div>
               </div>
             </CardContent>
@@ -383,6 +481,9 @@ export default function AttendanceOverviewPage() {
                   <p className="text-xs text-gray-500">
                     {stats.coach_present_today + stats.coach_late_today} of {stats.total_coaches}
                   </p>
+                  {stats.total_coaches === 0 && (
+                    <p className="text-xs text-gray-400 mt-1">No data available</p>
+                  )}
                 </div>
               </div>
             </CardContent>

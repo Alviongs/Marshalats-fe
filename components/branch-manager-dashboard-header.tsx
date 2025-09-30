@@ -478,12 +478,6 @@ export default function BranchManagerDashboardHeader({ currentPage = "Dashboard"
                       Profile Settings
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                      onClick={() => router.push("/branch-manager-dashboard/settings")}
-                      className="cursor-pointer hover:bg-gray-100/80 transition-colors"
-                    >
-                      Branch Settings
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
                       onClick={handleLogout}
                       className="cursor-pointer hover:bg-red-50 text-red-600 transition-colors"
                     >

@@ -132,71 +132,97 @@ export interface RecipientsResponse {
 class MessageAPI extends BaseAPI {
   
   /**
-   * Get authentication headers based on user type
+   * Get authentication token for API requests
    */
-  private getAuthHeaders(): Record<string, string> {
-    // Try different authentication methods
+  private getAuthToken(): string | null {
+    console.log('🔍 DEBUG: Getting auth token for messageAPI...')
+
+    // Try different authentication methods in order of priority
+
+    // 1. Try TokenManager first (unified token storage for all user types including coaches)
     const tokenManagerToken = TokenManager.getToken()
     if (tokenManagerToken) {
-      return {
-        'Authorization': `Bearer ${tokenManagerToken}`,
-        'Content-Type': 'application/json'
-      }
+      console.log('✅ DEBUG: Using TokenManager token for authentication')
+      console.log('🔍 DEBUG: TokenManager token preview:', tokenManagerToken.substring(0, 20) + '...')
+      return tokenManagerToken
     }
 
+    // 2. Try BranchManagerAuth
     const branchManagerToken = BranchManagerAuth.getToken()
     if (branchManagerToken) {
-      return {
-        'Authorization': `Bearer ${branchManagerToken}`,
-        'Content-Type': 'application/json'
-      }
+      console.log('✅ DEBUG: Using BranchManager token for authentication')
+      console.log('🔍 DEBUG: BranchManager token preview:', branchManagerToken.substring(0, 20) + '...')
+      return branchManagerToken
     }
 
-    // Check for coach authentication - try direct localStorage access first
+    // 3. Check for legacy coach authentication tokens (fallback)
     const coachToken = localStorage.getItem("access_token") || localStorage.getItem("token")
     if (coachToken) {
-      console.log('🔍 DEBUG: Found coach token in localStorage')
-
-      // Validate it's a coach token by checking JWT payload
+      console.log('🔍 DEBUG: Found legacy coach token, verifying...')
+      console.log('🔍 DEBUG: Legacy coach token preview:', coachToken.substring(0, 20) + '...')
       try {
-        const tokenParts = coachToken.split('.')
-        if (tokenParts.length === 3) {
-          const payload = JSON.parse(atob(tokenParts[1]))
-          if (payload.role === 'coach') {
-            console.log('🔍 DEBUG: Using coach authentication token')
-            console.log('🔍 DEBUG: Coach ID:', payload.sub, 'Branch ID:', payload.branch_id)
-            return {
-              'Authorization': `Bearer ${coachToken}`,
-              'Content-Type': 'application/json'
-            }
+        const parts = coachToken.split('.')
+        if (parts.length === 3) {
+          const payload = JSON.parse(atob(parts[1] + '='.repeat((4 - parts[1].length % 4) % 4)))
+          console.log('🔍 DEBUG: Legacy coach token payload:', { role: payload.role, sub: payload.sub, exp: payload.exp })
+
+          // Check if token is expired
+          const isExpired = payload.exp && payload.exp * 1000 < Date.now()
+          if (isExpired) {
+            console.warn('⚠️ DEBUG: Legacy coach token is expired')
+            return null
+          }
+
+          // Accept both 'coach' and any valid token for messaging (coaches can message)
+          if (payload.role === 'coach' || payload.sub) {
+            console.log('✅ DEBUG: Using legacy coach token for authentication')
+            return coachToken
           }
         }
       } catch (e) {
-        console.warn('⚠️ Could not validate coach token:', e)
+        console.warn('⚠️ Could not decode legacy coach token:', e)
       }
     }
 
-    // Fallback to environment token
+    // 4. Fallback to environment token
     const envToken = process.env.NEXT_PUBLIC_AUTH_TOKEN
     if (envToken) {
-      return {
-        'Authorization': `Bearer ${envToken}`,
-        'Content-Type': 'application/json'
-      }
+      console.log('✅ DEBUG: Using environment token for authentication')
+      return envToken
     }
 
-    return {
+    console.warn('⚠️ DEBUG: No authentication token found!')
+    console.log('🔍 DEBUG: Available localStorage keys:', Object.keys(localStorage))
+    return null
+  }
+
+  /**
+   * Get authentication headers based on user type (legacy method for backward compatibility)
+   */
+  private getAuthHeaders(): Record<string, string> {
+    const token = this.getAuthToken()
+
+    const headers: Record<string, string> = {
       'Content-Type': 'application/json'
     }
+
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`
+    }
+
+    return headers
   }
 
   /**
    * Send a new message
    */
   async sendMessage(messageData: SendMessageRequest): Promise<{ message: string; message_id: string; thread_id: string }> {
+    const token = this.getAuthToken()
+    console.log('🔍 DEBUG: Sending message with token:', token ? 'Present' : 'Missing')
+
     return await this.makeRequest('/api/messages/send', {
       method: 'POST',
-      headers: this.getAuthHeaders(),
+      token: token,
       body: messageData
     })
   }
@@ -209,11 +235,22 @@ class MessageAPI extends BaseAPI {
       skip: skip.toString(),
       limit: limit.toString()
     })
-    
-    return await this.makeRequest(`/api/messages/conversations?${params}`, {
-      method: 'GET',
-      headers: this.getAuthHeaders()
-    })
+
+    const token = this.getAuthToken()
+    console.log('🔍 DEBUG: Getting conversations with token:', token ? 'Present' : 'Missing')
+
+    try {
+      const response = await this.makeRequest(`/api/messages/conversations?${params}`, {
+        method: 'GET',
+        token: token
+      })
+
+      console.log('🔍 DEBUG: Conversations API response:', response)
+      return response
+    } catch (error) {
+      console.error('🔍 DEBUG: Conversations API error:', error)
+      throw error
+    }
   }
 
   /**
@@ -224,10 +261,10 @@ class MessageAPI extends BaseAPI {
       skip: skip.toString(),
       limit: limit.toString()
     })
-    
+
     return await this.makeRequest(`/api/messages/thread/${threadId}/messages?${params}`, {
       method: 'GET',
-      headers: this.getAuthHeaders()
+      token: this.getAuthToken()
     })
   }
 
@@ -237,7 +274,7 @@ class MessageAPI extends BaseAPI {
   async updateMessage(messageId: string, updateData: UpdateMessageRequest): Promise<{ message: string }> {
     return await this.makeRequest(`/api/messages/message/${messageId}`, {
       method: 'PATCH',
-      headers: this.getAuthHeaders(),
+      token: this.getAuthToken(),
       body: updateData
     })
   }
@@ -248,7 +285,7 @@ class MessageAPI extends BaseAPI {
   async markMessageAsRead(messageId: string): Promise<{ message: string }> {
     return await this.makeRequest(`/api/messages/message/${messageId}/mark-read`, {
       method: 'POST',
-      headers: this.getAuthHeaders()
+      token: this.getAuthToken()
     })
   }
 
@@ -258,7 +295,7 @@ class MessageAPI extends BaseAPI {
   async archiveMessage(messageId: string): Promise<{ message: string }> {
     return await this.makeRequest(`/api/messages/message/${messageId}/archive`, {
       method: 'POST',
-      headers: this.getAuthHeaders()
+      token: this.getAuthToken()
     })
   }
 
@@ -268,7 +305,7 @@ class MessageAPI extends BaseAPI {
   async deleteMessage(messageId: string): Promise<{ message: string }> {
     return await this.makeRequest(`/api/messages/message/${messageId}`, {
       method: 'DELETE',
-      headers: this.getAuthHeaders()
+      token: this.getAuthToken()
     })
   }
 
@@ -276,20 +313,42 @@ class MessageAPI extends BaseAPI {
    * Get message statistics
    */
   async getMessageStats(): Promise<{ stats: MessageStats }> {
-    return await this.makeRequest('/api/messages/stats', {
-      method: 'GET',
-      headers: this.getAuthHeaders()
-    })
+    const token = this.getAuthToken()
+    console.log('🔍 DEBUG: Getting message stats with token:', token ? 'Present' : 'Missing')
+
+    try {
+      const response = await this.makeRequest('/api/messages/stats', {
+        method: 'GET',
+        token: token
+      })
+
+      console.log('🔍 DEBUG: Message stats API response:', response)
+      return response
+    } catch (error) {
+      console.error('🔍 DEBUG: Message stats API error:', error)
+      throw error
+    }
   }
 
   /**
    * Get available recipients
    */
   async getAvailableRecipients(): Promise<RecipientsResponse> {
-    return await this.makeRequest('/api/messages/recipients', {
-      method: 'GET',
-      headers: this.getAuthHeaders()
-    })
+    const token = this.getAuthToken()
+    console.log('🔍 DEBUG: Getting available recipients with token:', token ? 'Present' : 'Missing')
+
+    try {
+      const response = await this.makeRequest('/api/messages/recipients', {
+        method: 'GET',
+        token: token
+      })
+
+      console.log('🔍 DEBUG: Available recipients API response:', response)
+      return response
+    } catch (error) {
+      console.error('🔍 DEBUG: Available recipients API error:', error)
+      throw error
+    }
   }
 
   /**
@@ -298,7 +357,7 @@ class MessageAPI extends BaseAPI {
   async getUnreadCount(): Promise<{ unread_count: number }> {
     return await this.makeRequest('/api/messages/unread-count', {
       method: 'GET',
-      headers: this.getAuthHeaders()
+      token: this.getAuthToken()
     })
   }
 
@@ -309,7 +368,7 @@ class MessageAPI extends BaseAPI {
     const params = branchId ? `?branch_id=${branchId}` : ''
     return await this.makeRequest(`/api/messages/students${params}`, {
       method: 'GET',
-      headers: this.getAuthHeaders()
+      token: this.getAuthToken()
     })
   }
 
@@ -320,7 +379,7 @@ class MessageAPI extends BaseAPI {
     const params = branchId ? `?branch_id=${branchId}` : ''
     return await this.makeRequest(`/api/messages/coaches${params}`, {
       method: 'GET',
-      headers: this.getAuthHeaders()
+      token: this.getAuthToken()
     })
   }
 
@@ -330,7 +389,7 @@ class MessageAPI extends BaseAPI {
   async getMessageableBranchManagers(): Promise<{ branch_managers: MessageRecipient[]; total_count: number }> {
     return await this.makeRequest('/api/messages/branch-managers', {
       method: 'GET',
-      headers: this.getAuthHeaders()
+      token: this.getAuthToken()
     })
   }
 
@@ -340,7 +399,7 @@ class MessageAPI extends BaseAPI {
   async getMessageableSuperadmins(): Promise<{ superadmins: MessageRecipient[]; total_count: number }> {
     return await this.makeRequest('/api/messages/superadmins', {
       method: 'GET',
-      headers: this.getAuthHeaders()
+      token: this.getAuthToken()
     })
   }
 
@@ -350,7 +409,7 @@ class MessageAPI extends BaseAPI {
   async getMessageNotifications(skip: number = 0, limit: number = 50): Promise<{ notifications: MessageNotification[]; total: number; unread_count: number }> {
     return await this.makeRequest(`/api/messages/notifications?skip=${skip}&limit=${limit}`, {
       method: 'GET',
-      headers: this.getAuthHeaders()
+      token: this.getAuthToken()
     })
   }
 
@@ -360,7 +419,7 @@ class MessageAPI extends BaseAPI {
   async markMessageNotificationAsRead(notificationId: string): Promise<{ message: string }> {
     return await this.makeRequest(`/api/messages/notifications/${notificationId}/read`, {
       method: 'PUT',
-      headers: this.getAuthHeaders()
+      token: this.getAuthToken()
     })
   }
 
